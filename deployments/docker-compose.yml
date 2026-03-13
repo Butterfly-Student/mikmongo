@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  # app:
+  #   build:
+  #     context: ..
+  #     dockerfile: deployments/Dockerfile
+  #   ports:
+  #     - "8080:8080"
+  #   environment:
+  #     - APP_ENV=production
+  #     - DB_HOST=postgres
+  #     - REDIS_HOST=redis
+  #     - RABBITMQ_HOST=rabbitmq
+  #   depends_on:
+  #     - postgres
+  #     - redis
+  #     - rabbitmq
+
+  # nginx:
+  #   image: nginx:alpine
+  #   ports:
+  #     - "80:80"
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+  #   depends_on:
+  #     - app
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: mikmongo
+      POSTGRES_PASSWORD: mikmongo
+      POSTGRES_DB: mikmongo
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  rabbitmq:
+    image: rabbitmq:management-alpine
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: mikmongo
+      RABBITMQ_DEFAULT_PASS: mikmongo
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+volumes:
+  postgres_data:
+  redis_data:
+  rabbitmq_data:

@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(go build:*)",
+      "Bash(go:*)",
+      "Bash(grep:*)",
+      "Bash(curl:*)",
+      "Bash(PGPASSWORD=mikmongo psql:*)",
+      "Bash(python -c \"import sys,json; print\\(json.load\\(sys.stdin\\)[''data''][''token'']\\)\")",
+      "Read(//tmp/**)",
+      "Bash(cat:*)",
+      "Bash(npx tsc:*)"
+    ]
+  }
+}

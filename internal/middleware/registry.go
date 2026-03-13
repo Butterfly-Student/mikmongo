@@ -1,0 +1,35 @@
+package middleware
+
+import (
+	"github.com/gin-contrib/requestid"
+	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
+	"mikmongo/pkg/jwt"
+	"mikmongo/pkg/redis"
+)
+
+// Registry holds all middleware instances
+type Registry struct {
+	Auth           *AuthMiddleware
+	Logger         gin.HandlerFunc
+	RateLimit      *RateLimitMiddleware
+	RequestID      gin.HandlerFunc
+	CORS           gin.HandlerFunc
+	PortalAuth     *PortalAuthMiddleware
+	MikrotikRouter *MikrotikRouterMiddleware
+}
+
+// NewRegistry creates a new middleware registry
+func NewRegistry(logger *zap.Logger, jwtService *jwt.Service, redisClient *redis.Client) *Registry {
+	loggerMiddleware := NewLoggerMiddleware(logger)
+
+	return &Registry{
+		Auth:           NewAuthMiddleware(jwtService, redisClient),
+		Logger:         loggerMiddleware.GinLogger(),
+		RateLimit:      NewRateLimitMiddleware(redisClient),
+		RequestID:      requestid.New(),
+		CORS:           NewCORSMiddleware(),
+		PortalAuth:     NewPortalAuthMiddleware(jwtService),
+		MikrotikRouter: NewMikrotikRouterMiddleware(),
+	}
+}
