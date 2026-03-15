@@ -17,4 +17,5 @@ type Registry struct {
 	SequenceCounterRepo      SequenceCounterRepository
 	MessageTemplateRepo      MessageTemplateRepository
 	AuditLogRepo             AuditLogRepository
+	Transactor               Transactor
 }

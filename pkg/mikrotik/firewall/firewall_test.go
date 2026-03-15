@@ -1,3 +1,0 @@
-package firewall
-
-// Firewall tests

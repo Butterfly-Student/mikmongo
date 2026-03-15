@@ -21,6 +21,7 @@ type PaymentService struct {
 	seqRepo         repository.SequenceCounterRepository
 	paymentDomain   *payment.Domain
 	billingDomain   *billing.Domain
+	transactor      repository.Transactor
 	customerSvc     *CustomerService
 	notificationSvc *NotificationService
 }
@@ -34,6 +35,7 @@ func NewPaymentService(
 	seqRepo repository.SequenceCounterRepository,
 	paymentDomain *payment.Domain,
 	billingDomain *billing.Domain,
+	transactor repository.Transactor,
 ) *PaymentService {
 	return &PaymentService{
 		paymentRepo:    paymentRepo,
@@ -43,6 +45,7 @@ func NewPaymentService(
 		seqRepo:        seqRepo,
 		paymentDomain:  paymentDomain,
 		billingDomain:  billingDomain,
+		transactor:     transactor,
 	}
 }
 
@@ -105,8 +108,12 @@ func (s *PaymentService) List(ctx context.Context, limit, offset int) ([]model.P
 	return s.paymentRepo.List(ctx, limit, offset)
 }
 
-// Confirm confirms a payment and allocates to invoices (FIFO by due date)
+// Confirm confirms a payment and allocates to invoices (FIFO by due date).
+// The allocation is performed atomically inside a SELECT FOR UPDATE transaction
+// to prevent double allocation when two payments for the same customer are
+// confirmed concurrently.
 func (s *PaymentService) Confirm(ctx context.Context, paymentID uuid.UUID, processedByID string) error {
+	// Fast-fail: validate payment before acquiring any lock.
 	p, err := s.paymentRepo.GetByID(ctx, paymentID)
 	if err != nil {
 		return err
@@ -120,64 +127,78 @@ func (s *PaymentService) Confirm(ctx context.Context, paymentID uuid.UUID, proce
 		return fmt.Errorf("invalid customer ID on payment: %w", err)
 	}
 
-	// Get unpaid invoices for customer (FIFO by due date)
-	invoices, err := s.invoiceRepo.GetByCustomerID(ctx, customerID)
+	var totalAllocated float64
+	var unpaid []model.Invoice
+
+	// Atomic section: lock invoices → allocate → update payment in one transaction.
+	err = s.transactor.RunInTx(ctx, func(
+		txPayment repository.PaymentRepository,
+		txInvoice repository.InvoiceRepository,
+		txAlloc repository.PaymentAllocationRepository,
+	) error {
+		// Re-read payment inside tx — idempotency guard (another goroutine may have confirmed it).
+		p, err = txPayment.GetByID(ctx, paymentID)
+		if err != nil {
+			return err
+		}
+		if err = s.paymentDomain.CanConfirm(p); err != nil {
+			return err
+		}
+
+		// SELECT FOR UPDATE — row-level lock prevents concurrent Confirm on same customer's invoices.
+		invoices, err := txInvoice.GetByCustomerIDForUpdate(ctx, customerID)
+		if err != nil {
+			return err
+		}
+
+		unpaid = nil
+		for _, inv := range invoices {
+			if inv.Status == "unpaid" || inv.Status == "partial" {
+				unpaid = append(unpaid, inv)
+			}
+		}
+
+		allocations := s.paymentDomain.CalculateAllocations(p.Amount, unpaid)
+
+		for _, alloc := range allocations {
+			invID, err := uuid.Parse(alloc.InvoiceID)
+			if err != nil {
+				continue
+			}
+			inv, err := txInvoice.GetByID(ctx, invID)
+			if err != nil {
+				continue
+			}
+
+			if err := txAlloc.Create(ctx, &model.PaymentAllocation{
+				PaymentID:       p.ID,
+				InvoiceID:       alloc.InvoiceID,
+				AllocatedAmount: alloc.Amount,
+			}); err != nil {
+				return err
+			}
+
+			inv.PaidAmount += alloc.Amount
+			newStatus := s.billingDomain.InvoiceStatusFromAmounts(inv.TotalAmount, inv.PaidAmount)
+			if err := txInvoice.Update(ctx, inv); err != nil {
+				return err
+			}
+			_ = txInvoice.UpdateStatus(ctx, invID, newStatus)
+			totalAllocated += alloc.Amount
+		}
+
+		now := time.Now()
+		p.Status = "confirmed"
+		p.ProcessedBy = &processedByID
+		p.ProcessedAt = &now
+		p.AllocatedAmount = totalAllocated
+		return txPayment.Update(ctx, p)
+	})
 	if err != nil {
 		return err
 	}
 
-	// Filter unpaid/partial invoices
-	var unpaid []model.Invoice
-	for _, inv := range invoices {
-		if inv.Status == "unpaid" || inv.Status == "partial" {
-			unpaid = append(unpaid, inv)
-		}
-	}
-
-	// Calculate allocations using FIFO
-	allocations := s.paymentDomain.CalculateAllocations(p.Amount, unpaid)
-	totalAllocated := 0.0
-
-	for _, alloc := range allocations {
-		invID, err := uuid.Parse(alloc.InvoiceID)
-		if err != nil {
-			continue
-		}
-		inv, err := s.invoiceRepo.GetByID(ctx, invID)
-		if err != nil {
-			continue
-		}
-
-		// Create allocation record
-		allocation := &model.PaymentAllocation{
-			PaymentID:       p.ID,
-			InvoiceID:       alloc.InvoiceID,
-			AllocatedAmount: alloc.Amount,
-		}
-		if err := s.allocationRepo.Create(ctx, allocation); err != nil {
-			continue
-		}
-
-		// Update invoice paid amount and status
-		inv.PaidAmount += alloc.Amount
-		newStatus := s.billingDomain.InvoiceStatusFromAmounts(inv.TotalAmount, inv.PaidAmount)
-		if err := s.invoiceRepo.Update(ctx, inv); err == nil {
-			_ = s.invoiceRepo.UpdateStatus(ctx, invID, newStatus)
-		}
-		totalAllocated += alloc.Amount
-	}
-
-	// Update payment
-	now := time.Now()
-	p.Status = "confirmed"
-	p.ProcessedBy = &processedByID
-	p.ProcessedAt = &now
-	p.AllocatedAmount = totalAllocated
-	if err := s.paymentRepo.Update(ctx, p); err != nil {
-		return err
-	}
-
-	// Check if all customer invoices are now paid → restore customer
+	// Post-tx side effects (not rolled back if they fail — acceptable for notifications).
 	if s.customerSvc != nil && len(unpaid) > 0 {
 		allPaid := true
 		for _, inv := range unpaid {
@@ -194,21 +215,16 @@ func (s *PaymentService) Confirm(ctx context.Context, paymentID uuid.UUID, proce
 				break
 			}
 		}
-
 		if allPaid {
-			// Restore all isolated subscriptions for this customer
 			_ = s.customerSvc.RestoreAllSubscriptions(ctx, customerID)
 		}
 	}
-
-	// Send notification
 	if s.notificationSvc != nil {
 		customer, err := s.customerRepo.GetByID(ctx, customerID)
 		if err == nil {
 			_ = s.notificationSvc.SendPaymentConfirmed(ctx, p, customer)
 		}
 	}
-
 	return nil
 }
 

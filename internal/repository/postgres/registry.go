@@ -23,6 +23,7 @@ type Registry struct {
 	SequenceCounterRepo      repository.SequenceCounterRepository
 	MessageTemplateRepo      repository.MessageTemplateRepository
 	AuditLogRepo             repository.AuditLogRepository
+	Transactor               repository.Transactor
 }
 
 // NewRepository creates a new postgres repository registry
@@ -43,5 +44,6 @@ func NewRepository(db *gorm.DB) *Registry {
 		SequenceCounterRepo:      NewSequenceCounterRepository(db),
 		MessageTemplateRepo:      NewMessageTemplateRepository(db),
 		AuditLogRepo:             NewAuditLogRepository(db),
+		Transactor:               NewTransactor(db),
 	}
 }

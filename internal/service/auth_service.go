@@ -11,18 +11,24 @@ import (
 	"mikmongo/internal/model"
 	"mikmongo/internal/repository"
 	"mikmongo/pkg/jwt"
-	"mikmongo/pkg/redis"
 )
+
+// RedisClientInterface defines the redis operations used by AuthService
+type RedisClientInterface interface {
+	BlacklistToken(ctx context.Context, jti string, ttl time.Duration) error
+	IsBlacklisted(ctx context.Context, jti string) (bool, error)
+	SetPasswordChangedAt(ctx context.Context, userID string, t time.Time, ttl time.Duration) error
+}
 
 // AuthService handles authentication business logic
 type AuthService struct {
 	userRepo    repository.UserRepository
 	jwtService  *jwt.Service
-	redisClient *redis.Client
+	redisClient RedisClientInterface
 }
 
 // NewAuthService creates a new auth service
-func NewAuthService(userRepo repository.UserRepository, jwtService *jwt.Service, redisClient *redis.Client) *AuthService {
+func NewAuthService(userRepo repository.UserRepository, jwtService *jwt.Service, redisClient RedisClientInterface) *AuthService {
 	return &AuthService{
 		userRepo:    userRepo,
 		jwtService:  jwtService,

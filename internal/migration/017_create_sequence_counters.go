@@ -32,12 +32,6 @@ func up017(ctx context.Context, tx *sql.Tx) error {
 
 	CREATE INDEX IF NOT EXISTS idx_sequence_counters_name ON sequence_counters(name);
 
-	-- Seed data awal untuk nomor urut utama
-	INSERT INTO sequence_counters (name, prefix, padding, reset_yearly) VALUES
-		('invoice',       'INV', 5, true),
-		('payment',       'PAY', 5, true),
-		('customer_code', 'CST', 4, false);
-
 	COMMENT ON TABLE  sequence_counters              IS 'Counter nomor urut otomatis, thread-safe dengan SELECT FOR UPDATE';
 	COMMENT ON COLUMN sequence_counters.reset_monthly IS 'Reset ke 0 setiap awal bulan';
 	COMMENT ON COLUMN sequence_counters.reset_yearly  IS 'Reset ke 0 setiap awal tahun';

@@ -17,13 +17,10 @@ type MikrotikRouter struct {
 	Username          string         `gorm:"type:varchar(100);not null"`
 	PasswordEncrypted string         `gorm:"type:text;not null"`
 	UseSSL            bool           `gorm:"type:boolean;default:false"`
-	RouterOSVersion   *string        `gorm:"type:varchar(50)"`
-	Identity          *string        `gorm:"type:varchar(255)"`
 	IsMaster          bool           `gorm:"type:boolean;default:false"`
 	IsActive          bool           `gorm:"type:boolean;default:true;index:,where:deleted_at IS NULL"`
 	Status            string         `gorm:"type:varchar(20);default:'unknown';check:status IN ('online', 'offline', 'unknown');index:,where:deleted_at IS NULL"`
 	LastSeenAt        *time.Time     `gorm:"type:timestamptz"`
-	LastPing          *time.Time     `gorm:"type:timestamptz"`
 	Notes             *string        `gorm:"type:text"`
 	CreatedAt         time.Time      `gorm:"type:timestamptz;not null;default:CURRENT_TIMESTAMP"`
 	UpdatedAt         time.Time      `gorm:"type:timestamptz;not null;default:CURRENT_TIMESTAMP"`

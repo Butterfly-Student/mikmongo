@@ -30,7 +30,9 @@ func up006(ctx context.Context, tx *sql.Tx) error {
 		-- Network Config
 		static_ip   VARCHAR(45),
 		gateway     VARCHAR(15),
-		mac_address VARCHAR(17),
+
+		-- MikroTik sync
+		mt_ppp_id   VARCHAR(50),
 
 		-- Status & Periode
 		status       VARCHAR(20) NOT NULL
@@ -67,12 +69,16 @@ func up006(ctx context.Context, tx *sql.Tx) error {
 	CREATE INDEX IF NOT EXISTS idx_subscriptions_expiry      ON subscriptions(expiry_date)    WHERE deleted_at IS NULL;
 	CREATE INDEX IF NOT EXISTS idx_subscriptions_deleted     ON subscriptions(deleted_at);
 	
+	CREATE INDEX IF NOT EXISTS idx_subscriptions_mt_ppp_id      ON subscriptions(mt_ppp_id)            WHERE mt_ppp_id IS NOT NULL AND deleted_at IS NULL;
+
 	-- Composite indexes untuk query yang sering digunakan
 	CREATE INDEX IF NOT EXISTS idx_subscriptions_customer_status ON subscriptions(customer_id, status) WHERE deleted_at IS NULL;
 
-	COMMENT ON TABLE  subscriptions              IS 'Layanan aktif pelanggan — jembatan antara customer, plan, dan router MikroTik';
-	COMMENT ON COLUMN subscriptions.username      IS 'PPP username di MikroTik (harus unik per router)';
-	COMMENT ON COLUMN subscriptions.previous_plan_id IS 'Plan sebelum isolasi, dikembalikan saat isolasi dicabut';
+	COMMENT ON TABLE  subscriptions                  IS 'Layanan aktif pelanggan — jembatan antara customer, plan, dan router MikroTik';
+	COMMENT ON COLUMN subscriptions.username          IS 'PPP secret name di MikroTik — harus unik per router';
+	COMMENT ON COLUMN subscriptions.password          IS 'PPP secret password di MikroTik';
+	COMMENT ON COLUMN subscriptions.mt_ppp_id         IS '.id entry /ppp/secret di RouterOS, digunakan untuk update/delete langsung';
+	COMMENT ON COLUMN subscriptions.previous_plan_id  IS 'Plan sebelum isolasi, dikembalikan saat isolasi dicabut';
 	`)
 	return err
 }

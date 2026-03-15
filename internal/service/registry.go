@@ -78,6 +78,7 @@ func NewRegistry(
 		repo.SequenceCounterRepo,
 		d.Payment,
 		d.Billing,
+		repo.Transactor,
 	)
 	payment.SetCustomerService(customerSvc)
 	payment.SetNotificationService(notification)

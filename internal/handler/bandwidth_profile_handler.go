@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"encoding/json"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -23,13 +22,12 @@ func NewBandwidthProfileHandler(svc *service.BandwidthProfileService) *Bandwidth
 
 // CreateRequest represents the request body for creating a bandwidth profile
 type CreateProfileRequest struct {
-	ProfileCode    string          `json:"profile_code" binding:"required"`
-	Name           string          `json:"name" binding:"required"`
-	Description    string          `json:"description,omitempty"`
-	PriceMonthly   float64         `json:"price_monthly" binding:"required"`
-	DownloadSpeed  int64           `json:"download_speed" binding:"required"`
-	UploadSpeed    int64           `json:"upload_speed" binding:"required"`
-	MikrotikConfig json.RawMessage `json:"mikrotik_config,omitempty"`
+	ProfileCode   string  `json:"profile_code" binding:"required"`
+	Name          string  `json:"name" binding:"required"`
+	Description   string  `json:"description,omitempty"`
+	PriceMonthly  float64 `json:"price_monthly" binding:"required"`
+	DownloadSpeed int64   `json:"download_speed" binding:"required"`
+	UploadSpeed   int64   `json:"upload_speed" binding:"required"`
 }
 
 // Create handles bandwidth profile creation for a specific router
@@ -47,13 +45,12 @@ func (h *BandwidthProfileHandler) Create(c *gin.Context) {
 	}
 
 	profile := model.BandwidthProfile{
-		RouterID:       routerID.String(),
-		ProfileCode:    req.ProfileCode,
-		Name:           req.Name,
-		PriceMonthly:   req.PriceMonthly,
-		DownloadSpeed:  req.DownloadSpeed,
-		UploadSpeed:    req.UploadSpeed,
-		MikrotikConfig: req.MikrotikConfig,
+		RouterID:      routerID.String(),
+		ProfileCode:   req.ProfileCode,
+		Name:          req.Name,
+		PriceMonthly:  req.PriceMonthly,
+		DownloadSpeed: req.DownloadSpeed,
+		UploadSpeed:   req.UploadSpeed,
 	}
 
 	if req.Description != "" {

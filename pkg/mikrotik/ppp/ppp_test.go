@@ -1,3 +1,0 @@
-package ppp
-
-// PPP tests

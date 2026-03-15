@@ -112,3 +112,32 @@ type TrafficRequest struct {
 
 // ResourceUsage is kept for backward compatibility with old stub.
 type ResourceUsage = SystemResource
+
+// Scheduler represents a system scheduler entry
+type Scheduler struct {
+	ID        string `json:"id,omitempty"`
+	Name      string `json:"name,omitempty"`
+	StartDate string `json:"startDate,omitempty"`
+	StartTime string `json:"startTime,omitempty"`
+	Interval  string `json:"interval,omitempty"`
+	OnEvent   string `json:"onEvent,omitempty"`
+	Comment   string `json:"comment,omitempty"`
+	Disabled  bool   `json:"disabled,omitempty"`
+	Owner     string `json:"owner,omitempty"`
+	Policy    string `json:"policy,omitempty"`
+	RunCount  string `json:"runCount,omitempty"`
+	NextRun   string `json:"nextRun,omitempty"`
+}
+
+// SystemScript represents a system script entry
+type SystemScript struct {
+	ID                     string `json:"id,omitempty"`
+	Name                   string `json:"name,omitempty"`
+	Owner                  string `json:"owner,omitempty"`
+	Policy                 string `json:"policy,omitempty"`
+	Source                 string `json:"source,omitempty"`
+	Comment                string `json:"comment,omitempty"`
+	DontRequirePermissions bool   `json:"dontRequirePermissions,omitempty"`
+	RunCount               string `json:"runCount,omitempty"`
+	LastTimeStarted        string `json:"lastTimeStarted,omitempty"`
+}

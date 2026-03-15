@@ -10,6 +10,10 @@
 //   - TEST_MIKROTIK_PASS (required for Mikrotik tests)
 //
 // Run tests with: go test -v -tags=integration ./tests/integration/...
+//
+// NOTE: Tests in this package must NOT use t.Parallel().
+// All tests share a single connection pool and use per-test transactions for isolation.
+// Running tests in parallel would interleave transactions and cause false failures.
 package integration
 
 import (
@@ -17,114 +21,154 @@ import (
 	"database/sql"
 	"fmt"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	_ "github.com/jackc/pgx/v5/stdlib"
 	"github.com/pressly/goose/v3"
 	"github.com/stretchr/testify/require"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	"gorm.io/gorm/logger"
+
+	_ "mikmongo/internal/migration"
+	"mikmongo/internal/model"
+	pkgredis "mikmongo/pkg/redis"
 )
 
 // TestConfig holds test configuration
 type TestConfig struct {
-	DBHost     string
-	DBPort     string
-	DBUser     string
-	DBPassword string
-	DBName     string
+	DBHost        string
+	DBPort        string
+	DBUser        string
+	DBPassword    string
+	DBName        string
+	RedisHost     string
+	RedisPort     string
+	RedisPassword string
+	RedisDB       int
 }
 
 // LoadTestConfig loads test configuration from environment
 func LoadTestConfig() *TestConfig {
 	return &TestConfig{
-		DBHost:     getEnv("TEST_DB_HOST", "localhost"),
-		DBPort:     getEnv("TEST_DB_PORT", "5432"),
-		DBUser:     getEnv("TEST_DB_USER", "postgres"),
-		DBPassword: getEnv("TEST_DB_PASSWORD", "postgres"),
-		DBName:     getEnv("TEST_DB_NAME", "mikmongo_test"),
+		DBHost:        getEnv("TEST_DB_HOST", "localhost"),
+		DBPort:        getEnv("TEST_DB_PORT", "5432"),
+		DBUser:        getEnv("TEST_DB_USER", "postgres"),
+		DBPassword:    getEnv("TEST_DB_PASSWORD", "postgres"),
+		DBName:        getEnv("TEST_DB_NAME", "mikmongo_test"),
+		RedisHost:     getEnv("TEST_REDIS_HOST", "localhost"),
+		RedisPort:     getEnv("TEST_REDIS_PORT", "6379"),
+		RedisPassword: getEnv("TEST_REDIS_PASSWORD", ""),
+		RedisDB:       getEnvInt("TEST_REDIS_DB", 15),
 	}
+}
+
+// Shared connection — opened once in TestMain, reused across all tests.
+var (
+	sharedDB    *gorm.DB
+	sharedSQL   *sql.DB
+	sharedRedis *pkgredis.Client
+)
+
+// TestMain runs once for the entire test binary.
+// It opens the database connection, runs migrations, then hands off to m.Run().
+// Each test gets its own transaction via SetupSuite; TestMain closes the connection at the end.
+func TestMain(m *testing.M) {
+	cfg := LoadTestConfig()
+	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+		cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName)
+
+	var err error
+	sharedDB, err = gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Silent),
+	})
+	if err != nil {
+		panic("failed to connect to test database: " + err.Error())
+	}
+
+	sharedSQL, err = sharedDB.DB()
+	if err != nil {
+		panic("failed to get sql.DB: " + err.Error())
+	}
+
+	redisPort, _ := strconv.Atoi(cfg.RedisPort)
+	sharedRedis = pkgredis.NewClient(pkgredis.Options{
+		Host:     cfg.RedisHost,
+		Port:     redisPort,
+		Password: cfg.RedisPassword,
+		DB:       cfg.RedisDB,
+	})
+	if err := sharedRedis.Ping(context.Background()); err != nil {
+		panic("cannot connect to test Redis: " + err.Error())
+	}
+	defer sharedRedis.FlushDB(context.Background())
+	defer sharedRedis.Close()
+
+	runMigrationsOnce(sharedSQL)
+
+	code := m.Run()
+	sharedSQL.Close()
+	os.Exit(code)
 }
 
 // TestSuite holds shared resources for integration tests
 type TestSuite struct {
-	DB     *gorm.DB
-	SQLDB  *sql.DB
-	Ctx    context.Context
-	Config *TestConfig
+	DB          *gorm.DB        // transaction-scoped: all test writes are rolled back in Cleanup
+	RootDB      *gorm.DB        // non-transactional shared DB (for setup that must be committed)
+	SQLDB       *sql.DB         // underlying sql.DB (shared, do NOT close per-test)
+	RedisClient *pkgredis.Client // real Redis, DB=15 (isolated test DB)
+	Ctx         context.Context
+	Config      *TestConfig
 }
 
-// SetupSuite initializes the test suite with PostgreSQL connection
+// SetupSuite begins a transaction on the shared DB and returns a TestSuite scoped to it.
+// Every INSERT/UPDATE in the test runs inside this transaction.
+// Call defer suite.Cleanup(t) to roll it all back at the end of the test.
 func SetupSuite(t *testing.T) *TestSuite {
-	ctx := context.Background()
-	cfg := LoadTestConfig()
+	t.Helper()
+	tx := sharedDB.Begin()
+	require.NoError(t, tx.Error, "failed to begin test transaction")
 
-	// Build connection string
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		cfg.DBHost, cfg.DBPort, cfg.DBUser, cfg.DBPassword, cfg.DBName)
+	// Flush test Redis DB before each test to guarantee clean state
+	_ = sharedRedis.FlushDB(context.Background())
 
-	// Connect with GORM
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Silent),
-	})
-	require.NoError(t, err, "Failed to connect to database")
-
-	// Get underlying sql.DB
-	sqlDB, err := db.DB()
-	require.NoError(t, err, "Failed to get sql.DB")
-
-	// Run migrations
-	runMigrations(t, sqlDB)
-
+	sqlDB, _ := sharedDB.DB()
 	return &TestSuite{
-		DB:     db,
-		SQLDB:  sqlDB,
-		Ctx:    ctx,
-		Config: cfg,
+		DB:          tx,
+		RootDB:      sharedDB,
+		SQLDB:       sqlDB,
+		RedisClient: sharedRedis,
+		Ctx:         context.Background(),
+		Config:      LoadTestConfig(),
 	}
 }
 
-// runMigrations runs all database migrations
-func runMigrations(t *testing.T, db *sql.DB) {
-	// Set goose dialect
+// runMigrationsOnce runs all database migrations exactly once (called from TestMain).
+func runMigrationsOnce(db *sql.DB) {
 	if err := goose.SetDialect("postgres"); err != nil {
-		t.Fatalf("Failed to set goose dialect: %v", err)
+		panic("failed to set goose dialect: " + err.Error())
 	}
-
-	// Run migrations from internal/migration
 	migrationsDir := "../../internal/migration"
 	if err := goose.Up(db, migrationsDir); err != nil {
-		t.Fatalf("Failed to run migrations: %v", err)
+		panic("failed to run migrations: " + err.Error())
 	}
 }
 
-// TearDownSuite cleans up resources
+// TearDownSuite is a no-op in the transaction-rollback model.
+// Connection lifecycle is managed by TestMain.
+// Kept for backward compatibility with existing "defer suite.TearDownSuite(t)" call sites.
 func (s *TestSuite) TearDownSuite(t *testing.T) {
-	if s.SQLDB != nil {
-		_ = s.SQLDB.Close()
-	}
+	// no-op: connection is closed in TestMain after all tests complete
 }
 
-// Cleanup truncates all tables between tests (except seed data tables)
+// Cleanup rolls back the test transaction, undoing all inserts/updates made during the test.
+// This is ~100x faster than TRUNCATE and also reverts sequence_counter increments.
 func (s *TestSuite) Cleanup(t *testing.T) {
-	tables := []string{
-		"users", "customers", "mikrotik_routers", "bandwidth_profiles",
-		"subscriptions", "invoices", "invoice_items", "payments",
-		"payment_allocations", "audit_logs",
-		"customer_registrations",
-	}
-
-	for _, table := range tables {
-		if err := s.DB.WithContext(s.Ctx).Exec(fmt.Sprintf("TRUNCATE TABLE %s CASCADE", table)).Error; err != nil {
-			t.Logf("Warning: failed to truncate table %s: %v", table, err)
-		}
-	}
-
-	// Reset sequence counters to 0 but keep the records
-	if err := s.DB.WithContext(s.Ctx).Exec("UPDATE sequence_counters SET last_number = 0").Error; err != nil {
-		t.Logf("Warning: failed to reset sequence counters: %v", err)
+	if s.DB != nil {
+		s.DB.Rollback()
 	}
 }
 
@@ -135,10 +179,68 @@ func getEnv(key, defaultValue string) string {
 	return defaultValue
 }
 
+func getEnvInt(key string, defaultValue int) int {
+	if v := os.Getenv(key); v != "" {
+		if n, err := strconv.Atoi(v); err == nil {
+			return n
+		}
+	}
+	return defaultValue
+}
+
 // WithTimeout creates a context with timeout for tests
 func WithTimeout(t *testing.T, timeout time.Duration) context.Context {
 	t.Helper()
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	t.Cleanup(cancel)
 	return ctx
+}
+
+// createTestUser creates a minimal user record in DB and returns its ID.
+// Used for tests that need a valid user UUID for FK constraints.
+func createTestUser(t *testing.T, suite *TestSuite) string {
+	t.Helper()
+	id := uuid.New().String()
+	err := suite.DB.WithContext(suite.Ctx).Exec(
+		`INSERT INTO users (id, full_name, email, password_hash, role, is_active, created_at, updated_at)
+		 VALUES (?, ?, ?, ?, 'admin', true, NOW(), NOW())`,
+		id, "Test Admin", id+"@test.com", "$2a$04$placeholder",
+	).Error
+	require.NoError(t, err)
+	return id
+}
+
+// directCreateSub creates a subscription directly in the DB,
+// bypassing router connectivity (for billing/payment tests).
+func directCreateSub(t *testing.T, suite *TestSuite, sub *model.Subscription) {
+	t.Helper()
+	sub.Status = "pending"
+	err := suite.DB.WithContext(suite.Ctx).Create(sub).Error
+	require.NoError(t, err)
+}
+
+// directActivate sets subscription status=active directly in DB,
+// bypassing router connectivity (for billing/payment tests).
+func directActivate(t *testing.T, suite *TestSuite, subID string) {
+	t.Helper()
+	now := time.Now()
+	err := suite.DB.WithContext(suite.Ctx).
+		Exec("UPDATE subscriptions SET status='active', activated_at=? WHERE id=?", now, subID).Error
+	require.NoError(t, err)
+}
+
+// directIsolate sets subscription status=isolated directly in DB.
+func directIsolate(t *testing.T, suite *TestSuite, subID string) {
+	t.Helper()
+	err := suite.DB.WithContext(suite.Ctx).
+		Exec("UPDATE subscriptions SET status='isolated' WHERE id=?", subID).Error
+	require.NoError(t, err)
+}
+
+// directSuspend sets subscription status=suspended directly in DB.
+func directSuspend(t *testing.T, suite *TestSuite, subID string) {
+	t.Helper()
+	err := suite.DB.WithContext(suite.Ctx).
+		Exec("UPDATE subscriptions SET status='suspended' WHERE id=?", subID).Error
+	require.NoError(t, err)
 }

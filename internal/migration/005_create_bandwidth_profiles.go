@@ -48,9 +48,6 @@ func up005(ctx context.Context, tx *sql.Tx) error {
 		grace_period_days INTEGER NOT NULL DEFAULT 3,
 		isolate_profile_name VARCHAR(100),
 
-		-- MikroTik configuration (JSON - PPPoE only)
-		mikrotik_config JSONB,
-
 		-- Timestamps
 			created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,
 			updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP NOT NULL,

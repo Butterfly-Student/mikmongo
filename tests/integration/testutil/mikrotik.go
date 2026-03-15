@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"mikmongo/pkg/mikrotik"
-	"mikmongo/pkg/mikrotik/client"
+	mikrotik "github.com/Butterfly-Student/go-ros"
+	"github.com/Butterfly-Student/go-ros/client"
 )
 
 // MikrotikConfig holds configuration for real Mikrotik connection

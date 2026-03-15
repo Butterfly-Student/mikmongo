@@ -7,9 +7,9 @@ import (
 	"github.com/pressly/goose/v3"
 )
 
-func init() { goose.AddMigrationContext(up023, down023) }
+func init() { goose.AddMigrationContext(up020, down020) }
 
-func up023(ctx context.Context, tx *sql.Tx) error {
+func up020(ctx context.Context, tx *sql.Tx) error {
 	// Seed system_settings
 	seeds := []struct {
 		group, key, value, typ, label string
@@ -91,7 +91,7 @@ func up023(ctx context.Context, tx *sql.Tx) error {
 	return nil
 }
 
-func down023(ctx context.Context, tx *sql.Tx) error {
+func down020(ctx context.Context, tx *sql.Tx) error {
 	// Seeder migration - no rollback needed
 	return nil
 }

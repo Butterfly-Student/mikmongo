@@ -1,3 +1,0 @@
-package queue
-
-// Queue tests

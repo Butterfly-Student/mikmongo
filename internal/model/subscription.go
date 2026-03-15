@@ -16,7 +16,7 @@ type Subscription struct {
 	Password        string         `gorm:"type:varchar(255);not null"`
 	StaticIP        *string        `gorm:"type:varchar(45)"`
 	Gateway         *string        `gorm:"type:varchar(15)"`
-	MACAddress      *string        `gorm:"type:varchar(17)"`
+	MtPPPID         *string        `gorm:"type:varchar(50);column:mt_ppp_id"`
 	Status          string         `gorm:"type:varchar(20);not null;default:'pending';check:status IN ('pending', 'active', 'suspended', 'isolated', 'expired', 'terminated');index:,where:deleted_at IS NULL"`
 	ActivatedAt     *time.Time     `gorm:"type:timestamptz"`
 	ExpiryDate      *time.Time     `gorm:"type:date;index:,where:deleted_at IS NULL"`

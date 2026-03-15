@@ -9,7 +9,16 @@
       "Bash(python -c \"import sys,json; print\\(json.load\\(sys.stdin\\)[''data''][''token'']\\)\")",
       "Read(//tmp/**)",
       "Bash(cat:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(ls:*)",
+      "Bash(cd:*)",
+      "Bash(TEST_DB_HOST=localhost TEST_DB_PORT=5432 TEST_DB_USER=postgres TEST_DB_PASSWORD=postgres TEST_DB_NAME=mikmongo_test go test -v -tags=integration -timeout=180s ./tests/integration/... -run \"TestLogin_Integration|TestLogout_Integration|TestRefreshToken_Integration|TestChangePassword_Integration|TestBillingLifecycle|TestPaymentLifecycle|TestRegistration|TestCustomerService\" 2>&1)",
+      "Bash(for f:*)",
+      "Bash(docker ps:*)",
+      "Bash(docker exec:*)",
+      "Bash(TEST_DB_HOST=localhost TEST_DB_PORT=5432 TEST_DB_USER=mikhmon TEST_DB_PASSWORD=secret TEST_DB_NAME=mikmongo_test go test -v -tags=integration -timeout=180s ./tests/integration/... -run \"TestLogin_Integration|TestLogout_Integration|TestRefreshToken_Integration|TestChangePassword_Integration|TestBillingLifecycle|TestPaymentLifecycle|TestRegistration|TestCustomerService\" 2>&1)",
+      "Bash(TEST_DB_HOST=localhost TEST_DB_PORT=5432 TEST_DB_USER=mikhmon TEST_DB_PASSWORD=secret TEST_DB_NAME=mikmongo_test go test -v -tags=integration -timeout=120s ./tests/integration/... -run \"TestLogin_Integration|TestLogout_Integration|TestRefreshToken_Integration|TestChangePassword_Integration|TestBillingLifecycle|TestPaymentLifecycle|TestRegistration|TestCustomerService\" 2>&1)",
+      "Bash(find:*)"
     ]
   }
 }

@@ -16,8 +16,8 @@ import (
 type NotificationService struct {
 	templateRepo repository.MessageTemplateRepository
 	settingRepo  repository.SystemSettingRepository
-	gowaClient   *notification.GoWAClient
-	emailClient  *notification.EmailClient
+	gowaClient   notification.WhatsAppSender
+	emailClient  notification.EmailSender
 }
 
 // NewNotificationService creates a new notification service
@@ -28,6 +28,22 @@ func NewNotificationService(
 	return &NotificationService{
 		templateRepo: templateRepo,
 		settingRepo:  settingRepo,
+	}
+}
+
+// NewNotificationServiceWithClients creates a notification service with pre-configured clients.
+// Intended for testing: pass mock implementations of WhatsAppSender and EmailSender.
+func NewNotificationServiceWithClients(
+	templateRepo repository.MessageTemplateRepository,
+	settingRepo repository.SystemSettingRepository,
+	wa notification.WhatsAppSender,
+	email notification.EmailSender,
+) *NotificationService {
+	return &NotificationService{
+		templateRepo: templateRepo,
+		settingRepo:  settingRepo,
+		gowaClient:   wa,
+		emailClient:  email,
 	}
 }
 

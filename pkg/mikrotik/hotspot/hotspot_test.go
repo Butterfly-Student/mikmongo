@@ -1,3 +1,0 @@
-package hotspot
-
-// Hotspot tests

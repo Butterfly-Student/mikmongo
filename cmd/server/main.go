@@ -12,7 +12,6 @@ import (
 	"mikmongo/internal/config"
 	"mikmongo/internal/domain"
 	"mikmongo/internal/handler"
-	mikrotikhdl "mikmongo/internal/handler/mikrotik"
 	"mikmongo/internal/middleware"
 	_ "mikmongo/internal/migration"
 	"mikmongo/internal/queue"
@@ -23,7 +22,6 @@ import (
 	"mikmongo/internal/scheduler"
 	"mikmongo/internal/seeder"
 	"mikmongo/internal/service"
-	mikrotiksvc "mikmongo/internal/service/mikrotik"
 	"mikmongo/pkg/jwt"
 	"mikmongo/pkg/logger"
 	"mikmongo/pkg/rabbitmq"
@@ -179,16 +177,10 @@ func main() {
 		},
 	})
 
-	// Create MikroTik service registry
-	mikrotikServiceRegistry := mikrotiksvc.NewRegistry(serviceRegistry.Router)
-	serviceRegistry.Mikrotik = mikrotikServiceRegistry
 
 	// Handlers
 	handlerRegistry := handler.NewRegistry(serviceRegistry, repoRegistry.SystemSettingRepo, jwtService)
 
-	// Create MikroTik handler registry
-	mikrotikHandlerRegistry := mikrotikhdl.NewRegistry(mikrotikServiceRegistry)
-	handlerRegistry.Mikrotik = mikrotikHandlerRegistry
 
 	// Middleware
 	middlewareRegistry := middleware.NewRegistry(logg.Logger, jwtService, redisClient)

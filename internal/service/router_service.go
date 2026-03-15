@@ -2,9 +2,6 @@ package service
 
 import (
 	"context"
-	"crypto/aes"
-	"crypto/cipher"
-	"encoding/base64"
 	"errors"
 	"fmt"
 	"time"
@@ -13,9 +10,10 @@ import (
 	"go.uber.org/zap"
 	"mikmongo/internal/model"
 	"mikmongo/internal/repository"
-	"mikmongo/pkg/mikrotik"
-	"mikmongo/pkg/mikrotik/client"
+	mikrotik "github.com/Butterfly-Student/go-ros"
+	"github.com/Butterfly-Student/go-ros/client"
 	"mikmongo/pkg/redis"
+	"mikmongo/utils"
 )
 
 // RouterService handles router business logic
@@ -51,7 +49,7 @@ func NewRouterService(
 
 // Create creates a new router device (encrypts password)
 func (s *RouterService) Create(ctx context.Context, router *model.MikrotikRouter, plainPassword string) error {
-	enc, err := s.encrypt(plainPassword)
+	enc, err := utils.Encrypt(s.encKey, plainPassword)
 	if err != nil {
 		return fmt.Errorf("failed to encrypt password: %w", err)
 	}
@@ -77,7 +75,7 @@ func (s *RouterService) List(ctx context.Context, limit, offset int) ([]model.Mi
 // Update updates router (re-encrypts password if provided)
 func (s *RouterService) Update(ctx context.Context, router *model.MikrotikRouter, plainPassword string) error {
 	if plainPassword != "" {
-		enc, err := s.encrypt(plainPassword)
+		enc, err := utils.Encrypt(s.encKey, plainPassword)
 		if err != nil {
 			return fmt.Errorf("failed to encrypt password: %w", err)
 		}
@@ -106,7 +104,7 @@ func (s *RouterService) getRouterConfig(ctx context.Context, routerID uuid.UUID)
 		return client.Config{}, fmt.Errorf("router not found: %w", err)
 	}
 
-	password, err := s.decrypt(router.PasswordEncrypted)
+	password, err := utils.Decrypt(s.encKey, router.PasswordEncrypted)
 	if err != nil {
 		return client.Config{}, fmt.Errorf("failed to decrypt password: %w", err)
 	}
@@ -141,6 +139,17 @@ func (s *RouterService) GetMikrotikClient(ctx context.Context, routerID uuid.UUI
 // Connect connects to a MikroTik router using its stored credentials (backward compatibility)
 func (s *RouterService) Connect(ctx context.Context, routerID uuid.UUID) (*mikrotik.Client, error) {
 	return s.GetMikrotikClient(ctx, routerID)
+}
+
+// GetMikrotikAdapter returns a MikrotikClientAdapter for a router.
+// This implements MikrotikProvider, enabling SubscriptionService to be unit-tested
+// by substituting a mock provider.
+func (s *RouterService) GetMikrotikAdapter(ctx context.Context, routerID uuid.UUID) (MikrotikClientAdapter, error) {
+	client, err := s.GetMikrotikClient(ctx, routerID)
+	if err != nil {
+		return nil, err
+	}
+	return &mikrotikClientWrapper{client: client}, nil
 }
 
 // TestConnection tests connection to a router
@@ -178,10 +187,6 @@ func (s *RouterService) SyncDevice(ctx context.Context, id uuid.UUID) error {
 	now := time.Now()
 	router.Status = "online"
 	router.LastSeenAt = &now
-	router.LastPing = &now
-	if err := s.routerRepo.Update(ctx, router); err != nil {
-		return err
-	}
 	return s.routerRepo.UpdateLastSync(ctx, id)
 }
 
@@ -241,49 +246,4 @@ func (s *RouterService) GetSelectedRouter(ctx context.Context, userID string) (*
 // CloseAllConnections closes all managed connections (call on shutdown)
 func (s *RouterService) CloseAllConnections() {
 	s.manager.CloseAll()
-}
-
-// encrypt encrypts plaintext using AES-GCM
-func (s *RouterService) encrypt(plaintext string) (string, error) {
-	block, err := aes.NewCipher(s.encKey)
-	if err != nil {
-		return "", err
-	}
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return "", err
-	}
-	nonce := make([]byte, gcm.NonceSize())
-	// Use deterministic nonce for simplicity (zero nonce) - in prod use random nonce
-	ciphertext := gcm.Seal(nonce, nonce, []byte(plaintext), nil)
-	return base64.StdEncoding.EncodeToString(ciphertext), nil
-}
-
-// decrypt decrypts ciphertext using AES-GCM
-func (s *RouterService) decrypt(encoded string) (string, error) {
-	ciphertext, err := base64.StdEncoding.DecodeString(encoded)
-	if err != nil {
-		// Might be plain text (legacy)
-		return encoded, nil
-	}
-	block, err := aes.NewCipher(s.encKey)
-	if err != nil {
-		return "", err
-	}
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return "", err
-	}
-	nonceSize := gcm.NonceSize()
-	if len(ciphertext) < nonceSize {
-		// Might be plain text (legacy)
-		return encoded, nil
-	}
-	nonce, ciphertext := ciphertext[:nonceSize], ciphertext[nonceSize:]
-	plaintext, err := gcm.Open(nil, nonce, ciphertext, nil)
-	if err != nil {
-		// Might be plain text (legacy)
-		return encoded, nil
-	}
-	return string(plaintext), nil
 }

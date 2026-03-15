@@ -48,3 +48,8 @@ func (c *Client) HealthCheck(ctx context.Context) error {
 	defer cancel()
 	return c.client.Ping(ctx).Err()
 }
+
+// FlushDB removes all keys from the current database. Use only in tests.
+func (c *Client) FlushDB(ctx context.Context) error {
+	return c.client.FlushDB(ctx).Err()
+}

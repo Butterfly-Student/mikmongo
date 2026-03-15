@@ -2,15 +2,14 @@ package service
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
+
+	mikrotik "github.com/Butterfly-Student/go-ros"
+	mkdomain "github.com/Butterfly-Student/go-ros/domain"
+	"github.com/google/uuid"
 
 	"mikmongo/internal/model"
 	"mikmongo/internal/repository"
-	"mikmongo/pkg/mikrotik"
-	mkdomain "mikmongo/pkg/mikrotik/domain"
-
-	"github.com/google/uuid"
 )
 
 // BandwidthProfileService handles bandwidth profile business logic
@@ -60,27 +59,11 @@ func (s *BandwidthProfileService) Create(ctx context.Context, profile *model.Ban
 
 // syncPPPProfile syncs PPP profile to MikroTik
 func (s *BandwidthProfileService) syncPPPProfile(ctx context.Context, mt *mikrotik.Client, profile *model.BandwidthProfile) error {
-	var config model.PPPProfileConfig
-	if len(profile.MikrotikConfig) > 0 {
-		if err := json.Unmarshal(profile.MikrotikConfig, &config); err != nil {
-			return fmt.Errorf("failed to unmarshal PPP config: %w", err)
-		}
-	}
+	rateLimit := fmt.Sprintf("%dk/%dk", profile.UploadSpeed/1024, profile.DownloadSpeed/1024)
 
 	pppProfile := &mkdomain.PPPProfile{
-		Name:           profile.Name,
-		LocalAddress:   config.LocalAddress,
-		RemoteAddress:  config.RemoteAddress,
-		DNSServer:      config.DNSServer,
-		SessionTimeout: config.SessionTimeout,
-		IdleTimeout:    config.IdleTimeout,
-		RateLimit:      config.RateLimit,
-		UseCompression: config.UseCompression,
-		UseEncryption:  config.UseEncryption,
-		OnlyOne:        config.OnlyOne,
-		ChangeTCPMSS:   config.ChangeTCPMSS,
-		Bridge:         config.Bridge,
-		AddressList:    config.AddressList,
+		Name:      profile.Name,
+		RateLimit: rateLimit,
 	}
 
 	// Cek apakah profile sudah ada

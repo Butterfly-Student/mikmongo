@@ -6,6 +6,7 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 	"mikmongo/internal/model"
 	"mikmongo/internal/repository"
 )
@@ -36,6 +37,15 @@ func (r *invoiceRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.I
 func (r *invoiceRepository) GetByCustomerID(ctx context.Context, customerID uuid.UUID) ([]model.Invoice, error) {
 	var invoices []model.Invoice
 	err := r.db.WithContext(ctx).Where("customer_id = ?", customerID).Find(&invoices).Error
+	return invoices, err
+}
+
+func (r *invoiceRepository) GetByCustomerIDForUpdate(ctx context.Context, customerID uuid.UUID) ([]model.Invoice, error) {
+	var invoices []model.Invoice
+	err := r.db.WithContext(ctx).
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Where("customer_id = ?", customerID).
+		Find(&invoices).Error
 	return invoices, err
 }
 

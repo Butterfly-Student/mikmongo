@@ -12,6 +12,7 @@ type InvoiceRepository interface {
 	Create(ctx context.Context, invoice *model.Invoice) error
 	GetByID(ctx context.Context, id uuid.UUID) (*model.Invoice, error)
 	GetByCustomerID(ctx context.Context, customerID uuid.UUID) ([]model.Invoice, error)
+	GetByCustomerIDForUpdate(ctx context.Context, customerID uuid.UUID) ([]model.Invoice, error)
 	Update(ctx context.Context, invoice *model.Invoice) error
 	UpdateStatus(ctx context.Context, id uuid.UUID, status string) error
 	Delete(ctx context.Context, id uuid.UUID) error
