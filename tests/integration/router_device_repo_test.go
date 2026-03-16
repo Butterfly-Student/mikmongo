@@ -14,17 +14,13 @@ import (
 )
 
 func TestRouterDeviceRepository_Integration(t *testing.T) {
-	// Setup test suite
-	suite := SetupSuite(t)
-	defer suite.TearDownSuite(t)
-
-	// Create repository
-	repo := postgres.NewRouterDeviceRepository(suite.DB)
-
 	t.Run("Create and Get Router Device", func(t *testing.T) {
+		suite := SetupSuite(t)
+		defer suite.TearDownSuite(t)
 		defer suite.Cleanup(t)
 
-		// Create test router
+		repo := postgres.NewRouterDeviceRepository(suite.DB)
+
 		router := &model.MikrotikRouter{
 			ID:                uuid.New().String(),
 			Name:              "Router Test 01",
@@ -40,11 +36,8 @@ func TestRouterDeviceRepository_Integration(t *testing.T) {
 			UpdatedAt:         time.Now(),
 		}
 
-		// Test Create
-		err := repo.Create(suite.Ctx, router)
-		require.NoError(t, err)
+		require.NoError(t, repo.Create(suite.Ctx, router))
 
-		// Test GetByID
 		id, err := uuid.Parse(router.ID)
 		require.NoError(t, err)
 
@@ -59,9 +52,12 @@ func TestRouterDeviceRepository_Integration(t *testing.T) {
 	})
 
 	t.Run("GetActive Routers", func(t *testing.T) {
+		suite := SetupSuite(t)
+		defer suite.TearDownSuite(t)
 		defer suite.Cleanup(t)
 
-		// Create active routers
+		repo := postgres.NewRouterDeviceRepository(suite.DB)
+
 		for i := 0; i < 3; i++ {
 			router := &model.MikrotikRouter{
 				ID:                uuid.New().String(),
@@ -75,11 +71,9 @@ func TestRouterDeviceRepository_Integration(t *testing.T) {
 				CreatedAt:         time.Now(),
 				UpdatedAt:         time.Now(),
 			}
-			err := repo.Create(suite.Ctx, router)
-			require.NoError(t, err)
+			require.NoError(t, repo.Create(suite.Ctx, router))
 		}
 
-		// Create inactive router
 		inactiveRouter := &model.MikrotikRouter{
 			ID:                uuid.New().String(),
 			Name:              "Inactive Router",
@@ -87,27 +81,30 @@ func TestRouterDeviceRepository_Integration(t *testing.T) {
 			APIPort:           8728,
 			Username:          "admin",
 			PasswordEncrypted: "encrypted",
-			IsActive:          false,
+			IsActive:          true, // create active, then force inactive via SQL
 			Status:            "offline",
 			CreatedAt:         time.Now(),
 			UpdatedAt:         time.Now(),
 		}
-		err := repo.Create(suite.Ctx, inactiveRouter)
-		require.NoError(t, err)
+		require.NoError(t, repo.Create(suite.Ctx, inactiveRouter))
+		// GORM skips false zero-values on Create; force is_active=false via SQL.
+		require.NoError(t, suite.DB.WithContext(suite.Ctx).
+			Exec("UPDATE mikrotik_routers SET is_active=false WHERE id=?", inactiveRouter.ID).Error)
 
-		// Test GetActive
 		activeRouters, err := repo.GetActive(suite.Ctx)
 		require.NoError(t, err)
 		assert.Len(t, activeRouters, 3)
-
-		// Verify all returned routers are active
 		for _, r := range activeRouters {
 			assert.True(t, r.IsActive)
 		}
 	})
 
 	t.Run("Update Router Device", func(t *testing.T) {
+		suite := SetupSuite(t)
+		defer suite.TearDownSuite(t)
 		defer suite.Cleanup(t)
+
+		repo := postgres.NewRouterDeviceRepository(suite.DB)
 
 		router := &model.MikrotikRouter{
 			ID:                uuid.New().String(),
@@ -122,18 +119,14 @@ func TestRouterDeviceRepository_Integration(t *testing.T) {
 			UpdatedAt:         time.Now(),
 		}
 
-		err := repo.Create(suite.Ctx, router)
-		require.NoError(t, err)
+		require.NoError(t, repo.Create(suite.Ctx, router))
 
-		// Update router
 		router.Name = "Updated Router Name"
 		router.Status = "offline"
 		router.APIPort = 8729
 
-		err = repo.Update(suite.Ctx, router)
-		require.NoError(t, err)
+		require.NoError(t, repo.Update(suite.Ctx, router))
 
-		// Verify update
 		id, _ := uuid.Parse(router.ID)
 		fetched, err := repo.GetByID(suite.Ctx, id)
 		require.NoError(t, err)
@@ -143,7 +136,11 @@ func TestRouterDeviceRepository_Integration(t *testing.T) {
 	})
 
 	t.Run("UpdateLastSync", func(t *testing.T) {
+		suite := SetupSuite(t)
+		defer suite.TearDownSuite(t)
 		defer suite.Cleanup(t)
+
+		repo := postgres.NewRouterDeviceRepository(suite.DB)
 
 		router := &model.MikrotikRouter{
 			ID:                uuid.New().String(),
@@ -158,15 +155,11 @@ func TestRouterDeviceRepository_Integration(t *testing.T) {
 			UpdatedAt:         time.Now(),
 		}
 
-		err := repo.Create(suite.Ctx, router)
-		require.NoError(t, err)
+		require.NoError(t, repo.Create(suite.Ctx, router))
 
-		// Update last sync
 		id, _ := uuid.Parse(router.ID)
-		err = repo.UpdateLastSync(suite.Ctx, id)
-		require.NoError(t, err)
+		require.NoError(t, repo.UpdateLastSync(suite.Ctx, id))
 
-		// Verify update
 		fetched, err := repo.GetByID(suite.Ctx, id)
 		require.NoError(t, err)
 		assert.NotNil(t, fetched.LastSeenAt)
@@ -174,7 +167,11 @@ func TestRouterDeviceRepository_Integration(t *testing.T) {
 	})
 
 	t.Run("Delete Router Device", func(t *testing.T) {
+		suite := SetupSuite(t)
+		defer suite.TearDownSuite(t)
 		defer suite.Cleanup(t)
+
+		repo := postgres.NewRouterDeviceRepository(suite.DB)
 
 		router := &model.MikrotikRouter{
 			ID:                uuid.New().String(),
@@ -189,23 +186,22 @@ func TestRouterDeviceRepository_Integration(t *testing.T) {
 			UpdatedAt:         time.Now(),
 		}
 
-		err := repo.Create(suite.Ctx, router)
-		require.NoError(t, err)
+		require.NoError(t, repo.Create(suite.Ctx, router))
 
-		// Delete
 		id, _ := uuid.Parse(router.ID)
-		err = repo.Delete(suite.Ctx, id)
-		require.NoError(t, err)
+		require.NoError(t, repo.Delete(suite.Ctx, id))
 
-		// Verify deletion
-		_, err = repo.GetByID(suite.Ctx, id)
+		_, err := repo.GetByID(suite.Ctx, id)
 		assert.Error(t, err)
 	})
 
 	t.Run("List Router Devices", func(t *testing.T) {
+		suite := SetupSuite(t)
+		defer suite.TearDownSuite(t)
 		defer suite.Cleanup(t)
 
-		// Create multiple routers
+		repo := postgres.NewRouterDeviceRepository(suite.DB)
+
 		for i := 0; i < 5; i++ {
 			router := &model.MikrotikRouter{
 				ID:                uuid.New().String(),
@@ -219,16 +215,13 @@ func TestRouterDeviceRepository_Integration(t *testing.T) {
 				CreatedAt:         time.Now(),
 				UpdatedAt:         time.Now(),
 			}
-			err := repo.Create(suite.Ctx, router)
-			require.NoError(t, err)
+			require.NoError(t, repo.Create(suite.Ctx, router))
 		}
 
-		// Test List with pagination
 		routers, err := repo.List(suite.Ctx, 3, 0)
 		require.NoError(t, err)
 		assert.Len(t, routers, 3)
 
-		// Test List with offset
 		routers, err = repo.List(suite.Ctx, 3, 3)
 		require.NoError(t, err)
 		assert.Len(t, routers, 2)

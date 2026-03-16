@@ -74,3 +74,15 @@ func (r *invoiceRepository) GetOverdue(ctx context.Context) ([]model.Invoice, er
 		Find(&invoices).Error
 	return invoices, err
 }
+
+func (r *invoiceRepository) GetBySubscriptionAndPeriod(ctx context.Context, subID uuid.UUID, month, year int) (*model.Invoice, error) {
+	var inv model.Invoice
+	err := r.db.WithContext(ctx).
+		Where("subscription_id = ? AND billing_month = ? AND billing_year = ?",
+			subID.String(), month, year).
+		First(&inv).Error
+	if err != nil {
+		return nil, err
+	}
+	return &inv, nil
+}

@@ -18,4 +18,7 @@ type InvoiceRepository interface {
 	Delete(ctx context.Context, id uuid.UUID) error
 	List(ctx context.Context, limit, offset int) ([]model.Invoice, error)
 	GetOverdue(ctx context.Context) ([]model.Invoice, error)
+	// GetBySubscriptionAndPeriod returns the invoice for a subscription in a given billing month/year,
+	// or (nil, gorm.ErrRecordNotFound) if none exists. Used for idempotency in GenerateInvoice.
+	GetBySubscriptionAndPeriod(ctx context.Context, subID uuid.UUID, month, year int) (*model.Invoice, error)
 }

@@ -95,6 +95,13 @@ func (s *BillingService) GenerateInvoice(ctx context.Context, subscriptionID uui
 		return nil, fmt.Errorf("plan not found: %w", err)
 	}
 
+	// Idempotency: return existing invoice if already generated for this subscription+period.
+	billingMonth := int(period.Month())
+	billingYear := period.Year()
+	if existing, err := s.invoiceRepo.GetBySubscriptionAndPeriod(ctx, subscriptionID, billingMonth, billingYear); err == nil {
+		return existing, nil
+	}
+
 	dueDaysStr := s.getSetting(ctx, "billing", "due_days", "10")
 	dueDays, _ := strconv.Atoi(dueDaysStr)
 
@@ -129,8 +136,6 @@ func (s *BillingService) GenerateInvoice(ctx context.Context, subscriptionID uui
 		return nil, fmt.Errorf("failed to generate invoice number: %w", err)
 	}
 
-	billingMonth := int(period.Month())
-	billingYear := period.Year()
 	subIDStr := sub.ID
 
 	invoice := &model.Invoice{

@@ -14,16 +14,14 @@ import (
 )
 
 func TestBandwidthProfileRepository_Integration(t *testing.T) {
-	// Setup test suite
-	suite := SetupSuite(t)
-	defer suite.TearDownSuite(t)
+	t.Run("Create and Get Bandwidth Profile", func(t *testing.T) {
+		suite := SetupSuite(t)
+		defer suite.TearDownSuite(t)
+		defer suite.Cleanup(t)
 
-	// Create repositories
-	repo := postgres.NewBandwidthProfileRepository(suite.DB)
-	routerRepo := postgres.NewRouterDeviceRepository(suite.DB)
+		repo := postgres.NewBandwidthProfileRepository(suite.DB)
+		routerRepo := postgres.NewRouterDeviceRepository(suite.DB)
 
-	// Helper function to create a test router
-	createTestRouter := func(t *testing.T) *model.MikrotikRouter {
 		router := &model.MikrotikRouter{
 			ID:                uuid.New().String(),
 			Name:              "Test Router",
@@ -35,18 +33,8 @@ func TestBandwidthProfileRepository_Integration(t *testing.T) {
 			CreatedAt:         time.Now(),
 			UpdatedAt:         time.Now(),
 		}
-		err := routerRepo.Create(suite.Ctx, router)
-		require.NoError(t, err)
-		return router
-	}
+		require.NoError(t, routerRepo.Create(suite.Ctx, router))
 
-	t.Run("Create and Get Bandwidth Profile", func(t *testing.T) {
-		defer suite.Cleanup(t)
-
-		// Create test router first
-		router := createTestRouter(t)
-
-		// Create test bandwidth profile
 		profile := &model.BandwidthProfile{
 			ID:              uuid.New().String(),
 			RouterID:        router.ID,
@@ -66,11 +54,8 @@ func TestBandwidthProfileRepository_Integration(t *testing.T) {
 			UpdatedAt:       time.Now(),
 		}
 
-		// Test Create
-		err := repo.Create(suite.Ctx, profile)
-		require.NoError(t, err)
+		require.NoError(t, repo.Create(suite.Ctx, profile))
 
-		// Test GetByID
 		id, err := uuid.Parse(profile.ID)
 		require.NoError(t, err)
 
@@ -84,9 +69,25 @@ func TestBandwidthProfileRepository_Integration(t *testing.T) {
 	})
 
 	t.Run("GetByCode", func(t *testing.T) {
+		suite := SetupSuite(t)
+		defer suite.TearDownSuite(t)
 		defer suite.Cleanup(t)
 
-		router := createTestRouter(t)
+		repo := postgres.NewBandwidthProfileRepository(suite.DB)
+		routerRepo := postgres.NewRouterDeviceRepository(suite.DB)
+
+		router := &model.MikrotikRouter{
+			ID:                uuid.New().String(),
+			Name:              "Test Router",
+			Address:           "192.168.88.1",
+			APIPort:           8728,
+			Username:          "admin",
+			PasswordEncrypted: "encrypted_password",
+			IsActive:          true,
+			CreatedAt:         time.Now(),
+			UpdatedAt:         time.Now(),
+		}
+		require.NoError(t, routerRepo.Create(suite.Ctx, router))
 
 		profile := &model.BandwidthProfile{
 			ID:            uuid.New().String(),
@@ -101,8 +102,7 @@ func TestBandwidthProfileRepository_Integration(t *testing.T) {
 			UpdatedAt:     time.Now(),
 		}
 
-		err := repo.Create(suite.Ctx, profile)
-		require.NoError(t, err)
+		require.NoError(t, repo.Create(suite.Ctx, profile))
 
 		fetched, err := repo.GetByCode(suite.Ctx, "PREMIUM50")
 		require.NoError(t, err)
@@ -110,9 +110,25 @@ func TestBandwidthProfileRepository_Integration(t *testing.T) {
 	})
 
 	t.Run("Update Bandwidth Profile", func(t *testing.T) {
+		suite := SetupSuite(t)
+		defer suite.TearDownSuite(t)
 		defer suite.Cleanup(t)
 
-		router := createTestRouter(t)
+		repo := postgres.NewBandwidthProfileRepository(suite.DB)
+		routerRepo := postgres.NewRouterDeviceRepository(suite.DB)
+
+		router := &model.MikrotikRouter{
+			ID:                uuid.New().String(),
+			Name:              "Test Router",
+			Address:           "192.168.88.1",
+			APIPort:           8728,
+			Username:          "admin",
+			PasswordEncrypted: "encrypted_password",
+			IsActive:          true,
+			CreatedAt:         time.Now(),
+			UpdatedAt:         time.Now(),
+		}
+		require.NoError(t, routerRepo.Create(suite.Ctx, router))
 
 		profile := &model.BandwidthProfile{
 			ID:            uuid.New().String(),
@@ -126,19 +142,14 @@ func TestBandwidthProfileRepository_Integration(t *testing.T) {
 			CreatedAt:     time.Now(),
 			UpdatedAt:     time.Now(),
 		}
+		require.NoError(t, repo.Create(suite.Ctx, profile))
 
-		err := repo.Create(suite.Ctx, profile)
-		require.NoError(t, err)
-
-		// Update profile
 		profile.Name = "Updated Name"
 		profile.PriceMonthly = 250000
 		profile.IsActive = false
 
-		err = repo.Update(suite.Ctx, profile)
-		require.NoError(t, err)
+		require.NoError(t, repo.Update(suite.Ctx, profile))
 
-		// Verify update
 		id, _ := uuid.Parse(profile.ID)
 		fetched, err := repo.GetByID(suite.Ctx, id)
 		require.NoError(t, err)
@@ -148,9 +159,25 @@ func TestBandwidthProfileRepository_Integration(t *testing.T) {
 	})
 
 	t.Run("Delete Bandwidth Profile", func(t *testing.T) {
+		suite := SetupSuite(t)
+		defer suite.TearDownSuite(t)
 		defer suite.Cleanup(t)
 
-		router := createTestRouter(t)
+		repo := postgres.NewBandwidthProfileRepository(suite.DB)
+		routerRepo := postgres.NewRouterDeviceRepository(suite.DB)
+
+		router := &model.MikrotikRouter{
+			ID:                uuid.New().String(),
+			Name:              "Test Router",
+			Address:           "192.168.88.1",
+			APIPort:           8728,
+			Username:          "admin",
+			PasswordEncrypted: "encrypted_password",
+			IsActive:          true,
+			CreatedAt:         time.Now(),
+			UpdatedAt:         time.Now(),
+		}
+		require.NoError(t, routerRepo.Create(suite.Ctx, router))
 
 		profile := &model.BandwidthProfile{
 			ID:            uuid.New().String(),
@@ -164,26 +191,36 @@ func TestBandwidthProfileRepository_Integration(t *testing.T) {
 			CreatedAt:     time.Now(),
 			UpdatedAt:     time.Now(),
 		}
+		require.NoError(t, repo.Create(suite.Ctx, profile))
 
-		err := repo.Create(suite.Ctx, profile)
-		require.NoError(t, err)
-
-		// Delete
 		id, _ := uuid.Parse(profile.ID)
-		err = repo.Delete(suite.Ctx, id)
-		require.NoError(t, err)
+		require.NoError(t, repo.Delete(suite.Ctx, id))
 
-		// Verify deletion (should return error)
-		_, err = repo.GetByID(suite.Ctx, id)
+		_, err := repo.GetByID(suite.Ctx, id)
 		assert.Error(t, err)
 	})
 
 	t.Run("ListByRouterID", func(t *testing.T) {
+		suite := SetupSuite(t)
+		defer suite.TearDownSuite(t)
 		defer suite.Cleanup(t)
 
-		router := createTestRouter(t)
+		repo := postgres.NewBandwidthProfileRepository(suite.DB)
+		routerRepo := postgres.NewRouterDeviceRepository(suite.DB)
 
-		// Create multiple profiles for the same router
+		router := &model.MikrotikRouter{
+			ID:                uuid.New().String(),
+			Name:              "Test Router",
+			Address:           "192.168.88.1",
+			APIPort:           8728,
+			Username:          "admin",
+			PasswordEncrypted: "encrypted_password",
+			IsActive:          true,
+			CreatedAt:         time.Now(),
+			UpdatedAt:         time.Now(),
+		}
+		require.NoError(t, routerRepo.Create(suite.Ctx, router))
+
 		for i := 0; i < 3; i++ {
 			profile := &model.BandwidthProfile{
 				ID:            uuid.New().String(),
@@ -197,11 +234,9 @@ func TestBandwidthProfileRepository_Integration(t *testing.T) {
 				CreatedAt:     time.Now(),
 				UpdatedAt:     time.Now(),
 			}
-			err := repo.Create(suite.Ctx, profile)
-			require.NoError(t, err)
+			require.NoError(t, repo.Create(suite.Ctx, profile))
 		}
 
-		// Test ListByRouterID
 		routerID, _ := uuid.Parse(router.ID)
 		profiles, err := repo.ListByRouterID(suite.Ctx, routerID, 10, 0)
 		require.NoError(t, err)
@@ -209,11 +244,26 @@ func TestBandwidthProfileRepository_Integration(t *testing.T) {
 	})
 
 	t.Run("ListActive", func(t *testing.T) {
+		suite := SetupSuite(t)
+		defer suite.TearDownSuite(t)
 		defer suite.Cleanup(t)
 
-		router := createTestRouter(t)
+		repo := postgres.NewBandwidthProfileRepository(suite.DB)
+		routerRepo := postgres.NewRouterDeviceRepository(suite.DB)
 
-		// Create active and inactive profiles
+		router := &model.MikrotikRouter{
+			ID:                uuid.New().String(),
+			Name:              "Test Router",
+			Address:           "192.168.88.1",
+			APIPort:           8728,
+			Username:          "admin",
+			PasswordEncrypted: "encrypted_password",
+			IsActive:          true,
+			CreatedAt:         time.Now(),
+			UpdatedAt:         time.Now(),
+		}
+		require.NoError(t, routerRepo.Create(suite.Ctx, router))
+
 		activeProfile := &model.BandwidthProfile{
 			ID:            uuid.New().String(),
 			RouterID:      router.ID,
@@ -226,8 +276,7 @@ func TestBandwidthProfileRepository_Integration(t *testing.T) {
 			CreatedAt:     time.Now(),
 			UpdatedAt:     time.Now(),
 		}
-		err := repo.Create(suite.Ctx, activeProfile)
-		require.NoError(t, err)
+		require.NoError(t, repo.Create(suite.Ctx, activeProfile))
 
 		inactiveProfile := &model.BandwidthProfile{
 			ID:            uuid.New().String(),
@@ -237,14 +286,15 @@ func TestBandwidthProfileRepository_Integration(t *testing.T) {
 			DownloadSpeed: 20000,
 			UploadSpeed:   20000,
 			PriceMonthly:  200000,
-			IsActive:      false,
+			IsActive:      true, // created active, then forced inactive below
 			CreatedAt:     time.Now(),
 			UpdatedAt:     time.Now(),
 		}
-		err = repo.Create(suite.Ctx, inactiveProfile)
-		require.NoError(t, err)
+		require.NoError(t, repo.Create(suite.Ctx, inactiveProfile))
+		// GORM skips false zero-values on Create; force is_active=false via SQL.
+		require.NoError(t, suite.DB.WithContext(suite.Ctx).
+			Exec("UPDATE bandwidth_profiles SET is_active=false WHERE id=?", inactiveProfile.ID).Error)
 
-		// Test ListActive
 		profiles, err := repo.ListActive(suite.Ctx)
 		require.NoError(t, err)
 		assert.Len(t, profiles, 1)

@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	casbincore "github.com/casbin/casbin/v2"
 	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -17,10 +18,11 @@ type Registry struct {
 	CORS           gin.HandlerFunc
 	PortalAuth     *PortalAuthMiddleware
 	MikrotikRouter *MikrotikRouterMiddleware
+	RBAC           gin.HandlerFunc
 }
 
 // NewRegistry creates a new middleware registry
-func NewRegistry(logger *zap.Logger, jwtService *jwt.Service, redisClient *redis.Client) *Registry {
+func NewRegistry(logger *zap.Logger, jwtService *jwt.Service, redisClient *redis.Client, enforcer *casbincore.Enforcer) *Registry {
 	loggerMiddleware := NewLoggerMiddleware(logger)
 
 	return &Registry{
@@ -31,5 +33,6 @@ func NewRegistry(logger *zap.Logger, jwtService *jwt.Service, redisClient *redis
 		CORS:           NewCORSMiddleware(),
 		PortalAuth:     NewPortalAuthMiddleware(jwtService),
 		MikrotikRouter: NewMikrotikRouterMiddleware(),
+		RBAC:           CasbinMiddleware(enforcer),
 	}
 }

@@ -26,6 +26,7 @@ import (
 	"mikmongo/pkg/logger"
 	"mikmongo/pkg/rabbitmq"
 	"mikmongo/pkg/redis"
+	casbinpkg "mikmongo/internal/casbin"
 
 	"github.com/google/uuid"
 	"github.com/pressly/goose/v3"
@@ -182,8 +183,14 @@ func main() {
 	handlerRegistry := handler.NewRegistry(serviceRegistry, repoRegistry.SystemSettingRepo, jwtService)
 
 
+	// Casbin RBAC enforcer
+	casbinEnforcer, err := casbinpkg.NewEnforcer(db)
+	if err != nil {
+		logg.Fatal("Failed to create Casbin enforcer", zap.Error(err))
+	}
+
 	// Middleware
-	middlewareRegistry := middleware.NewRegistry(logg.Logger, jwtService, redisClient)
+	middlewareRegistry := middleware.NewRegistry(logg.Logger, jwtService, redisClient, casbinEnforcer)
 
 	// Router
 	r := router.New(handlerRegistry, middlewareRegistry)

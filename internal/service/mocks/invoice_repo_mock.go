@@ -73,6 +73,14 @@ func (m *MockInvoiceRepository) GetOverdue(ctx context.Context) ([]model.Invoice
 	return args.Get(0).([]model.Invoice), args.Error(1)
 }
 
+func (m *MockInvoiceRepository) GetBySubscriptionAndPeriod(ctx context.Context, subID uuid.UUID, month, year int) (*model.Invoice, error) {
+	args := m.Called(ctx, subID, month, year)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Invoice), args.Error(1)
+}
+
 // MockInvoiceItemRepository is a mock implementation of repository.InvoiceItemRepository
 type MockInvoiceItemRepository struct {
 	mock.Mock

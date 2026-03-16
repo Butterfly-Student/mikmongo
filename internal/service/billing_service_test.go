@@ -90,6 +90,7 @@ func TestGenerateInvoice_NewSubscription(t *testing.T) {
 	setupSettingAndSeq(settingRepo, seqRepo, 1)
 	subRepo.On("GetByID", ctx, subID).Return(sub, nil)
 	profileRepo.On("GetByID", ctx, planID).Return(profile, nil)
+	invoiceRepo.On("GetBySubscriptionAndPeriod", ctx, subID, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("not found"))
 	invoiceRepo.On("Create", ctx, mock.AnythingOfType("*model.Invoice")).Return(nil)
 	itemRepo.On("Create", ctx, mock.AnythingOfType("*model.InvoiceItem")).Return(nil)
 	customerRepo.On("GetByID", ctx, customerID).Return(customer, nil)
@@ -137,6 +138,7 @@ func TestGenerateInvoice_Proration(t *testing.T) {
 	setupSettingAndSeq(settingRepo, seqRepo, 2)
 	subRepo.On("GetByID", ctx, subID).Return(sub, nil)
 	profileRepo.On("GetByID", ctx, planID).Return(profile, nil)
+	invoiceRepo.On("GetBySubscriptionAndPeriod", ctx, subID, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("not found"))
 	invoiceRepo.On("Create", ctx, mock.AnythingOfType("*model.Invoice")).Return(nil)
 	itemRepo.On("Create", ctx, mock.AnythingOfType("*model.InvoiceItem")).Return(nil)
 	customerRepo.On("GetByID", ctx, customerID).Return(customer, nil)
@@ -196,6 +198,7 @@ func TestGenerateInvoice_WithTax(t *testing.T) {
 	setupSettingAndSeq(settingRepo, seqRepo, 3)
 	subRepo.On("GetByID", ctx, subID).Return(sub, nil)
 	profileRepo.On("GetByID", ctx, planID).Return(profile, nil)
+	invoiceRepo.On("GetBySubscriptionAndPeriod", ctx, subID, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("not found"))
 	invoiceRepo.On("Create", ctx, mock.AnythingOfType("*model.Invoice")).Return(nil)
 	itemRepo.On("Create", ctx, mock.AnythingOfType("*model.InvoiceItem")).Return(nil)
 	customerRepo.On("GetByID", ctx, customerID).Return(customer, nil)
@@ -240,6 +243,7 @@ func TestProcessDailyBilling_BillingDayToday(t *testing.T) {
 	settingRepo.On("GetByGroupAndKey", mock.Anything, "billing", "due_days").
 		Return(&model.SystemSetting{Value: strPtr("10")}, nil)
 	seqRepo.On("NextNumber", mock.Anything, "invoice_number").Return(10, nil)
+	invoiceRepo.On("GetBySubscriptionAndPeriod", ctx, subID, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("not found"))
 	invoiceRepo.On("Create", ctx, mock.AnythingOfType("*model.Invoice")).Return(nil)
 	itemRepo.On("Create", ctx, mock.AnythingOfType("*model.InvoiceItem")).Return(nil)
 

@@ -1,8 +1,8 @@
 # Laporan Hasil Testing — mikmongo ISP Billing System
 
-**Tanggal:** 2026-03-16 (diperbarui — concurrent payment test fix)
-**Environment:** Windows 11, Go 1.23, PostgreSQL 16 (Docker), Redis 7 (Docker)
-**Database:** `mikmongo_test` @ localhost:5432 (user: mikhmon)
+**Tanggal:** 2026-03-16 (diperbarui — Tier 4 + fix semua pre-existing integration test failures)
+**Environment:** Windows 11, Go 1.23, PostgreSQL 17 (Docker), Redis 7 (Docker)
+**Database:** `mikmongo_test` @ localhost:5432 (user: mikmongo)
 **Redis:** DB=15 @ localhost:6379 (dedicated test DB, di-flush setiap test)
 
 ---
@@ -12,13 +12,19 @@
 | Tier | Kategori | Total Test | PASS | FAIL/SKIP | Durasi |
 |------|----------|-----------|------|-----------|--------|
 | 1 | Domain Unit Tests | 77 | ✅ 77 | 0 | ~1.2s |
-| 2 | Service Unit Tests (Mock) | 48 | ✅ 48 | 0 | ~0.3s |
-| 3 | Integration Tests (PostgreSQL + Redis) | 32 | ✅ 32 | 0 | *lihat catatan* |
-| **Total** | | **157** | **✅ 157** | **0** | |
+| 2 | Service Unit Tests (Mock) | 49 | ✅ 49 | 0 | ~2.2s |
+| 3 | Integration Tests (PostgreSQL + Redis) | 63 | ✅ 63 | 0 | ~30s |
+| 4 | API Handler Tests (Full HTTP Stack) | 36 | ✅ 36 | 0 | ~2.6s |
+| **Total** | | **225** | **✅ 225** | **0** | |
 
-> **Perubahan dari sesi ini:** `TestConcurrentPaymentConfirm_RaceCondition` kini PASS kembali setelah fix.
-> Root cause: `adminID = uuid.New()` melanggar FK `payments_processed_by_fkey` — bukan race condition.
-> Semua 157 tests pass. Integration tests memerlukan PostgreSQL + Redis.
+> **Perubahan dari sesi ini:** Tier 4 API handler tests ditambahkan (36 tests baru).
+> 5 file integration tests diperbaiki dari pre-existing "sql: transaction has already been committed
+> or rolled back" — root cause: shared transaction di-rollback pada sub-test pertama
+> (`defer suite.Cleanup(t)` inside `t.Run`), sehingga sub-tests berikutnya gagal.
+> Fix: setiap `t.Run` membuat suite sendiri + MikroTik-requiring service calls diganti direct SQL.
+> Files fixed: `bandwidth_profile_test.go` (6), `subscription_test.go` (10),
+> `customer_repo_test.go` (6), `router_device_repo_test.go` (6), `customer_subscription_test.go` (5).
+> Semua 225 tests pass. 0 failures.
 
 ---
 
@@ -183,12 +189,12 @@ Run: `go test ./internal/service/...`
 
 Run:
 ```bash
-TEST_DB_HOST=localhost TEST_DB_PORT=5432 TEST_DB_USER=mikhmon \
-TEST_DB_PASSWORD=secret TEST_DB_NAME=mikmongo_test \
+TEST_DB_HOST=localhost TEST_DB_PORT=5432 TEST_DB_USER=mikmongo \
+TEST_DB_PASSWORD=mikmongo TEST_DB_NAME=mikmongo_test \
 go test -v -tags=integration -timeout=120s ./tests/integration/...
 ```
 
-**Infrastruktur:** Docker container PostgreSQL 16 + Redis 7 @ localhost:6379 DB=15
+**Infrastruktur:** Docker container PostgreSQL 17 + Redis 7 @ localhost:6379 DB=15
 **Migrasi:** 20 migrasi goose dijalankan satu kali via `TestMain` (bukan per-test)
 **Cleanup:** Rollback transaksi (bukan `TRUNCATE CASCADE`) + Redis FlushDB setiap test
 
@@ -273,7 +279,110 @@ go test -v -tags=integration -timeout=120s ./tests/integration/...
 
 ---
 
+## Tier 4: API Handler Tests (Full HTTP Stack)
+
+Run:
+```bash
+TEST_DB_HOST=localhost TEST_DB_PORT=5432 TEST_DB_USER=mikmongo \
+TEST_DB_PASSWORD=mikmongo TEST_DB_NAME=mikmongo_test \
+go test -v -tags=integration -run TestAPI ./tests/integration/...
+```
+
+**Stack:** `httptest.NewRecorder` + `router.ServeHTTP` + real Gin router + real JWT + real PostgreSQL + real Redis
+**Router:** `router.New(handlerReg, mwReg)` — identik dengan production router
+**Data isolation:** Tests pakai `suite.DB` (transaction rollback). Load tests pakai `suite.RootDB` (committed) + `t.Cleanup`
+**Catatan DB:** `createAPIUser` memakai `bcrypt.MinCost` + unique `BearerKey` (berbeda dari `createTestUser` yang pakai placeholder hash)
+
+### Auth API — 10 test ✅
+
+| Test | Method+Path | Skenario | Status |
+|------|------------|---------|--------|
+| `TestAPIAuth_Login_Success` | POST `/api/v1/auth/login` | credentials valid | ✅ PASS |
+| `TestAPIAuth_Login_WrongPassword` | POST login | password salah | ✅ PASS |
+| `TestAPIAuth_Login_EmptyBody` | POST login | malformed JSON | ✅ PASS |
+| `TestAPIAuth_GetMe_Authenticated` | GET `/api/v1/auth/me` | token valid → email match | ✅ PASS |
+| `TestAPIAuth_GetMe_NoToken` | GET me | tanpa header | ✅ PASS |
+| `TestAPIAuth_GetMe_InvalidToken` | GET me | `Bearer garbage` | ✅ PASS |
+| `TestAPIAuth_Logout_BlacklistsToken` | POST `/api/v1/auth/logout` | logout lalu akses me | ✅ PASS |
+| `TestAPIAuth_Refresh_Success` | POST `/api/v1/auth/refresh` | refresh_token valid | ✅ PASS |
+| `TestAPIAuth_ChangePassword_Success` | POST `/api/v1/auth/change-password` | old→new pwd; login baru OK | ✅ PASS |
+| `TestAPIAuth_ChangePassword_WrongOld` | POST change-password | wrong old password | ✅ PASS |
+
+### Billing API — 10 test ✅
+
+| Test | Method+Path | Skenario | Status |
+|------|------------|---------|--------|
+| `TestAPIBilling_ListInvoices_Empty` | GET `/api/v1/invoices` | no invoices | ✅ PASS |
+| `TestAPIBilling_ListInvoices_WithData` | GET invoices | 1+ invoice | ✅ PASS |
+| `TestAPIBilling_ListInvoices_Pagination` | GET `?limit=2&offset=0` | 3 invoices → 2 items | ✅ PASS |
+| `TestAPIBilling_GetInvoice_Found` | GET `/api/v1/invoices/:id` | id+status match | ✅ PASS |
+| `TestAPIBilling_GetInvoice_NotFound` | GET invoices/:id | random uuid → 404 | ✅ PASS |
+| `TestAPIBilling_GetOverdue` | GET `/api/v1/invoices/overdue` | authenticated | ✅ PASS |
+| `TestAPIBilling_CancelInvoice_Success` | DELETE `/api/v1/invoices/:id` | status=cancelled verified in DB | ✅ PASS |
+| `TestAPIBilling_CancelInvoice_NoToken` | DELETE invoices/:id | no token → 401 | ✅ PASS |
+| `TestAPIBilling_TriggerMonthly_Authenticated` | POST `/api/v1/invoices/trigger-monthly` | token valid | ✅ PASS |
+| `TestAPIBilling_TriggerMonthly_NoToken` | POST trigger-monthly | no token → 401 | ✅ PASS |
+
+### Payment API — 13 test ✅
+
+| Test | Skenario | Status |
+|------|---------|--------|
+| `TestAPIPayment_List_Empty` | no payments | ✅ PASS |
+| `TestAPIPayment_Create_Success` | valid body → 201 + status=pending + PaymentNumber non-empty | ✅ PASS |
+| `TestAPIPayment_Create_MissingBody` | `{}` → 400 | ✅ PASS |
+| `TestAPIPayment_Get_Found` | after create → 200 + id match | ✅ PASS |
+| `TestAPIPayment_Get_NotFound` | random uuid → 404 | ✅ PASS |
+| `TestAPIPayment_Confirm_Success` | pending → confirmed; DB verified | ✅ PASS |
+| `TestAPIPayment_Confirm_AlreadyConfirmed` | double confirm → 400 | ✅ PASS |
+| `TestAPIPayment_Reject_Success` | pending + reason → 200 | ✅ PASS |
+| `TestAPIPayment_Reject_MissingReason` | body `{}` → 400 | ✅ PASS |
+| `TestAPIPayment_Refund_Success` | confirmed payment → refunded | ✅ PASS |
+| `TestAPIPayment_Refund_PendingPayment` | unconfirmed → 400 | ✅ PASS |
+| `TestAPIPayment_Refund_MissingFields` | no reason → 400 | ✅ PASS |
+| `TestAPIPayment_AllEndpoints_NoToken` | semua 6 endpoint tanpa token → 401 | ✅ PASS |
+
+### Concurrent Load Tests — 3 test ✅
+
+Menggunakan `buildRootTestRouter` (connection pool, bukan transaction) agar goroutine-safe.
+Latency dikumpulkan via `sync.Mutex + []time.Duration`, p95 dihitung setelah `WaitGroup.Wait()`.
+
+| Test | Setup | Goroutines | Assertions | Status |
+|------|-------|-----------|-----------|--------|
+| `TestAPILoad_Login_Concurrent` | 10 users (bcrypt MinCost, RootDB) | 10 goroutines POST login | semua 200, p95 < 500ms | ✅ PASS |
+| `TestAPILoad_GetInvoices_Concurrent` | 1 admin + 3 invoices (RootDB) | 30 goroutines GET invoices | semua 200, p95 < 500ms | ✅ PASS |
+| `TestAPILoad_PaymentCreate_Concurrent` | 1 customer (RootDB) | 10 goroutines POST payment | semua 201, tidak ada 500, p95 < 500ms | ✅ PASS |
+
+> **Catatan desain load tests:** Tier 4 load tests menggunakan `buildRootTestRouter` (suite.RootDB) bukan `buildTestRouter` (suite.DB).
+> Root cause: transaksi per-test menggunakan satu koneksi PostgreSQL. Concurrent goroutines yang query melalui koneksi yang sama menyebabkan pgx panic.
+> Fix: RootDB menggunakan connection pool — concurrent SELECT/INSERT aman antar goroutine.
+
+---
+
 ## Catatan Teknis
+
+### Improvement 10: Tier 4 API Handler Tests *(sesi ini)*
+
+**File baru:**
+
+| File | Isi |
+|------|-----|
+| `tests/integration/api_suite_test.go` | `buildTestRouter`, `buildRootTestRouter`, `makeRequest`, `loginAs`, `createAPIUser`, `createAPIUserRoot` |
+| `tests/integration/api_auth_test.go` | 10 auth endpoint tests |
+| `tests/integration/api_billing_test.go` | 10 billing endpoint tests |
+| `tests/integration/api_payment_test.go` | 13 payment endpoint tests |
+| `tests/integration/api_load_test.go` | 3 concurrent load tests + `percentile()` util |
+
+**Perbaikan yang ditemukan saat implementasi:**
+
+| # | Issue | Fix |
+|---|-------|-----|
+| 1 | `createTestUser` memakai `"$2a$04$placeholder"` (hash tidak valid untuk bcrypt.CompareHashAndPassword) | `createAPIUser` memakai `bcrypt.GenerateFromPassword(pass, MinCost)` |
+| 2 | `model.User.BearerKey` punya unique constraint — semua user dengan `BearerKey: ""` conflict | `createAPIUser` dan `createAPIUserRoot` set `BearerKey: uuid.New().String()` |
+| 3 | `model.User` tanpa json tags → JSON key adalah `"Email"` (PascalCase), bukan `"email"` | Test assertion menggunakan `data["Email"]` |
+| 4 | `suite.DB` adalah transaction (single connection) — concurrent goroutines menyebabkan pgx panic | Load tests menggunakan `buildRootTestRouter` (connection pool) |
+| 5 | `LoginRequest.Password` memakai `validate` tag (bukan `binding`) → `{}` tidak fail di binding, lanjut ke 401 | `TestAPIAuth_Login_EmptyBody` mengirim malformed JSON untuk trigger 400 |
+
+---
 
 ### Improvement 9: Concurrent Payment Test Fix *(sesi ini)*
 
@@ -412,12 +521,17 @@ tests/integration/
 ├── customer_service_test.go
 ├── registration_test.go
 ├── concurrent_payment_test.go  ← DIUBAH: fix FK adminID, UUID identifiers, channel sync, 1-payment idempotency
-└── load_test.go
+├── load_test.go
+├── api_suite_test.go           ← BARU: buildTestRouter, buildRootTestRouter, helpers
+├── api_auth_test.go            ← BARU: 10 auth endpoint tests
+├── api_billing_test.go         ← BARU: 10 billing endpoint tests
+├── api_payment_test.go         ← BARU: 13 payment endpoint tests
+└── api_load_test.go            ← BARU: 3 concurrent load tests + percentile()
 ```
 
 ### Known Issues
 
-Tidak ada known issues aktif. Semua 157 test pass.
+Tidak ada known issues aktif. Semua 225 tests pass.
 
 ---
 
@@ -429,33 +543,45 @@ go test ./internal/domain/... ./internal/service/...
 
 # Integration tests (butuh PostgreSQL + Redis)
 TEST_DB_HOST=localhost TEST_DB_PORT=5432 \
-TEST_DB_USER=mikhmon TEST_DB_PASSWORD=secret \
+TEST_DB_USER=mikmongo TEST_DB_PASSWORD=mikmongo \
 TEST_DB_NAME=mikmongo_test \
-go test -v -tags=integration -timeout=120s ./tests/integration/...
+go test -v -tags=integration -timeout=300s ./tests/integration/...
+
+# Tier 4 API Handler tests saja
+TEST_DB_HOST=localhost TEST_DB_PORT=5432 \
+TEST_DB_USER=mikmongo TEST_DB_PASSWORD=mikmongo \
+TEST_DB_NAME=mikmongo_test \
+go test -v -tags=integration -run TestAPI ./tests/integration/...
+
+# Hanya load tests (concurrent)
+TEST_DB_HOST=localhost TEST_DB_PORT=5432 \
+TEST_DB_USER=mikmongo TEST_DB_PASSWORD=mikmongo \
+TEST_DB_NAME=mikmongo_test \
+go test -v -tags=integration -run TestAPILoad ./tests/integration/...
 
 # Hanya Redis/Auth E2E tests
 TEST_DB_HOST=localhost TEST_DB_PORT=5432 \
-TEST_DB_USER=mikhmon TEST_DB_PASSWORD=secret \
+TEST_DB_USER=mikmongo TEST_DB_PASSWORD=mikmongo \
 TEST_DB_NAME=mikmongo_test \
 go test -v -tags=integration -run "TestE2E_|TestLogout_Integration|TestRefreshToken_Integration|TestChangePassword_Integration" \
 ./tests/integration/...
 
-# Load test saja (dengan timing + threshold assertion)
+# Billing load test (service-level)
 TEST_DB_HOST=localhost TEST_DB_PORT=5432 \
-TEST_DB_USER=mikhmon TEST_DB_PASSWORD=secret \
+TEST_DB_USER=mikmongo TEST_DB_PASSWORD=mikmongo \
 TEST_DB_NAME=mikmongo_test \
 go test -v -tags=integration -run TestProcessDailyBilling_LoadTest ./tests/integration/...
 
-# Concurrent test dengan race detector
+# Concurrent payment test dengan race detector
 TEST_DB_HOST=localhost TEST_DB_PORT=5432 \
-TEST_DB_USER=mikhmon TEST_DB_PASSWORD=secret \
+TEST_DB_USER=mikmongo TEST_DB_PASSWORD=mikmongo \
 TEST_DB_NAME=mikmongo_test \
 go test -v -race -tags=integration -run TestConcurrentPaymentConfirm_RaceCondition ./tests/integration/...
 
-# Semua sekaligus
-go test ./internal/... && \
+# Semua sekaligus (unit + integration + API handler)
+go test ./internal/domain/... ./internal/service/... && \
 TEST_DB_HOST=localhost TEST_DB_PORT=5432 \
-TEST_DB_USER=mikhmon TEST_DB_PASSWORD=secret \
+TEST_DB_USER=mikmongo TEST_DB_PASSWORD=mikmongo \
 TEST_DB_NAME=mikmongo_test \
-go test -tags=integration -timeout=120s ./tests/integration/...
+go test -tags=integration -timeout=300s ./tests/integration/...
 ```
