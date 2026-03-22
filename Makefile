@@ -51,7 +51,7 @@ docker-down:
 # DSN      : read from .env  →  DB_DSN="postgres://user:pass@host:5432/db?sslmode=disable"
 # ─────────────────────────────────────────────────────────────────────────────
 
-DB_DSN ?= $(shell grep -E '^DB_DSN=' .env 2>/dev/null | cut -d '=' -f2-)
+DB_DSN ?= $(shell grep -E '^DB_DSN=' .env 2>/dev/null | sed 's/^DB_DSN=//' | tr -d '\r')
 
 migrate-up:
 	@echo "[INFO] Running all pending migrations..."

@@ -77,10 +77,10 @@ func TestAPIPayment_Create_Success(t *testing.T) {
 	r := buildTestRouter(t, suite)
 
 	w := makeRequest(t, r, http.MethodPost, "/api/v1/payments", adminToken, map[string]interface{}{
-		"CustomerID":    customerID,
-		"Amount":        200000.0,
-		"PaymentMethod": "cash",
-		"PaymentDate":   time.Now().Format(time.RFC3339),
+		"customer_id":    customerID,
+		"amount":         200000.0,
+		"payment_method": "cash",
+		"payment_date":   time.Now().Format(time.RFC3339),
 	})
 	assert.Equal(t, http.StatusCreated, w.Code)
 
@@ -88,8 +88,8 @@ func TestAPIPayment_Create_Success(t *testing.T) {
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
 	data, ok := resp["data"].(map[string]interface{})
 	require.True(t, ok)
-	assert.Equal(t, "pending", data["Status"])
-	assert.NotEmpty(t, data["PaymentNumber"])
+	assert.Equal(t, "pending", data["status"])
+	assert.NotEmpty(t, data["payment_number"])
 }
 
 func TestAPIPayment_Create_MissingBody(t *testing.T) {
@@ -122,7 +122,7 @@ func TestAPIPayment_Get_Found(t *testing.T) {
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
 	data, ok := resp["data"].(map[string]interface{})
 	require.True(t, ok)
-	assert.Equal(t, payment.ID, data["ID"])
+	assert.Equal(t, payment.ID, data["id"])
 }
 
 func TestAPIPayment_Get_NotFound(t *testing.T) {

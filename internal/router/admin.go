@@ -73,7 +73,31 @@ func registerAdminRoutes(v1 *gin.RouterGroup, handlers *handler.Registry) {
 				subs.POST("/:id/restore", handlers.Subscription.Restore)
 				subs.POST("/:id/suspend", handlers.Subscription.Suspend)
 				subs.POST("/:id/terminate", handlers.Subscription.Terminate)
+			}
 
+			// Mikhmon (scoped to router)
+			mikhmonGroup := router.Group("/mikhmon")
+			{
+				// Vouchers
+				mikhmonGroup.POST("/vouchers/generate", handlers.Mikhmon.Voucher.GenerateBatch)
+				mikhmonGroup.GET("/vouchers", handlers.Mikhmon.Voucher.GetVouchers)
+				mikhmonGroup.DELETE("/vouchers", handlers.Mikhmon.Voucher.RemoveBatch)
+
+				// Profiles
+				mikhmonGroup.POST("/profiles", handlers.Mikhmon.Profile.Create)
+				mikhmonGroup.PUT("/profiles/:id", handlers.Mikhmon.Profile.Update)
+				mikhmonGroup.POST("/profiles/generate-script", handlers.Mikhmon.Profile.GenerateScript)
+
+				// Reports
+				mikhmonGroup.POST("/reports", handlers.Mikhmon.Report.Add)
+				mikhmonGroup.GET("/reports", handlers.Mikhmon.Report.GetReports)
+				mikhmonGroup.GET("/reports/summary", handlers.Mikhmon.Report.GetSummary)
+
+				// Expire Monitor
+				mikhmonGroup.POST("/expire/setup", handlers.Mikhmon.Expire.Setup)
+				mikhmonGroup.POST("/expire/disable", handlers.Mikhmon.Expire.Disable)
+				mikhmonGroup.GET("/expire/status", handlers.Mikhmon.Expire.GetStatus)
+				mikhmonGroup.GET("/expire/generate-script", handlers.Mikhmon.Expire.GenerateScript)
 			}
 		}
 	}
@@ -97,6 +121,7 @@ func registerAdminRoutes(v1 *gin.RouterGroup, handlers *handler.Registry) {
 		payments.POST("/:id/confirm", handlers.Payment.Confirm)
 		payments.POST("/:id/reject", handlers.Payment.Reject)
 		payments.POST("/:id/refund", handlers.Payment.Refund)
+		payments.POST("/:id/initiate-gateway", handlers.Payment.InitiateGateway)
 	}
 
 	// Registrations

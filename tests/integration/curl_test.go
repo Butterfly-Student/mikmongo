@@ -8,8 +8,8 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"mikmongo/pkg/mikrotik"
-	"mikmongo/pkg/mikrotik/client"
+	mikrotik "github.com/Butterfly-Student/go-ros"
+	"github.com/Butterfly-Student/go-ros/client"
 	"mikmongo/tests/integration/testutil"
 )
 

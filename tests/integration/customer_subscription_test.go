@@ -20,7 +20,7 @@ import (
 func buildCustomerSubDeps(suite *TestSuite) (*service.CustomerService, *postgres.Registry) {
 	repos := postgres.NewRepository(suite.DB)
 	routerSvc := service.NewRouterService(repos.RouterDeviceRepo, "test-key", nil, zap.NewNop())
-	subSvc := service.NewSubscriptionService(repos.SubscriptionRepo, repos.BandwidthProfileRepo, nil, domain.NewSubscriptionDomain(), routerSvc)
+	subSvc := service.NewSubscriptionService(repos.SubscriptionRepo, repos.BandwidthProfileRepo, repos.SystemSettingRepo, domain.NewSubscriptionDomain(), routerSvc, nil)
 	customerSvc := service.NewCustomerService(repos.CustomerRepo, repos.SequenceCounterRepo, repos.BandwidthProfileRepo, domain.NewCustomerDomain(), routerSvc)
 	customerSvc.SetSubscriptionService(subSvc)
 	return customerSvc, repos

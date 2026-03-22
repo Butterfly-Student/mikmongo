@@ -12,6 +12,7 @@ type Customer struct {
 	CustomerCode       string         `gorm:"type:varchar(50);unique;not null;index"`
 	FullName           string         `gorm:"type:varchar(100);not null"`
 	Email              *string        `gorm:"type:varchar(100);unique;index:,where:email IS NOT NULL"`
+	Username           *string        `gorm:"type:varchar(100);uniqueIndex:,where:username IS NOT NULL AND deleted_at IS NULL"`
 	Phone              string         `gorm:"type:varchar(20);not null;index"`
 	IDCardNumber       *string        `gorm:"type:varchar(30)"`
 	Address            *string        `gorm:"type:text"`

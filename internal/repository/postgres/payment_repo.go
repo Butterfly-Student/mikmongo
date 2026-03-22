@@ -58,6 +58,15 @@ func (r *paymentRepository) UpdateStatus(ctx context.Context, id uuid.UUID, stat
 	return r.db.WithContext(ctx).Model(&model.Payment{}).Where("id = ?", id).Update("status", status).Error
 }
 
+func (r *paymentRepository) GetByCustomerID(ctx context.Context, customerID uuid.UUID) ([]model.Payment, error) {
+	var payments []model.Payment
+	err := r.db.WithContext(ctx).
+		Where("customer_id = ? AND deleted_at IS NULL", customerID).
+		Order("payment_date DESC").
+		Find(&payments).Error
+	return payments, err
+}
+
 func (r *paymentRepository) List(ctx context.Context, limit, offset int) ([]model.Payment, error) {
 	var payments []model.Payment
 	err := r.db.WithContext(ctx).Preload("Customer").Limit(limit).Offset(offset).Find(&payments).Error

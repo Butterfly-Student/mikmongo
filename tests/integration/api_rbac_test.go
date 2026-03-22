@@ -11,7 +11,8 @@ import (
 )
 
 func TestRBAC_Admin_CanAccessInvoices(t *testing.T) {
-	suite := NewTestSuite(t)
+	suite := SetupSuite(t)
+	defer suite.Cleanup(t)
 	r := buildTestRouter(t, suite)
 
 	email, password, _ := createAPIUser(t, suite, "admin")
@@ -22,7 +23,8 @@ func TestRBAC_Admin_CanAccessInvoices(t *testing.T) {
 }
 
 func TestRBAC_Admin_CanAccessUsers(t *testing.T) {
-	suite := NewTestSuite(t)
+	suite := SetupSuite(t)
+	defer suite.Cleanup(t)
 	r := buildTestRouter(t, suite)
 
 	email, password, _ := createAPIUser(t, suite, "admin")
@@ -33,7 +35,8 @@ func TestRBAC_Admin_CanAccessUsers(t *testing.T) {
 }
 
 func TestRBAC_Admin_CanAccessRouters(t *testing.T) {
-	suite := NewTestSuite(t)
+	suite := SetupSuite(t)
+	defer suite.Cleanup(t)
 	r := buildTestRouter(t, suite)
 
 	email, password, _ := createAPIUser(t, suite, "admin")
@@ -44,7 +47,8 @@ func TestRBAC_Admin_CanAccessRouters(t *testing.T) {
 }
 
 func TestRBAC_Staff_CanGetInvoices(t *testing.T) {
-	suite := NewTestSuite(t)
+	suite := SetupSuite(t)
+	defer suite.Cleanup(t)
 	r := buildTestRouter(t, suite)
 
 	email, password, _ := createAPIUser(t, suite, "cs")
@@ -55,7 +59,8 @@ func TestRBAC_Staff_CanGetInvoices(t *testing.T) {
 }
 
 func TestRBAC_Staff_CannotAccessUsers(t *testing.T) {
-	suite := NewTestSuite(t)
+	suite := SetupSuite(t)
+	defer suite.Cleanup(t)
 	r := buildTestRouter(t, suite)
 
 	email, password, _ := createAPIUser(t, suite, "cs")
@@ -66,7 +71,8 @@ func TestRBAC_Staff_CannotAccessUsers(t *testing.T) {
 }
 
 func TestRBAC_Staff_CannotAccessRouters(t *testing.T) {
-	suite := NewTestSuite(t)
+	suite := SetupSuite(t)
+	defer suite.Cleanup(t)
 	r := buildTestRouter(t, suite)
 
 	email, password, _ := createAPIUser(t, suite, "billing")
@@ -77,7 +83,8 @@ func TestRBAC_Staff_CannotAccessRouters(t *testing.T) {
 }
 
 func TestRBAC_NoToken_Returns401(t *testing.T) {
-	suite := NewTestSuite(t)
+	suite := SetupSuite(t)
+	defer suite.Cleanup(t)
 	r := buildTestRouter(t, suite)
 
 	w := makeRequest(t, r, http.MethodGet, "/api/v1/invoices", "", nil)
@@ -85,7 +92,8 @@ func TestRBAC_NoToken_Returns401(t *testing.T) {
 }
 
 func TestRBAC_Staff_CanConfirmPayment(t *testing.T) {
-	suite := NewTestSuite(t)
+	suite := SetupSuite(t)
+	defer suite.Cleanup(t)
 	r := buildTestRouter(t, suite)
 
 	email, password, _ := createAPIUser(t, suite, "billing")

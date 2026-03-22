@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"mikmongo/internal/model"
+	"mikmongo/internal/dto"
 	"mikmongo/internal/service"
 	"mikmongo/pkg/response"
 )
@@ -28,24 +28,22 @@ func (h *RouterHandler) List(c *gin.Context) {
 		response.InternalServerError(c, err.Error())
 		return
 	}
-	response.OK(c, routers)
+	response.OK(c, dto.RoutersToResponse(routers))
 }
 
 // Create handles creating a router
 func (h *RouterHandler) Create(c *gin.Context) {
-	var req struct {
-		model.MikrotikRouter
-		Password string `json:"password" binding:"required"`
-	}
+	var req dto.CreateRouterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}
-	if err := h.service.Create(c.Request.Context(), &req.MikrotikRouter, req.Password); err != nil {
+	router := req.ToModel()
+	if err := h.service.Create(c.Request.Context(), router, req.Password); err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	response.Created(c, req.MikrotikRouter)
+	response.Created(c, dto.RouterToResponse(router))
 }
 
 // GetDevice handles getting a router by ID
@@ -60,7 +58,7 @@ func (h *RouterHandler) GetDevice(c *gin.Context) {
 		response.NotFound(c, err.Error())
 		return
 	}
-	response.OK(c, device)
+	response.OK(c, dto.RouterToResponse(device))
 }
 
 // Update handles updating a router
@@ -70,20 +68,30 @@ func (h *RouterHandler) Update(c *gin.Context) {
 		response.BadRequest(c, "invalid id")
 		return
 	}
-	var req struct {
-		model.MikrotikRouter
-		Password string `json:"password"`
+	device, err := h.service.GetDevice(c.Request.Context(), id)
+	if err != nil {
+		response.NotFound(c, err.Error())
+		return
 	}
+
+	var req dto.UpdateRouterRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}
-	req.MikrotikRouter.ID = id.String()
-	if err := h.service.Update(c.Request.Context(), &req.MikrotikRouter, req.Password); err != nil {
+
+	req.ApplyTo(device)
+
+	password := ""
+	if req.Password != nil {
+		password = *req.Password
+	}
+
+	if err := h.service.Update(c.Request.Context(), device, password); err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	response.OK(c, req.MikrotikRouter)
+	response.OK(c, dto.RouterToResponse(device))
 }
 
 // Delete handles deleting a router
@@ -152,7 +160,7 @@ func (h *RouterHandler) SelectRouter(c *gin.Context) {
 		return
 	}
 
-	response.OK(c, router)
+	response.OK(c, dto.RouterToResponse(router))
 }
 
 // GetSelectedRouter handles getting the currently selected router
@@ -170,5 +178,5 @@ func (h *RouterHandler) GetSelectedRouter(c *gin.Context) {
 		return
 	}
 
-	response.OK(c, router)
+	response.OK(c, dto.RouterToResponse(router))
 }

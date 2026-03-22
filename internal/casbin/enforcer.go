@@ -3,8 +3,8 @@ package casbin
 import (
 	_ "embed"
 
-	casbincore "github.com/casbin/casbin/v2"
-	"github.com/casbin/casbin/v2/model"
+	casbincore "github.com/casbin/casbin/v3"
+	"github.com/casbin/casbin/v3/model"
 	gormadapter "github.com/casbin/gorm-adapter/v3"
 	"gorm.io/gorm"
 )
@@ -37,7 +37,6 @@ func NewEnforcer(db *gorm.DB) (*casbincore.Enforcer, error) {
 func seedDefaultPolicies(e *casbincore.Enforcer) {
 	groupings := [][2]string{
 		{"superadmin", "admin"},
-		{"admin", "admin"},
 		{"cs", "staff"},
 		{"billing", "staff"},
 		{"technician", "staff"},

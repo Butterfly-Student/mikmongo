@@ -32,6 +32,15 @@ func (r *customerRepository) GetByID(ctx context.Context, id uuid.UUID) (*model.
 	return &customer, nil
 }
 
+func (r *customerRepository) GetByUsername(ctx context.Context, username string) (*model.Customer, error) {
+	var customer model.Customer
+	err := r.db.WithContext(ctx).First(&customer, "username = ?", username).Error
+	if err != nil {
+		return nil, err
+	}
+	return &customer, nil
+}
+
 func (r *customerRepository) GetByEmail(ctx context.Context, email string) (*model.Customer, error) {
 	var customer model.Customer
 	err := r.db.WithContext(ctx).First(&customer, "email = ?", email).Error

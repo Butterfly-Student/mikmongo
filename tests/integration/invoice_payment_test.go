@@ -14,9 +14,9 @@ import (
 	"mikmongo/internal/model"
 	"mikmongo/internal/repository/postgres"
 	"mikmongo/internal/service"
-	"mikmongo/pkg/mikrotik"
-	"mikmongo/pkg/mikrotik/client"
-	mkdomain "mikmongo/pkg/mikrotik/domain"
+	mikrotik "github.com/Butterfly-Student/go-ros"
+	"github.com/Butterfly-Student/go-ros/client"
+	mkdomain "github.com/Butterfly-Student/go-ros/domain"
 )
 
 // TestInvoicePaymentIntegration tests invoice auto-creation and payment processing
@@ -24,6 +24,7 @@ func TestInvoicePaymentIntegration(t *testing.T) {
 	// Setup test suite
 	suite := SetupSuite(t)
 	defer suite.TearDownSuite(t)
+	defer suite.Cleanup(t)
 
 	// Get MikroTik connection details from env
 	mtHost := getEnv("TEST_MIKROTIK_HOST", "192.168.233.1")
@@ -63,6 +64,7 @@ func TestInvoicePaymentIntegration(t *testing.T) {
 		settingRepo,
 		subDomain,
 		routerSvc,
+		nil,
 	)
 
 	// Create customer service
@@ -160,7 +162,6 @@ func TestInvoicePaymentIntegration(t *testing.T) {
 	}
 
 	t.Run("Auto Create Invoice for Active Subscription", func(t *testing.T) {
-		defer suite.Cleanup(t)
 
 		// Setup
 		router := createTestRouter(t)
@@ -224,7 +225,6 @@ func TestInvoicePaymentIntegration(t *testing.T) {
 	})
 
 	t.Run("Process Payment and Update Invoice Status", func(t *testing.T) {
-		defer suite.Cleanup(t)
 
 		// Setup
 		router := createTestRouter(t)
@@ -319,7 +319,6 @@ func TestInvoicePaymentIntegration(t *testing.T) {
 	})
 
 	t.Run("Self Payment - Auto Restore from Isolate", func(t *testing.T) {
-		defer suite.Cleanup(t)
 
 		// Setup
 		router := createTestRouter(t)
@@ -450,7 +449,6 @@ func TestInvoicePaymentIntegration(t *testing.T) {
 	})
 
 	t.Run("Report Generation - Monthly Revenue", func(t *testing.T) {
-		defer suite.Cleanup(t)
 
 		// Setup
 		router := createTestRouter(t)
@@ -526,7 +524,6 @@ func TestInvoicePaymentIntegration(t *testing.T) {
 	})
 
 	t.Run("Bandwidth Profile CRUD with MikroTik Sync", func(t *testing.T) {
-		defer suite.Cleanup(t)
 
 		// Setup
 		router := createTestRouter(t)

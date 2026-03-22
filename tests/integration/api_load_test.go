@@ -183,10 +183,10 @@ func TestAPILoad_PaymentCreate_Concurrent(t *testing.T) {
 		go func(idx int) {
 			defer wg.Done()
 			body := mustMarshal(map[string]interface{}{
-				"CustomerID":    customerID,
-				"Amount":        200000.0,
-				"PaymentMethod": "cash",
-				"PaymentDate":   time.Now().Format(time.RFC3339),
+				"customer_id":    customerID,
+				"amount":         200000.0,
+				"payment_method": "cash",
+				"payment_date":   time.Now().Format(time.RFC3339),
 			})
 			req, _ := http.NewRequest(http.MethodPost, "/api/v1/payments", bytes.NewBuffer(body))
 			req.Header.Set("Content-Type", "application/json")

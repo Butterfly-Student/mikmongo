@@ -5,8 +5,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	casbincore "github.com/casbin/casbin/v2"
-	"github.com/casbin/casbin/v2/model"
+	casbincore "github.com/casbin/casbin/v3"
+	"github.com/casbin/casbin/v3/model"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 )

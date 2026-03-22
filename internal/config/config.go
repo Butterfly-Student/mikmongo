@@ -51,6 +51,10 @@ type Config struct {
 		ClientKey   string
 		Environment string
 	}
+	Xendit struct {
+		SecretKey    string
+		WebhookToken string
+	}
 	Seed struct {
 		AutoMigrate    bool
 		AdminEmail     string
@@ -113,6 +117,10 @@ func Load() *Config {
 	config.Midtrans.ServerKey = os.Getenv("MIDTRANS_SERVER_KEY")
 	config.Midtrans.ClientKey = os.Getenv("MIDTRANS_CLIENT_KEY")
 	config.Midtrans.Environment = env("MIDTRANS_ENVIRONMENT", "sandbox")
+
+	// Xendit
+	config.Xendit.SecretKey = os.Getenv("XENDIT_SECRET_KEY")
+	config.Xendit.WebhookToken = os.Getenv("XENDIT_WEBHOOK_SECRET")
 
 	// Seed
 	config.Seed.AutoMigrate = envBool("AUTO_MIGRATE")

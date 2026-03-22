@@ -1,7 +1,7 @@
 package middleware
 
 import (
-	casbincore "github.com/casbin/casbin/v2"
+	casbincore "github.com/casbin/casbin/v3"
 	"github.com/gin-contrib/requestid"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"

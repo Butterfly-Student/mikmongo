@@ -30,8 +30,9 @@ import (
 
 const testSecret = "test-secret-key-must-be-32chars!"
 
-// buildTestRouter constructs a full Gin router using real dependencies scoped to suite.DB.
-func buildTestRouter(t *testing.T, suite *TestSuite) *gin.Engine {
+// buildTestRouterFull constructs a full Gin router and returns both the engine and handler registry.
+// Callers can inject providers into the registry before using the engine.
+func buildTestRouterFull(t *testing.T, suite *TestSuite) (*gin.Engine, *handler.Registry) {
 	t.Helper()
 	gin.SetMode(gin.TestMode)
 
@@ -72,7 +73,14 @@ func buildTestRouter(t *testing.T, suite *TestSuite) *gin.Engine {
 	require.NoError(t, err)
 	mwReg := middleware.NewRegistry(zap.NewNop(), jwtSvc, suite.RedisClient, enforcer)
 
-	return router.New(handlerReg, mwReg)
+	return router.New(handlerReg, mwReg), handlerReg
+}
+
+// buildTestRouter constructs a full Gin router using real dependencies scoped to suite.DB.
+func buildTestRouter(t *testing.T, suite *TestSuite) *gin.Engine {
+	t.Helper()
+	r, _ := buildTestRouterFull(t, suite)
+	return r
 }
 
 // makeRequest sends an HTTP request to the router and returns the recorder.

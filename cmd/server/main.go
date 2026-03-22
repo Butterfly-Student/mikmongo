@@ -9,9 +9,11 @@ import (
 	"syscall"
 	"time"
 
+	casbinpkg "mikmongo/internal/casbin"
 	"mikmongo/internal/config"
 	"mikmongo/internal/domain"
 	"mikmongo/internal/handler"
+	"mikmongo/internal/handler/mikrotik/mikhmon"
 	"mikmongo/internal/middleware"
 	_ "mikmongo/internal/migration"
 	"mikmongo/internal/queue"
@@ -22,11 +24,12 @@ import (
 	"mikmongo/internal/scheduler"
 	"mikmongo/internal/seeder"
 	"mikmongo/internal/service"
+	"mikmongo/internal/service/mikrotik"
 	"mikmongo/pkg/jwt"
 	"mikmongo/pkg/logger"
+	xenditpkg "mikmongo/pkg/payment/xendit"
 	"mikmongo/pkg/rabbitmq"
 	"mikmongo/pkg/redis"
-	casbinpkg "mikmongo/internal/casbin"
 
 	"github.com/google/uuid"
 	"github.com/pressly/goose/v3"
@@ -68,16 +71,7 @@ func main() {
 		logg.Info("Migrations completed")
 
 		seedCfg := seeder.Config{
-			AdminEmail:     cfg.Seed.AdminEmail,
-			AdminPassword:  cfg.Seed.AdminPassword,
-			AdminName:      cfg.Seed.AdminName,
-			AdminPhone:     cfg.Seed.AdminPhone,
-			RouterName:     cfg.Seed.RouterName,
-			RouterAddress:  cfg.Seed.RouterAddress,
-			RouterAPIPort:  cfg.Seed.RouterAPIPort,
-			RouterUsername: cfg.Seed.RouterUsername,
-			RouterPassword: cfg.Seed.RouterPassword,
-			EncryptionKey:  cfg.JWT.Secret,
+			EncryptionKey: cfg.JWT.Secret,
 		}
 		if err := seeder.New(sqlDB, seedCfg).Run(context.Background()); err != nil {
 			logg.Fatal("Failed to run seeder", zap.Error(err))
@@ -161,6 +155,10 @@ func main() {
 		logg.Logger,
 	)
 
+	// Initialize Mikrotik service registry
+	mikrotikRegistry := mikrotik.NewRegistry(serviceRegistry.Router)
+	serviceRegistry.Mikrotik = mikrotikRegistry
+
 	// Inject services into queue consumers (callbacks, avoids import cycle)
 	queueRegistry.BillingConsumer.SetHandler(func(ctx context.Context, subscriptionID uuid.UUID, period time.Time) error {
 		_, err := serviceRegistry.Billing.GenerateInvoice(ctx, subscriptionID, period)
@@ -178,10 +176,20 @@ func main() {
 		},
 	})
 
-
 	// Handlers
-	handlerRegistry := handler.NewRegistry(serviceRegistry, repoRegistry.SystemSettingRepo, jwtService)
+	// Payment gateway providers
+	xenditClient := xenditpkg.New(xenditpkg.Config{
+		SecretKey:    cfg.Xendit.SecretKey,
+		WebhookToken: cfg.Xendit.WebhookToken,
+	})
 
+	handlerRegistry := handler.NewRegistry(serviceRegistry, repoRegistry.SystemSettingRepo, jwtService)
+	handlerRegistry.Payment.SetProvider("xendit", xenditClient)
+	handlerRegistry.CustomerPortal.SetProvider("xendit", xenditClient)
+	handlerRegistry.Webhook.SetXenditProvider(xenditClient)
+
+	// Initialize Mikhmon handler registry
+	handlerRegistry.Mikhmon = mikhmon.NewRegistry(mikrotikRegistry)
 
 	// Casbin RBAC enforcer
 	casbinEnforcer, err := casbinpkg.NewEnforcer(db)

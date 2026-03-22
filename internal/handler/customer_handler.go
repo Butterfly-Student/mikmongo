@@ -6,6 +6,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"mikmongo/internal/dto"
 	"mikmongo/internal/model"
 	"mikmongo/internal/service"
 	"mikmongo/pkg/response"
@@ -21,27 +22,9 @@ func NewCustomerHandler(service *service.CustomerService) *CustomerHandler {
 	return &CustomerHandler{service: service}
 }
 
-// CreateCustomerRequest represents the request body for creating a customer with subscription
-type CreateCustomerRequest struct {
-	// Customer fields
-	FullName  string   `json:"full_name" binding:"required"`
-	Phone     string   `json:"phone" binding:"required"`
-	Email     *string  `json:"email"`
-	Address   *string  `json:"address"`
-	Latitude  *float64 `json:"latitude"`
-	Longitude *float64 `json:"longitude"`
-
-	// Subscription fields (mandatory)
-	PlanID   string  `json:"plan_id" binding:"required"`
-	RouterID string  `json:"router_id" binding:"required"`
-	Username string  `json:"username"`  // optional, default dari FullName
-	Password string  `json:"password"`  // optional, default dari FullName
-	StaticIP *string `json:"static_ip"` // optional
-}
-
 // Create handles customer creation with auto subscription
 func (h *CustomerHandler) Create(c *gin.Context) {
-	var req CreateCustomerRequest
+	var req dto.CreateCustomerRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
@@ -59,17 +42,8 @@ func (h *CustomerHandler) Create(c *gin.Context) {
 		password = generatePasswordFromFullName(req.FullName)
 	}
 
-	// Create customer model
-	customer := &model.Customer{
-		FullName:  req.FullName,
-		Phone:     req.Phone,
-		Email:     req.Email,
-		Address:   req.Address,
-		Latitude:  req.Latitude,
-		Longitude: req.Longitude,
-	}
+	customer := req.ToCustomerModel()
 
-	// Create subscription model
 	subscription := &model.Subscription{
 		PlanID:   req.PlanID,
 		RouterID: req.RouterID,
@@ -79,7 +53,6 @@ func (h *CustomerHandler) Create(c *gin.Context) {
 		Status:   "pending",
 	}
 
-	// Create both customer and subscription
 	createdCustomer, createdSubscription, err := h.service.CreateWithSubscription(
 		c.Request.Context(),
 		customer,
@@ -91,31 +64,26 @@ func (h *CustomerHandler) Create(c *gin.Context) {
 	}
 
 	response.Created(c, gin.H{
-		"customer":     createdCustomer,
-		"subscription": createdSubscription,
+		"customer":     dto.CustomerToResponse(createdCustomer),
+		"subscription": dto.SubscriptionToResponse(createdSubscription, nil),
 	})
 }
 
 // generateUsernameFromFullName generates username from full name
 func generateUsernameFromFullName(fullName string) string {
-	// Lowercase and replace spaces with -
 	username := strings.ToLower(fullName)
 	username = strings.ReplaceAll(username, " ", "-")
-
-	// Remove special characters (keep only alphanumeric and -)
 	var result strings.Builder
 	for _, char := range username {
 		if (char >= 'a' && char <= 'z') || (char >= '0' && char <= '9') || char == '-' {
 			result.WriteRune(char)
 		}
 	}
-
 	return result.String()
 }
 
 // generatePasswordFromFullName generates password from full name
 func generatePasswordFromFullName(fullName string) string {
-	// Same logic as username
 	return generateUsernameFromFullName(fullName)
 }
 
@@ -131,7 +99,7 @@ func (h *CustomerHandler) Get(c *gin.Context) {
 		response.NotFound(c, err.Error())
 		return
 	}
-	response.OK(c, customer)
+	response.OK(c, dto.CustomerToResponse(customer))
 }
 
 // List handles listing customers
@@ -142,7 +110,7 @@ func (h *CustomerHandler) List(c *gin.Context) {
 		response.InternalServerError(c, err.Error())
 		return
 	}
-	response.WithMeta(c, http.StatusOK, customers, &response.Meta{
+	response.WithMeta(c, http.StatusOK, dto.CustomersToResponse(customers), &response.Meta{
 		Total:  total,
 		Limit:  limit,
 		Offset: offset,
@@ -156,17 +124,25 @@ func (h *CustomerHandler) Update(c *gin.Context) {
 		response.BadRequest(c, "invalid id")
 		return
 	}
-	var customer model.Customer
-	if err := c.ShouldBindJSON(&customer); err != nil {
+	customer, err := h.service.GetByID(c.Request.Context(), id)
+	if err != nil {
+		response.NotFound(c, err.Error())
+		return
+	}
+
+	var req dto.UpdateCustomerRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}
-	customer.ID = id.String()
-	if err := h.service.Update(c.Request.Context(), &customer); err != nil {
+
+	req.ApplyTo(customer)
+
+	if err := h.service.Update(c.Request.Context(), customer); err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	response.OK(c, customer)
+	response.OK(c, dto.CustomerToResponse(customer))
 }
 
 // Delete handles deleting a customer

@@ -242,16 +242,56 @@ func TestCustomerService_PortalAuth(t *testing.T) {
 	err := customerSvc.SetPortalPassword(suite.Ctx, customerID, "portal-password-123")
 	require.NoError(t, err)
 
-	// Reload customer to get code
+	// Reload customer
 	updatedCustomer, err := customerSvc.GetByID(suite.Ctx, customerID)
 	require.NoError(t, err)
+	require.NotNil(t, updatedCustomer.Username)
 
-	// Auth portal with correct password
-	authedCustomer, err := customerSvc.AuthPortal(suite.Ctx, updatedCustomer.CustomerCode, "portal-password-123")
+	// Auth portal by username with correct password
+	authedCustomer, err := customerSvc.AuthPortal(suite.Ctx, *updatedCustomer.Username, "portal-password-123")
 	require.NoError(t, err)
 	assert.Equal(t, customerID.String(), authedCustomer.ID)
+	assert.NotNil(t, authedCustomer.Username)
 
 	// Auth portal with wrong password
-	_, err = customerSvc.AuthPortal(suite.Ctx, updatedCustomer.CustomerCode, "wrong-password")
+	_, err = customerSvc.AuthPortal(suite.Ctx, *updatedCustomer.Username, "wrong-password")
 	assert.Error(t, err)
+}
+
+func TestCustomerService_PortalAuth_ByUsername(t *testing.T) {
+	suite := SetupSuite(t)
+	defer suite.TearDownSuite(t)
+	defer suite.Cleanup(t)
+
+	customerSvc, _ := setupCustomerTestServices(t, suite)
+
+	uname := "test-username-login"
+	customer := &model.Customer{FullName: "Username Login", Phone: "087777777777", Username: &uname}
+	require.NoError(t, customerSvc.Create(suite.Ctx, customer))
+	customerID, _ := uuid.Parse(customer.ID)
+
+	require.NoError(t, customerSvc.SetPortalPassword(suite.Ctx, customerID, "pass-by-username"))
+
+	authed, err := customerSvc.AuthPortal(suite.Ctx, uname, "pass-by-username")
+	require.NoError(t, err)
+	assert.Equal(t, customerID.String(), authed.ID)
+}
+
+func TestCustomerService_PortalAuth_ByEmail(t *testing.T) {
+	suite := SetupSuite(t)
+	defer suite.TearDownSuite(t)
+	defer suite.Cleanup(t)
+
+	customerSvc, _ := setupCustomerTestServices(t, suite)
+
+	email := "email.login@example.com"
+	customer := &model.Customer{FullName: "Email Login", Phone: "088888888888", Email: &email}
+	require.NoError(t, customerSvc.Create(suite.Ctx, customer))
+	customerID, _ := uuid.Parse(customer.ID)
+
+	require.NoError(t, customerSvc.SetPortalPassword(suite.Ctx, customerID, "pass-by-email"))
+
+	authed, err := customerSvc.AuthPortal(suite.Ctx, email, "pass-by-email")
+	require.NoError(t, err)
+	assert.Equal(t, customerID.String(), authed.ID)
 }

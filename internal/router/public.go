@@ -26,6 +26,7 @@ func registerPublicRoutes(r *gin.Engine, handlers *handler.Registry, mw *middlew
 	webhooks := r.Group("/api/v1/webhooks")
 	{
 		webhooks.POST("/midtrans", handlers.Webhook.MidtransWebhook)
+		webhooks.POST("/xendit", handlers.Webhook.XenditWebhook)
 	}
 
 	// Customer portal
@@ -42,6 +43,8 @@ func registerPublicRoutes(r *gin.Engine, handlers *handler.Registry, mw *middlew
 			portalAuth.GET("/invoices/:id", handlers.CustomerPortal.GetInvoice)
 			portalAuth.POST("/payments", handlers.CustomerPortal.CreatePayment)
 			portalAuth.GET("/payments", handlers.CustomerPortal.GetPayments)
+			portalAuth.GET("/payments/:id", handlers.CustomerPortal.GetPayment)
+			portalAuth.POST("/payments/:id/pay", handlers.CustomerPortal.PayWithGateway)
 		}
 	}
 }

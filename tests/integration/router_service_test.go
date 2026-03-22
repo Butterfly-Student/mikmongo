@@ -9,7 +9,7 @@ import (
 	"mikmongo/internal/model"
 	"mikmongo/internal/repository/postgres"
 	"mikmongo/internal/service"
-	mkdomain "mikmongo/pkg/mikrotik/domain"
+	mkdomain "github.com/Butterfly-Student/go-ros/domain"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -22,6 +22,7 @@ func TestRouterServiceMikroTikIntegration(t *testing.T) {
 	// Setup test suite
 	suite := SetupSuite(t)
 	defer suite.TearDownSuite(t)
+	defer suite.Cleanup(t)
 
 	// Get MikroTik connection details from env
 	mtHost := getEnv("TEST_MIKROTIK_HOST", "192.168.233.1")
@@ -43,7 +44,6 @@ func TestRouterServiceMikroTikIntegration(t *testing.T) {
 	routerSvc := service.NewRouterService(routerRepo, "test-key-16-bytes", nil, logger)
 
 	t.Run("Create Router and Get MikroTik Client", func(t *testing.T) {
-		defer suite.Cleanup(t)
 
 		// Create router with plain text password (like test does)
 		router := &model.MikrotikRouter{
@@ -77,7 +77,6 @@ func TestRouterServiceMikroTikIntegration(t *testing.T) {
 	})
 
 	t.Run("TestConnection via RouterService", func(t *testing.T) {
-		defer suite.Cleanup(t)
 
 		// Create router
 		router := &model.MikrotikRouter{
@@ -110,7 +109,6 @@ func TestRouterServiceMikroTikIntegration(t *testing.T) {
 	})
 
 	t.Run("Create PPP Secret via RouterService", func(t *testing.T) {
-		defer suite.Cleanup(t)
 
 		// Create router
 		router := &model.MikrotikRouter{

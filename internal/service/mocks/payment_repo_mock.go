@@ -52,6 +52,14 @@ func (m *MockPaymentRepository) UpdateStatus(ctx context.Context, id uuid.UUID, 
 	return args.Error(0)
 }
 
+func (m *MockPaymentRepository) GetByCustomerID(ctx context.Context, customerID uuid.UUID) ([]model.Payment, error) {
+	args := m.Called(ctx, customerID)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]model.Payment), args.Error(1)
+}
+
 func (m *MockPaymentRepository) List(ctx context.Context, limit, offset int) ([]model.Payment, error) {
 	args := m.Called(ctx, limit, offset)
 	if args.Get(0) == nil {

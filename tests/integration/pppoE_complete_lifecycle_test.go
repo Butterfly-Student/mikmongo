@@ -14,9 +14,9 @@ import (
 	"mikmongo/internal/model"
 	"mikmongo/internal/repository/postgres"
 	"mikmongo/internal/service"
-	"mikmongo/pkg/mikrotik"
-	"mikmongo/pkg/mikrotik/client"
-	mkdomain "mikmongo/pkg/mikrotik/domain"
+	mikrotik "github.com/Butterfly-Student/go-ros"
+	"github.com/Butterfly-Student/go-ros/client"
+	mkdomain "github.com/Butterfly-Student/go-ros/domain"
 )
 
 // TestPPPoECompleteLifecycle tests complete PPPoE customer lifecycle
@@ -24,6 +24,7 @@ func TestPPPoECompleteLifecycle(t *testing.T) {
 	// Setup test suite
 	suite := SetupSuite(t)
 	defer suite.TearDownSuite(t)
+	defer suite.Cleanup(t)
 
 	// Get MikroTik connection details from env
 	mtHost := getEnv("TEST_MIKROTIK_HOST", "192.168.233.1")
@@ -63,6 +64,7 @@ func TestPPPoECompleteLifecycle(t *testing.T) {
 		settingRepo,
 		subDomain,
 		routerSvc,
+		nil,
 	)
 
 	// Create report service
@@ -176,7 +178,6 @@ func TestPPPoECompleteLifecycle(t *testing.T) {
 	}
 
 	t.Run("Complete PPPoE Customer Lifecycle", func(t *testing.T) {
-		defer suite.Cleanup(t)
 
 		t.Logf("\n=== PPPoE CUSTOMER LIFECYCLE TEST ===\n")
 
@@ -321,7 +322,6 @@ func TestPPPoECompleteLifecycle(t *testing.T) {
 	})
 
 	t.Run("PPPoE Auto-Isolate on Overdue", func(t *testing.T) {
-		defer suite.Cleanup(t)
 
 		t.Logf("\n=== PPPoE AUTO-ISOLATE TEST ===\n")
 
@@ -402,7 +402,6 @@ func TestPPPoECompleteLifecycle(t *testing.T) {
 	})
 
 	t.Run("PPPoE Auto-Restore on Payment", func(t *testing.T) {
-		defer suite.Cleanup(t)
 
 		t.Logf("\n=== PPPoE AUTO-RESTORE TEST ===\n")
 
@@ -519,7 +518,6 @@ func TestPPPoECompleteLifecycle(t *testing.T) {
 	})
 
 	t.Run("Monthly Revenue Report", func(t *testing.T) {
-		defer suite.Cleanup(t)
 
 		t.Logf("\n=== MONTHLY REVENUE REPORT TEST ===\n")
 

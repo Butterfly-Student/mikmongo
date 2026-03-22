@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"mikmongo/internal/model"
+	"mikmongo/internal/dto"
 	"mikmongo/internal/service"
 	"mikmongo/pkg/response"
 )
@@ -22,16 +22,17 @@ func NewRegistrationHandler(svc *service.RegistrationService) *RegistrationHandl
 
 // Create handles creating a registration request
 func (h *RegistrationHandler) Create(c *gin.Context) {
-	var reg model.CustomerRegistration
-	if err := c.ShouldBindJSON(&reg); err != nil {
+	var req dto.CreateRegistrationRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}
-	if err := h.service.Create(c.Request.Context(), &reg); err != nil {
+	reg := req.ToModel()
+	if err := h.service.Create(c.Request.Context(), reg); err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	response.Created(c, reg)
+	response.Created(c, dto.RegistrationToResponse(reg))
 }
 
 // Get handles getting a registration by ID
@@ -46,7 +47,7 @@ func (h *RegistrationHandler) Get(c *gin.Context) {
 		response.NotFound(c, err.Error())
 		return
 	}
-	response.OK(c, reg)
+	response.OK(c, dto.RegistrationToResponse(reg))
 }
 
 // List handles listing registrations
@@ -57,7 +58,7 @@ func (h *RegistrationHandler) List(c *gin.Context) {
 		response.InternalServerError(c, err.Error())
 		return
 	}
-	response.WithMeta(c, http.StatusOK, regs, &response.Meta{Total: count, Limit: limit, Offset: offset})
+	response.WithMeta(c, http.StatusOK, dto.RegistrationsToResponse(regs), &response.Meta{Total: count, Limit: limit, Offset: offset})
 }
 
 // Approve handles approving a registration
@@ -67,10 +68,7 @@ func (h *RegistrationHandler) Approve(c *gin.Context) {
 		response.BadRequest(c, "invalid id")
 		return
 	}
-	var req struct {
-		RouterID  string  `json:"router_id"`
-		ProfileID *string `json:"profile_id"`
-	}
+	var req dto.ApproveRegistrationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
@@ -91,9 +89,7 @@ func (h *RegistrationHandler) Reject(c *gin.Context) {
 		response.BadRequest(c, "invalid id")
 		return
 	}
-	var req struct {
-		Reason string `json:"reason" binding:"required"`
-	}
+	var req dto.RejectRegistrationRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return

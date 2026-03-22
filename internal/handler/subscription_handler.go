@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"mikmongo/internal/model"
+	"mikmongo/internal/dto"
 	"mikmongo/internal/service"
 	"mikmongo/pkg/response"
 )
@@ -28,22 +28,30 @@ func (h *SubscriptionHandler) Create(c *gin.Context) {
 		return
 	}
 
-	var sub model.Subscription
-	if err := c.ShouldBindJSON(&sub); err != nil {
+	var req dto.CreateSubscriptionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}
 
-	sub.RouterID = routerID.String()
+	sub := req.ToModel(routerID.String())
 
-	if err := h.service.Create(c.Request.Context(), &sub); err != nil {
+	mtCfg := &service.PPPSecretConfig{
+		Service:       req.MtService,
+		LocalAddress:  req.MtLocalAddress,
+		Routes:        req.MtRoutes,
+		LimitBytesIn:  req.MtLimitBytesIn,
+		LimitBytesOut: req.MtLimitBytesOut,
+	}
+
+	if err := h.service.Create(c.Request.Context(), sub, mtCfg); err != nil {
 		response.Error(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	response.Created(c, sub)
+	response.Created(c, dto.SubscriptionToResponse(sub, nil))
 }
 
-// Get handles getting a subscription by ID
+// Get handles getting a subscription by ID, enriched with live MikroTik data.
 func (h *SubscriptionHandler) Get(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -55,7 +63,8 @@ func (h *SubscriptionHandler) Get(c *gin.Context) {
 		response.NotFound(c, err.Error())
 		return
 	}
-	response.OK(c, sub)
+	secretData, _ := h.service.GetPPPSecret(c.Request.Context(), sub) // nil OK — graceful degradation
+	response.OK(c, dto.SubscriptionToResponse(sub, secretData))
 }
 
 // List handles listing subscriptions for a specific router
@@ -72,7 +81,12 @@ func (h *SubscriptionHandler) List(c *gin.Context) {
 		response.InternalServerError(c, err.Error())
 		return
 	}
-	response.WithMeta(c, http.StatusOK, subs, &response.Meta{Total: count, Limit: limit, Offset: offset})
+	secretMap := h.service.GetPPPSecrets(c.Request.Context(), subs)
+	responses := make([]dto.SubscriptionResponse, len(subs))
+	for i := range subs {
+		responses[i] = dto.SubscriptionToResponse(&subs[i], secretMap[subs[i].Username])
+	}
+	response.WithMeta(c, http.StatusOK, responses, &response.Meta{Total: count, Limit: limit, Offset: offset})
 }
 
 // Update handles updating a subscription
@@ -87,15 +101,28 @@ func (h *SubscriptionHandler) Update(c *gin.Context) {
 		response.NotFound(c, err.Error())
 		return
 	}
-	if err := c.ShouldBindJSON(sub); err != nil {
+
+	var req dto.UpdateSubscriptionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}
-	if err := h.service.Update(c.Request.Context(), sub); err != nil {
+
+	req.ApplyTo(sub)
+
+	mtCfg := &service.PPPSecretConfig{
+		Service:       req.MtService,
+		LocalAddress:  req.MtLocalAddress,
+		Routes:        req.MtRoutes,
+		LimitBytesIn:  req.MtLimitBytesIn,
+		LimitBytesOut: req.MtLimitBytesOut,
+	}
+
+	if err := h.service.Update(c.Request.Context(), sub, mtCfg); err != nil {
 		response.InternalServerError(c, err.Error())
 		return
 	}
-	response.OK(c, sub)
+	response.OK(c, dto.SubscriptionToResponse(sub, nil))
 }
 
 // Delete handles deleting a subscription

@@ -144,8 +144,8 @@ func TestAPIBilling_GetInvoice_Found(t *testing.T) {
 	require.NoError(t, json.Unmarshal(w.Body.Bytes(), &resp))
 	data, ok := resp["data"].(map[string]interface{})
 	require.True(t, ok)
-	assert.Equal(t, invoiceID, data["ID"])
-	assert.NotEmpty(t, data["Status"])
+	assert.Equal(t, invoiceID, data["id"])
+	assert.NotEmpty(t, data["status"])
 }
 
 func TestAPIBilling_GetInvoice_NotFound(t *testing.T) {

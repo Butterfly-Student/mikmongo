@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"mikmongo/internal/dto"
 	"mikmongo/internal/service"
 	"mikmongo/pkg/response"
 )
@@ -27,7 +28,7 @@ func (h *BillingHandler) ListInvoices(c *gin.Context) {
 		response.InternalServerError(c, err.Error())
 		return
 	}
-	response.OK(c, invoices)
+	response.OK(c, dto.InvoicesToResponse(invoices))
 }
 
 // GetInvoice handles getting an invoice by ID
@@ -42,7 +43,7 @@ func (h *BillingHandler) GetInvoice(c *gin.Context) {
 		response.NotFound(c, err.Error())
 		return
 	}
-	response.OK(c, invoice)
+	response.OK(c, dto.InvoiceToResponse(invoice))
 }
 
 // GetOverdue handles getting overdue invoices
@@ -52,7 +53,7 @@ func (h *BillingHandler) GetOverdue(c *gin.Context) {
 		response.InternalServerError(c, err.Error())
 		return
 	}
-	response.OK(c, invoices)
+	response.OK(c, dto.InvoicesToResponse(invoices))
 }
 
 // CancelInvoice handles cancelling an invoice

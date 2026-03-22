@@ -25,7 +25,7 @@ func TestRegistration_Create(t *testing.T) {
 	logger := zap.NewNop()
 
 	routerSvc := service.NewRouterService(repos.RouterDeviceRepo, "test-key-16-bytes", nil, logger)
-	subSvc := service.NewSubscriptionService(repos.SubscriptionRepo, repos.BandwidthProfileRepo, repos.SystemSettingRepo, domain.NewSubscriptionDomain(), routerSvc)
+	subSvc := service.NewSubscriptionService(repos.SubscriptionRepo, repos.BandwidthProfileRepo, repos.SystemSettingRepo, domain.NewSubscriptionDomain(), routerSvc, nil)
 	customerSvc := service.NewCustomerService(repos.CustomerRepo, repos.SequenceCounterRepo, repos.BandwidthProfileRepo, domain.NewCustomerDomain(), routerSvc)
 	customerSvc.SetSubscriptionService(subSvc)
 	regSvc := service.NewRegistrationService(repos.CustomerRegistrationRepo, customerSvc, subSvc)
@@ -51,7 +51,7 @@ func TestRegistration_Approve_WithoutSubscription(t *testing.T) {
 	logger := zap.NewNop()
 
 	routerSvc := service.NewRouterService(repos.RouterDeviceRepo, "test-key-16-bytes", nil, logger)
-	subSvc := service.NewSubscriptionService(repos.SubscriptionRepo, repos.BandwidthProfileRepo, repos.SystemSettingRepo, domain.NewSubscriptionDomain(), routerSvc)
+	subSvc := service.NewSubscriptionService(repos.SubscriptionRepo, repos.BandwidthProfileRepo, repos.SystemSettingRepo, domain.NewSubscriptionDomain(), routerSvc, nil)
 	customerSvc := service.NewCustomerService(repos.CustomerRepo, repos.SequenceCounterRepo, repos.BandwidthProfileRepo, domain.NewCustomerDomain(), routerSvc)
 	customerSvc.SetSubscriptionService(subSvc)
 	regSvc := service.NewRegistrationService(repos.CustomerRegistrationRepo, customerSvc, subSvc)
@@ -85,7 +85,7 @@ func TestRegistration_Approve_WithSubscription(t *testing.T) {
 	logger := zap.NewNop()
 
 	routerSvc := service.NewRouterService(repos.RouterDeviceRepo, "test-key-16-bytes", nil, logger)
-	subSvc := service.NewSubscriptionService(repos.SubscriptionRepo, repos.BandwidthProfileRepo, repos.SystemSettingRepo, domain.NewSubscriptionDomain(), routerSvc)
+	subSvc := service.NewSubscriptionService(repos.SubscriptionRepo, repos.BandwidthProfileRepo, repos.SystemSettingRepo, domain.NewSubscriptionDomain(), routerSvc, nil)
 	customerSvc := service.NewCustomerService(repos.CustomerRepo, repos.SequenceCounterRepo, repos.BandwidthProfileRepo, domain.NewCustomerDomain(), routerSvc)
 	customerSvc.SetSubscriptionService(subSvc)
 	regSvc := service.NewRegistrationService(repos.CustomerRegistrationRepo, customerSvc, subSvc)
@@ -149,7 +149,7 @@ func TestRegistration_Reject(t *testing.T) {
 	logger := zap.NewNop()
 
 	routerSvc := service.NewRouterService(repos.RouterDeviceRepo, "test-key-16-bytes", nil, logger)
-	subSvc := service.NewSubscriptionService(repos.SubscriptionRepo, repos.BandwidthProfileRepo, repos.SystemSettingRepo, domain.NewSubscriptionDomain(), routerSvc)
+	subSvc := service.NewSubscriptionService(repos.SubscriptionRepo, repos.BandwidthProfileRepo, repos.SystemSettingRepo, domain.NewSubscriptionDomain(), routerSvc, nil)
 	customerSvc := service.NewCustomerService(repos.CustomerRepo, repos.SequenceCounterRepo, repos.BandwidthProfileRepo, domain.NewCustomerDomain(), routerSvc)
 	customerSvc.SetSubscriptionService(subSvc)
 	regSvc := service.NewRegistrationService(repos.CustomerRegistrationRepo, customerSvc, subSvc)
@@ -182,7 +182,7 @@ func TestRegistration_ListByStatus(t *testing.T) {
 	logger := zap.NewNop()
 
 	routerSvc := service.NewRouterService(repos.RouterDeviceRepo, "test-key-16-bytes", nil, logger)
-	subSvc := service.NewSubscriptionService(repos.SubscriptionRepo, repos.BandwidthProfileRepo, repos.SystemSettingRepo, domain.NewSubscriptionDomain(), routerSvc)
+	subSvc := service.NewSubscriptionService(repos.SubscriptionRepo, repos.BandwidthProfileRepo, repos.SystemSettingRepo, domain.NewSubscriptionDomain(), routerSvc, nil)
 	customerSvc := service.NewCustomerService(repos.CustomerRepo, repos.SequenceCounterRepo, repos.BandwidthProfileRepo, domain.NewCustomerDomain(), routerSvc)
 	customerSvc.SetSubscriptionService(subSvc)
 	regSvc := service.NewRegistrationService(repos.CustomerRegistrationRepo, customerSvc, subSvc)

@@ -25,9 +25,7 @@ type Payment struct {
 	GatewayName          *string        `gorm:"type:varchar(50)"`
 	GatewayTrxID         *string        `gorm:"type:varchar(150);index:,where:gateway_trx_id IS NOT NULL"`
 	GatewayResponse      *string        `gorm:"type:jsonb"`
-	XenditInvoiceID      *string        `gorm:"type:varchar(100);index:,where:xendit_invoice_id IS NOT NULL"`
-	XenditExternalID     *string        `gorm:"type:varchar(100)"`
-	XenditPaymentChannel *string        `gorm:"type:varchar(50)"`
+	GatewayPaymentURL    *string        `gorm:"type:text"`
 	ProofImage           *string        `gorm:"type:text"`
 	ReceiptNumber        *string        `gorm:"type:varchar(50)"`
 	Status               string         `gorm:"type:varchar(20);not null;default:'pending';check:status IN ('pending', 'confirmed', 'rejected', 'refunded');index:,where:deleted_at IS NULL"`

@@ -48,11 +48,6 @@ func up010(ctx context.Context, tx *sql.Tx) error {
 		gateway_trx_id   VARCHAR(150),
 		gateway_response JSONB,
 
-		-- Backward-compat Xendit fields
-		xendit_invoice_id      VARCHAR(100),
-		xendit_external_id     VARCHAR(100),
-		xendit_payment_channel VARCHAR(50),
-
 		-- Bukti Bayar
 		proof_image    TEXT,
 		receipt_number VARCHAR(50),
@@ -85,9 +80,8 @@ func up010(ctx context.Context, tx *sql.Tx) error {
 	CREATE INDEX IF NOT EXISTS idx_payments_date           ON payments(payment_date)   WHERE deleted_at IS NULL;
 	CREATE INDEX IF NOT EXISTS idx_payments_method         ON payments(payment_method) WHERE deleted_at IS NULL;
 	CREATE INDEX IF NOT EXISTS idx_payments_number         ON payments(payment_number);
-	CREATE INDEX IF NOT EXISTS idx_payments_gateway        ON payments(gateway_name, gateway_trx_id) WHERE gateway_trx_id IS NOT NULL;
-	CREATE INDEX IF NOT EXISTS idx_payments_xendit_invoice ON payments(xendit_invoice_id) WHERE xendit_invoice_id IS NOT NULL;
-	CREATE INDEX IF NOT EXISTS idx_payments_deleted        ON payments(deleted_at);
+	CREATE INDEX IF NOT EXISTS idx_payments_gateway ON payments(gateway_name, gateway_trx_id) WHERE gateway_trx_id IS NOT NULL;
+	CREATE INDEX IF NOT EXISTS idx_payments_deleted ON payments(deleted_at);
 
 	COMMENT ON TABLE  payments                IS 'Pembayaran dari pelanggan';
 	COMMENT ON COLUMN payments.remaining_amount IS 'Calculated: amount - allocated_amount (untuk advance payment)';

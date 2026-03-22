@@ -3,7 +3,7 @@ package middleware
 import (
 	"net/http"
 
-	casbincore "github.com/casbin/casbin/v2"
+	casbincore "github.com/casbin/casbin/v3"
 	"github.com/gin-gonic/gin"
 )
 

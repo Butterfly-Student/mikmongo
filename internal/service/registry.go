@@ -22,7 +22,7 @@ type Registry struct {
 	Router           *RouterService
 	Notification     *NotificationService
 	Report           *ReportService
-	Mikrotik         interface{} // MikroTik service registry (set after creation to avoid import cycle)
+	Mikrotik         interface{} // Mikrotik registry is set separately to avoid import cycle
 }
 
 // NewRegistry creates a new service registry
@@ -46,6 +46,7 @@ func NewRegistry(
 		repo.SystemSettingRepo,
 		d.Subscription,
 		router,
+		redisClient,
 	)
 
 	customerSvc := NewCustomerService(
@@ -91,7 +92,7 @@ func NewRegistry(
 	registration.SetNotificationService(notification)
 
 	auth := NewAuthService(repo.UserRepo, jwtService, redisClient)
-	bandwidth := NewBandwidthProfileService(repo.BandwidthProfileRepo, router)
+	bandwidth := NewBandwidthProfileService(repo.BandwidthProfileRepo, router, redisClient)
 
 	report := NewReportService(db)
 

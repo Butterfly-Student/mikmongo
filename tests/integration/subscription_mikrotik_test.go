@@ -11,9 +11,9 @@ import (
 	"mikmongo/internal/model"
 	"mikmongo/internal/repository/postgres"
 	"mikmongo/internal/service"
-	"mikmongo/pkg/mikrotik"
-	"mikmongo/pkg/mikrotik/client"
-	mkdomain "mikmongo/pkg/mikrotik/domain"
+	mikrotik "github.com/Butterfly-Student/go-ros"
+	"github.com/Butterfly-Student/go-ros/client"
+	mkdomain "github.com/Butterfly-Student/go-ros/domain"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -26,6 +26,7 @@ func TestSubscriptionMikroTikIntegration(t *testing.T) {
 	// Setup test suite
 	suite := SetupSuite(t)
 	defer suite.TearDownSuite(t)
+	defer suite.Cleanup(t)
 
 	// Get MikroTik connection details from env
 	mtHost := getEnv("TEST_MIKROTIK_HOST", "192.168.233.1")
@@ -62,6 +63,7 @@ func TestSubscriptionMikroTikIntegration(t *testing.T) {
 		settingRepo,
 		subDomain,
 		routerSvc,
+		nil,
 	)
 
 	// Create customer service
@@ -203,7 +205,6 @@ func TestSubscriptionMikroTikIntegration(t *testing.T) {
 	}
 
 	t.Run("Create Subscription - PPP Secret Created in MikroTik", func(t *testing.T) {
-		defer suite.Cleanup(t)
 
 		// Create router and profile
 		router := createTestRouter(t)
@@ -261,16 +262,14 @@ func TestSubscriptionMikroTikIntegration(t *testing.T) {
 		if exists {
 			t.Logf("✓ PPP secret '%s' exists in MikroTik", createdSub.Username)
 
-			// Verify secret details
+			// Verify secret details (RouterOS does not return passwords in print responses)
 			secret, _ := mt.PPP.GetSecretByName(suite.Ctx, createdSub.Username)
-			assert.Equal(t, createdSub.Password, secret.Password)
 			assert.Equal(t, profile.Name, secret.Profile)
-			t.Logf("✓ PPP secret has correct password and profile")
+			t.Logf("✓ PPP secret has correct profile")
 		}
 	})
 
 	t.Run("Activate Subscription - PPP Secret Enabled", func(t *testing.T) {
-		defer suite.Cleanup(t)
 
 		// Setup
 		router := createTestRouter(t)
@@ -322,7 +321,6 @@ func TestSubscriptionMikroTikIntegration(t *testing.T) {
 	})
 
 	t.Run("Suspend Subscription - PPP Secret Disabled", func(t *testing.T) {
-		defer suite.Cleanup(t)
 
 		// Setup
 		router := createTestRouter(t)
@@ -383,7 +381,6 @@ func TestSubscriptionMikroTikIntegration(t *testing.T) {
 	})
 
 	t.Run("Isolate Subscription - PPP Secret Profile Changed", func(t *testing.T) {
-		defer suite.Cleanup(t)
 
 		// Setup
 		router := createTestRouter(t)
@@ -445,7 +442,6 @@ func TestSubscriptionMikroTikIntegration(t *testing.T) {
 	})
 
 	t.Run("Restore Subscription - PPP Secret Profile Restored", func(t *testing.T) {
-		defer suite.Cleanup(t)
 
 		// Setup
 		router := createTestRouter(t)
@@ -509,7 +505,6 @@ func TestSubscriptionMikroTikIntegration(t *testing.T) {
 	})
 
 	t.Run("Terminate Subscription - PPP Secret Removed", func(t *testing.T) {
-		defer suite.Cleanup(t)
 
 		// Setup
 		router := createTestRouter(t)
@@ -570,7 +565,6 @@ func TestSubscriptionMikroTikIntegration(t *testing.T) {
 	})
 
 	t.Run("Full Lifecycle Test", func(t *testing.T) {
-		defer suite.Cleanup(t)
 
 		// Setup
 		router := createTestRouter(t)

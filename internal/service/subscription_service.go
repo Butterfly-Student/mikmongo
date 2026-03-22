@@ -2,7 +2,9 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"sync"
 	"time"
 
 	mkdomain "github.com/Butterfly-Student/go-ros/domain"
@@ -13,6 +15,15 @@ import (
 	"mikmongo/internal/repository"
 )
 
+// PPPSecretConfig holds MikroTik-only fields for PPP secrets (not stored in DB).
+type PPPSecretConfig struct {
+	Service       *string
+	LocalAddress  *string
+	Routes        *string
+	LimitBytesIn  *int64
+	LimitBytesOut *int64
+}
+
 // SubscriptionService handles subscription business logic
 type SubscriptionService struct {
 	subRepo        repository.SubscriptionRepository
@@ -20,6 +31,7 @@ type SubscriptionService struct {
 	settingRepo    repository.SystemSettingRepository
 	subDomain      *subscription.Domain
 	routerProvider MikrotikProvider
+	cache          CacheClient // nil → caching disabled (graceful degradation)
 }
 
 // NewSubscriptionService creates a new subscription service
@@ -29,6 +41,7 @@ func NewSubscriptionService(
 	settingRepo repository.SystemSettingRepository,
 	subDomain *subscription.Domain,
 	routerProvider MikrotikProvider,
+	cache CacheClient,
 ) *SubscriptionService {
 	return &SubscriptionService{
 		subRepo:        subRepo,
@@ -36,11 +49,16 @@ func NewSubscriptionService(
 		settingRepo:    settingRepo,
 		subDomain:      subDomain,
 		routerProvider: routerProvider,
+		cache:          cache,
 	}
 }
 
-// Create creates a new subscription and creates PPP secret in MikroTik
-func (s *SubscriptionService) Create(ctx context.Context, sub *model.Subscription) error {
+// Create creates a new subscription and creates PPP secret in MikroTik.
+// mtCfg carries optional MikroTik-only fields; pass nil to use defaults.
+func (s *SubscriptionService) Create(ctx context.Context, sub *model.Subscription, mtCfg *PPPSecretConfig) error {
+	if mtCfg == nil {
+		mtCfg = &PPPSecretConfig{}
+	}
 	// Validate profile belongs to the same router
 	planID, err := uuid.Parse(sub.PlanID)
 	if err != nil {
@@ -74,7 +92,7 @@ func (s *SubscriptionService) Create(ctx context.Context, sub *model.Subscriptio
 	}
 
 	// Create PPP secret in MikroTik
-	if err := s.createInMikroTik(ctx, mt, sub, profile); err != nil {
+	if err := s.createInMikroTik(ctx, mt, sub, profile, mtCfg); err != nil {
 		return fmt.Errorf("failed to create in mikrotik: %w", err)
 	}
 
@@ -85,12 +103,32 @@ func (s *SubscriptionService) Create(ctx context.Context, sub *model.Subscriptio
 		return fmt.Errorf("failed to save subscription: %w", err)
 	}
 
+	s.invalidateSub(ctx, sub.ID, sub.RouterID, sub.Username)
 	return nil
 }
 
-// GetByID gets subscription by ID
+// GetByID gets subscription by ID with cache-aside.
 func (s *SubscriptionService) GetByID(ctx context.Context, id uuid.UUID) (*model.Subscription, error) {
-	return s.subRepo.GetByID(ctx, id)
+	if s.cache != nil {
+		if raw, err := s.cache.Get(ctx, keySubscription(id.String())); err == nil {
+			var m model.Subscription
+			if json.Unmarshal([]byte(raw), &m) == nil {
+				return &m, nil
+			}
+		}
+	}
+
+	m, err := s.subRepo.GetByID(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.cache != nil {
+		if b, err := json.Marshal(m); err == nil {
+			_ = s.cache.Set(ctx, keySubscription(id.String()), b, ttlSub)
+		}
+	}
+	return m, nil
 }
 
 // GetByCustomerID gets subscriptions by customer ID
@@ -123,8 +161,13 @@ func (s *SubscriptionService) ListByRouterID(ctx context.Context, routerID uuid.
 	return subs, count, err
 }
 
-// Update updates a subscription and updates PPP secret in MikroTik
-func (s *SubscriptionService) Update(ctx context.Context, sub *model.Subscription) error {
+// Update updates a subscription and updates PPP secret in MikroTik.
+// mtCfg carries optional MikroTik-only fields; pass nil to use defaults.
+func (s *SubscriptionService) Update(ctx context.Context, sub *model.Subscription, mtCfg *PPPSecretConfig) error {
+	if mtCfg == nil {
+		mtCfg = &PPPSecretConfig{}
+	}
+
 	// Get existing subscription
 	existingSub, err := s.subRepo.GetByID(ctx, uuid.MustParse(sub.ID))
 	if err != nil {
@@ -161,17 +204,18 @@ func (s *SubscriptionService) Update(ctx context.Context, sub *model.Subscriptio
 	}
 
 	// Update PPP secret in MikroTik
-	if err := s.updateInMikroTik(ctx, mt, sub, profile); err != nil {
+	if err := s.updateInMikroTik(ctx, mt, sub, profile, mtCfg); err != nil {
 		return fmt.Errorf("failed to update in mikrotik: %w", err)
 	}
 
 	// Update database only if MikroTik succeeded
 	if err := s.subRepo.Update(ctx, sub); err != nil {
-		// Rollback: restore old data in MikroTik
-		_ = s.updateInMikroTik(ctx, mt, existingSub, profile)
+		// Rollback: restore old data in MikroTik (no extra MikroTik opts for rollback)
+		_ = s.updateInMikroTik(ctx, mt, existingSub, profile, &PPPSecretConfig{})
 		return fmt.Errorf("failed to update subscription: %w", err)
 	}
 
+	s.invalidateSub(ctx, sub.ID, sub.RouterID, sub.Username)
 	return nil
 }
 
@@ -195,8 +239,12 @@ func (s *SubscriptionService) Delete(ctx context.Context, id uuid.UUID) error {
 		return fmt.Errorf("failed to remove from mikrotik: %w", err)
 	}
 
-	// Delete from database only if MikroTik succeeded
-	return s.subRepo.Delete(ctx, id)
+	if err := s.subRepo.Delete(ctx, id); err != nil {
+		return err
+	}
+
+	s.invalidateSub(ctx, sub.ID, sub.RouterID, sub.Username)
+	return nil
 }
 
 // Activate activates a subscription: enable PPP secret + set status=active
@@ -223,11 +271,15 @@ func (s *SubscriptionService) Activate(ctx context.Context, id uuid.UUID) error 
 	now := time.Now()
 	sub.Status = "active"
 	sub.ActivatedAt = &now
-	return s.subRepo.Update(ctx, sub)
+	if err := s.subRepo.Update(ctx, sub); err != nil {
+		return err
+	}
+	s.invalidateSub(ctx, sub.ID, sub.RouterID, sub.Username)
+	return nil
 }
 
-// createInMikroTik creates PPP secret in MikroTik and captures the RouterOS ID
-func (s *SubscriptionService) createInMikroTik(ctx context.Context, mt MikrotikClientAdapter, sub *model.Subscription, profile *model.BandwidthProfile) error {
+// createInMikroTik creates PPP secret in MikroTik and captures the RouterOS ID.
+func (s *SubscriptionService) createInMikroTik(ctx context.Context, mt MikrotikClientAdapter, sub *model.Subscription, profile *model.BandwidthProfile, mtCfg *PPPSecretConfig) error {
 	secret := &mkdomain.PPPSecret{
 		Name:     sub.Username,
 		Password: sub.Password,
@@ -236,6 +288,23 @@ func (s *SubscriptionService) createInMikroTik(ctx context.Context, mt MikrotikC
 	}
 	if sub.StaticIP != nil {
 		secret.RemoteAddress = *sub.StaticIP
+	}
+	if mtCfg != nil {
+		if mtCfg.Service != nil {
+			secret.Service = *mtCfg.Service
+		}
+		if mtCfg.LocalAddress != nil {
+			secret.LocalAddress = *mtCfg.LocalAddress
+		}
+		if mtCfg.Routes != nil {
+			secret.Routes = *mtCfg.Routes
+		}
+		if mtCfg.LimitBytesIn != nil {
+			secret.LimitBytesIn = *mtCfg.LimitBytesIn
+		}
+		if mtCfg.LimitBytesOut != nil {
+			secret.LimitBytesOut = *mtCfg.LimitBytesOut
+		}
 	}
 
 	if err := mt.AddSecret(ctx, secret); err != nil {
@@ -262,8 +331,8 @@ func (s *SubscriptionService) getPPPID(ctx context.Context, mt MikrotikClientAda
 	return existing.ID, nil
 }
 
-// updateInMikroTik updates PPP secret in MikroTik
-func (s *SubscriptionService) updateInMikroTik(ctx context.Context, mt MikrotikClientAdapter, sub *model.Subscription, profile *model.BandwidthProfile) error {
+// updateInMikroTik updates PPP secret in MikroTik.
+func (s *SubscriptionService) updateInMikroTik(ctx context.Context, mt MikrotikClientAdapter, sub *model.Subscription, profile *model.BandwidthProfile, mtCfg *PPPSecretConfig) error {
 	secret := &mkdomain.PPPSecret{
 		Name:     sub.Username,
 		Password: sub.Password,
@@ -272,6 +341,23 @@ func (s *SubscriptionService) updateInMikroTik(ctx context.Context, mt MikrotikC
 	}
 	if sub.StaticIP != nil {
 		secret.RemoteAddress = *sub.StaticIP
+	}
+	if mtCfg != nil {
+		if mtCfg.Service != nil {
+			secret.Service = *mtCfg.Service
+		}
+		if mtCfg.LocalAddress != nil {
+			secret.LocalAddress = *mtCfg.LocalAddress
+		}
+		if mtCfg.Routes != nil {
+			secret.Routes = *mtCfg.Routes
+		}
+		if mtCfg.LimitBytesIn != nil {
+			secret.LimitBytesIn = *mtCfg.LimitBytesIn
+		}
+		if mtCfg.LimitBytesOut != nil {
+			secret.LimitBytesOut = *mtCfg.LimitBytesOut
+		}
 	}
 
 	id, err := s.getPPPID(ctx, mt, sub)
@@ -325,7 +411,11 @@ func (s *SubscriptionService) Isolate(ctx context.Context, id uuid.UUID, reason 
 	r := reason
 	sub.SuspendReason = &r
 	sub.Status = "isolated"
-	return s.subRepo.Update(ctx, sub)
+	if err := s.subRepo.Update(ctx, sub); err != nil {
+		return err
+	}
+	s.invalidateSub(ctx, sub.ID, sub.RouterID, sub.Username)
+	return nil
 }
 
 // applyProfile sets a new profile name on the PPP secret
@@ -365,7 +455,11 @@ func (s *SubscriptionService) Restore(ctx context.Context, id uuid.UUID) error {
 
 	sub.Status = "active"
 	sub.SuspendReason = nil
-	return s.subRepo.Update(ctx, sub)
+	if err := s.subRepo.Update(ctx, sub); err != nil {
+		return err
+	}
+	s.invalidateSub(ctx, sub.ID, sub.RouterID, sub.Username)
+	return nil
 }
 
 // Suspend disables the PPP secret on MikroTik and marks the subscription as suspended
@@ -388,7 +482,11 @@ func (s *SubscriptionService) Suspend(ctx context.Context, id uuid.UUID, reason 
 	r := reason
 	sub.SuspendReason = &r
 	sub.Status = "suspended"
-	return s.subRepo.Update(ctx, sub)
+	if err := s.subRepo.Update(ctx, sub); err != nil {
+		return err
+	}
+	s.invalidateSub(ctx, sub.ID, sub.RouterID, sub.Username)
+	return nil
 }
 
 // disableInMikroTik disables the PPP secret
@@ -429,7 +527,11 @@ func (s *SubscriptionService) Terminate(ctx context.Context, id uuid.UUID) error
 	now := time.Now()
 	sub.Status = "terminated"
 	sub.TerminatedAt = &now
-	return s.subRepo.Update(ctx, sub)
+	if err := s.subRepo.Update(ctx, sub); err != nil {
+		return err
+	}
+	s.invalidateSub(ctx, sub.ID, sub.RouterID, sub.Username)
+	return nil
 }
 
 // removeFromMikroTik removes the PPP secret from MikroTik
@@ -439,4 +541,77 @@ func (s *SubscriptionService) removeFromMikroTik(ctx context.Context, mt Mikroti
 		return nil // already gone
 	}
 	return mt.RemoveSecret(ctx, id)
+}
+
+// GetPPPSecret fetches the live PPP secret from MikroTik with a short cache.
+// Returns nil if the router is unreachable — callers must handle gracefully.
+func (s *SubscriptionService) GetPPPSecret(ctx context.Context, sub *model.Subscription) (*mkdomain.PPPSecret, error) {
+	cacheKey := keyMtSecret(sub.RouterID, sub.Username)
+
+	if s.cache != nil {
+		if raw, err := s.cache.Get(ctx, cacheKey); err == nil {
+			var secret mkdomain.PPPSecret
+			if json.Unmarshal([]byte(raw), &secret) == nil {
+				return &secret, nil
+			}
+		}
+	}
+
+	routerID, err := uuid.Parse(sub.RouterID)
+	if err != nil {
+		return nil, err
+	}
+	mt, err := s.routerProvider.GetMikrotikAdapter(ctx, routerID)
+	if err != nil {
+		return nil, err
+	}
+	secret, err := mt.GetSecretByName(ctx, sub.Username)
+	if err != nil {
+		return nil, err
+	}
+
+	if s.cache != nil {
+		if b, err := json.Marshal(secret); err == nil {
+			_ = s.cache.Set(ctx, cacheKey, b, ttlMtSecret)
+		}
+	}
+	return secret, nil
+}
+
+// GetPPPSecretsBatch fetches live PPP secret data for a slice of subscriptions concurrently.
+// Returns map[username]*PPPSecret. Missing entries mean router was unreachable for that item.
+func (s *SubscriptionService) GetPPPSecrets(ctx context.Context, subs []model.Subscription) map[string]*mkdomain.PPPSecret {
+	if len(subs) == 0 {
+		return nil
+	}
+	type result struct {
+		username string
+		data     *mkdomain.PPPSecret
+	}
+	ch := make(chan result, len(subs))
+	var wg sync.WaitGroup
+	for i := range subs {
+		wg.Add(1)
+		go func(sub *model.Subscription) {
+			defer wg.Done()
+			secret, err := s.GetPPPSecret(ctx, sub)
+			if err == nil {
+				ch <- result{sub.Username, secret}
+			}
+		}(&subs[i])
+	}
+	wg.Wait()
+	close(ch)
+	m := make(map[string]*mkdomain.PPPSecret, len(subs))
+	for r := range ch {
+		m[r.username] = r.data
+	}
+	return m
+}
+
+// invalidateSub removes cached DB model and MikroTik data for a subscription.
+func (s *SubscriptionService) invalidateSub(ctx context.Context, id, routerID, username string) {
+	if s.cache != nil {
+		_ = s.cache.Del(ctx, keySubscription(id), keyMtSecret(routerID, username))
+	}
 }

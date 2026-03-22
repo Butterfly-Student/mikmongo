@@ -32,7 +32,7 @@ func buildSubTestDeps(suite *TestSuite) (
 	subRepo := postgres.NewSubscriptionRepository(suite.DB)
 
 	routerSvc := service.NewRouterService(routerRepo, "test-key", nil, logger)
-	subSvc = service.NewSubscriptionService(subRepo, profileRepo, nil, domain.NewSubscriptionDomain(), routerSvc)
+	subSvc = service.NewSubscriptionService(subRepo, profileRepo, nil, domain.NewSubscriptionDomain(), routerSvc, nil)
 	customerSvc = service.NewCustomerService(customerRepo, seqRepo, profileRepo, domain.NewCustomerDomain(), routerSvc)
 	customerSvc.SetSubscriptionService(subSvc)
 	return

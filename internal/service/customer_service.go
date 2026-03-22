@@ -67,6 +67,10 @@ func (s *CustomerService) Create(ctx context.Context, c *model.Customer) error {
 		}
 		c.CustomerCode = code
 	}
+	if c.Username == nil || *c.Username == "" {
+		u := generateUsernameFromFullName(c.FullName)
+		c.Username = &u
+	}
 	c.IsActive = true
 	return s.repo.Create(ctx, c)
 }
@@ -85,6 +89,10 @@ func (s *CustomerService) CreateWithSubscription(ctx context.Context, customer *
 			return nil, nil, fmt.Errorf("failed to generate customer code: %w", err)
 		}
 		customer.CustomerCode = code
+	}
+	if customer.Username == nil || *customer.Username == "" {
+		u := generateUsernameFromFullName(customer.FullName)
+		customer.Username = &u
 	}
 	customer.IsActive = true
 
@@ -126,7 +134,7 @@ func (s *CustomerService) CreateWithSubscription(ctx context.Context, customer *
 
 	// Create subscription
 	if s.subscriptionSvc != nil {
-		if err := s.subscriptionSvc.Create(ctx, subscription); err != nil {
+		if err := s.subscriptionSvc.Create(ctx, subscription, nil); err != nil {
 			// Rollback: delete customer
 			customerID, _ := uuid.Parse(customer.ID)
 			_ = s.repo.Delete(ctx, customerID)
@@ -310,9 +318,15 @@ func (s *CustomerService) SetPortalPassword(ctx context.Context, id uuid.UUID, p
 	return s.repo.Update(ctx, c)
 }
 
-// AuthPortal authenticates a customer for portal access
-func (s *CustomerService) AuthPortal(ctx context.Context, customerCode, password string) (*model.Customer, error) {
-	c, err := s.GetByCode(ctx, customerCode)
+// AuthPortal authenticates a customer for portal access using username or email
+func (s *CustomerService) AuthPortal(ctx context.Context, identifier, password string) (*model.Customer, error) {
+	var c *model.Customer
+	var err error
+
+	c, err = s.repo.GetByUsername(ctx, identifier)
+	if err != nil {
+		c, err = s.repo.GetByEmail(ctx, identifier)
+	}
 	if err != nil {
 		return nil, errors.New("invalid credentials")
 	}

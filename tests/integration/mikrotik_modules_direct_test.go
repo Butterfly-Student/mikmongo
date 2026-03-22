@@ -14,7 +14,7 @@ import (
 	"mikmongo/internal/repository/postgres"
 	"mikmongo/internal/service"
 	mikrotiksvc "mikmongo/internal/service/mikrotik"
-	mkdomain "mikmongo/pkg/mikrotik/domain"
+	mkdomain "github.com/Butterfly-Student/go-ros/domain"
 )
 
 // TestMikrotikModulesDirect tests all MikroTik modules directly using services
@@ -22,6 +22,7 @@ func TestMikrotikModulesDirect(t *testing.T) {
 	// Setup test suite
 	suite := SetupSuite(t)
 	defer suite.TearDownSuite(t)
+	defer suite.Cleanup(t)
 
 	// Get MikroTik connection details from env
 	mtHost := getEnv("TEST_MIKROTIK_HOST", "192.168.233.1")
@@ -65,7 +66,6 @@ func TestMikrotikModulesDirect(t *testing.T) {
 	}
 
 	t.Run("PPP Module - Complete CRUD", func(t *testing.T) {
-		defer suite.Cleanup(t)
 		router := createTestRouter(t)
 		routerUUID := uuid.MustParse(router.ID)
 
@@ -123,7 +123,6 @@ func TestMikrotikModulesDirect(t *testing.T) {
 	})
 
 	t.Run("Hotspot Module - Complete CRUD", func(t *testing.T) {
-		defer suite.Cleanup(t)
 		router := createTestRouter(t)
 		routerUUID := uuid.MustParse(router.ID)
 
@@ -214,7 +213,6 @@ func TestMikrotikModulesDirect(t *testing.T) {
 	})
 
 	t.Run("Queue Module", func(t *testing.T) {
-		defer suite.Cleanup(t)
 		router := createTestRouter(t)
 		routerUUID := uuid.MustParse(router.ID)
 
@@ -230,7 +228,6 @@ func TestMikrotikModulesDirect(t *testing.T) {
 	})
 
 	t.Run("Firewall Module", func(t *testing.T) {
-		defer suite.Cleanup(t)
 		router := createTestRouter(t)
 		routerUUID := uuid.MustParse(router.ID)
 
@@ -256,7 +253,6 @@ func TestMikrotikModulesDirect(t *testing.T) {
 	})
 
 	t.Run("IP Pool Module", func(t *testing.T) {
-		defer suite.Cleanup(t)
 		router := createTestRouter(t)
 		routerUUID := uuid.MustParse(router.ID)
 
@@ -299,7 +295,6 @@ func TestMikrotikModulesDirect(t *testing.T) {
 	})
 
 	t.Run("IP Address Module", func(t *testing.T) {
-		defer suite.Cleanup(t)
 		router := createTestRouter(t)
 		routerUUID := uuid.MustParse(router.ID)
 
@@ -315,7 +310,6 @@ func TestMikrotikModulesDirect(t *testing.T) {
 	})
 
 	t.Run("Monitor Module", func(t *testing.T) {
-		defer suite.Cleanup(t)
 		router := createTestRouter(t)
 		routerUUID := uuid.MustParse(router.ID)
 
@@ -340,7 +334,6 @@ func TestMikrotikModulesDirect(t *testing.T) {
 	})
 
 	t.Run("Report Module", func(t *testing.T) {
-		defer suite.Cleanup(t)
 		router := createTestRouter(t)
 		routerUUID := uuid.MustParse(router.ID)
 
@@ -378,7 +371,6 @@ func TestMikrotikModulesDirect(t *testing.T) {
 	})
 
 	t.Run("All Modules Integration", func(t *testing.T) {
-		defer suite.Cleanup(t)
 		router := createTestRouter(t)
 		routerUUID := uuid.MustParse(router.ID)
 

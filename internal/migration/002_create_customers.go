@@ -23,6 +23,7 @@ func up002(ctx context.Context, tx *sql.Tx) error {
 
 		-- Identitas
 		full_name  VARCHAR(100) NOT NULL,
+		username   VARCHAR(100) UNIQUE,
 		email      VARCHAR(100) UNIQUE,
 		phone      VARCHAR(20)  NOT NULL,
 		id_card_number VARCHAR(30),
@@ -53,6 +54,7 @@ func up002(ctx context.Context, tx *sql.Tx) error {
 	CREATE INDEX IF NOT EXISTS idx_customers_is_active ON customers(is_active) WHERE deleted_at IS NULL;
 	CREATE INDEX IF NOT EXISTS idx_customers_phone    ON customers(phone);
 	CREATE INDEX IF NOT EXISTS idx_customers_email    ON customers(email)   WHERE email IS NOT NULL;
+	CREATE UNIQUE INDEX IF NOT EXISTS idx_customers_username ON customers(username) WHERE username IS NOT NULL AND deleted_at IS NULL;
 	CREATE INDEX IF NOT EXISTS idx_customers_deleted  ON customers(deleted_at);
 
 	COMMENT ON TABLE  customers                IS 'Data identitas pelanggan ISP (konfigurasi layanan di tabel subscriptions)';

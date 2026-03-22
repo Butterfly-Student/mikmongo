@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"mikmongo/internal/model"
+	"mikmongo/internal/dto"
 	"mikmongo/internal/service"
 	"mikmongo/pkg/response"
 )
@@ -20,16 +20,6 @@ func NewBandwidthProfileHandler(svc *service.BandwidthProfileService) *Bandwidth
 	return &BandwidthProfileHandler{service: svc}
 }
 
-// CreateRequest represents the request body for creating a bandwidth profile
-type CreateProfileRequest struct {
-	ProfileCode   string  `json:"profile_code" binding:"required"`
-	Name          string  `json:"name" binding:"required"`
-	Description   string  `json:"description,omitempty"`
-	PriceMonthly  float64 `json:"price_monthly" binding:"required"`
-	DownloadSpeed int64   `json:"download_speed" binding:"required"`
-	UploadSpeed   int64   `json:"upload_speed" binding:"required"`
-}
-
 // Create handles bandwidth profile creation for a specific router
 func (h *BandwidthProfileHandler) Create(c *gin.Context) {
 	routerID, err := uuid.Parse(c.Param("router_id"))
@@ -38,33 +28,32 @@ func (h *BandwidthProfileHandler) Create(c *gin.Context) {
 		return
 	}
 
-	var req CreateProfileRequest
+	var req dto.CreateBandwidthProfileRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}
 
-	profile := model.BandwidthProfile{
-		RouterID:      routerID.String(),
-		ProfileCode:   req.ProfileCode,
-		Name:          req.Name,
-		PriceMonthly:  req.PriceMonthly,
-		DownloadSpeed: req.DownloadSpeed,
-		UploadSpeed:   req.UploadSpeed,
+	profile := req.ToModel(routerID.String())
+
+	mtCfg := &service.PPPProfileConfig{
+		LocalAddress:   req.MtLocalAddress,
+		RemoteAddress:  req.MtRemoteAddress,
+		ParentQueue:    req.MtParentQueue,
+		QueueType:      req.MtQueueType,
+		DNSServer:      req.MtDNSServer,
+		SessionTimeout: req.MtSessionTimeout,
+		IdleTimeout:    req.MtIdleTimeout,
 	}
 
-	if req.Description != "" {
-		profile.Description = &req.Description
-	}
-
-	if err := h.service.Create(c.Request.Context(), &profile); err != nil {
+	if err := h.service.Create(c.Request.Context(), profile, mtCfg); err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	response.Created(c, profile)
+	response.Created(c, dto.ProfileToResponse(profile, nil))
 }
 
-// Get handles getting a bandwidth profile by ID
+// Get handles getting a bandwidth profile by ID, enriched with live MikroTik data.
 func (h *BandwidthProfileHandler) Get(c *gin.Context) {
 	id, err := uuid.Parse(c.Param("id"))
 	if err != nil {
@@ -76,7 +65,8 @@ func (h *BandwidthProfileHandler) Get(c *gin.Context) {
 		response.NotFound(c, err.Error())
 		return
 	}
-	response.OK(c, profile)
+	pppData, _ := h.service.GetPPPProfile(c.Request.Context(), profile) // nil OK — graceful degradation
+	response.OK(c, dto.ProfileToResponse(profile, pppData))
 }
 
 // List handles listing bandwidth profiles for a specific router
@@ -93,7 +83,12 @@ func (h *BandwidthProfileHandler) List(c *gin.Context) {
 		response.InternalServerError(c, err.Error())
 		return
 	}
-	response.WithMeta(c, http.StatusOK, profiles, &response.Meta{Total: count, Limit: limit, Offset: offset})
+	mtMap := h.service.GetPPPProfiles(c.Request.Context(), profiles)
+	responses := make([]dto.BandwidthProfileResponse, len(profiles))
+	for i := range profiles {
+		responses[i] = dto.ProfileToResponse(&profiles[i], mtMap[profiles[i].Name])
+	}
+	response.WithMeta(c, http.StatusOK, responses, &response.Meta{Total: count, Limit: limit, Offset: offset})
 }
 
 // Update handles updating a bandwidth profile
@@ -108,15 +103,30 @@ func (h *BandwidthProfileHandler) Update(c *gin.Context) {
 		response.NotFound(c, err.Error())
 		return
 	}
-	if err := c.ShouldBindJSON(profile); err != nil {
+
+	var req dto.UpdateBandwidthProfileRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}
-	if err := h.service.Update(c.Request.Context(), profile); err != nil {
+
+	req.ApplyTo(profile)
+
+	mtCfg := &service.PPPProfileConfig{
+		LocalAddress:   req.MtLocalAddress,
+		RemoteAddress:  req.MtRemoteAddress,
+		ParentQueue:    req.MtParentQueue,
+		QueueType:      req.MtQueueType,
+		DNSServer:      req.MtDNSServer,
+		SessionTimeout: req.MtSessionTimeout,
+		IdleTimeout:    req.MtIdleTimeout,
+	}
+
+	if err := h.service.Update(c.Request.Context(), profile, mtCfg); err != nil {
 		response.InternalServerError(c, err.Error())
 		return
 	}
-	response.OK(c, profile)
+	response.OK(c, dto.ProfileToResponse(profile, nil))
 }
 
 // Delete handles deleting a bandwidth profile

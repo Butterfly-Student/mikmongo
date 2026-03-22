@@ -35,6 +35,14 @@ func (m *MockCustomerRepository) GetByEmail(ctx context.Context, email string) (
 	return args.Get(0).(*model.Customer), args.Error(1)
 }
 
+func (m *MockCustomerRepository) GetByUsername(ctx context.Context, username string) (*model.Customer, error) {
+	args := m.Called(ctx, username)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*model.Customer), args.Error(1)
+}
+
 func (m *MockCustomerRepository) Update(ctx context.Context, customer *model.Customer) error {
 	args := m.Called(ctx, customer)
 	return args.Error(0)

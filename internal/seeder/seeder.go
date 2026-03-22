@@ -6,20 +6,9 @@ import (
 	"log"
 )
 
-// Config holds seed configuration from environment variables.
+// Config holds minimal seed configuration.
 type Config struct {
-	AdminEmail    string
-	AdminPassword string
-	AdminName     string
-	AdminPhone    string
-
-	RouterName     string
-	RouterAddress  string
-	RouterAPIPort  int
-	RouterUsername string
-	RouterPassword string
-
-	EncryptionKey string // JWT_SECRET, used for AES-GCM encryption
+	EncryptionKey string // JWT_SECRET, used for AES-GCM encryption of router passwords
 }
 
 // Seeder runs idempotent seed functions against the database.
@@ -39,8 +28,10 @@ func (s *Seeder) Run(ctx context.Context) error {
 		name string
 		fn   func(context.Context) error
 	}{
-		{"users", s.seedUser},
-		{"router", s.seedRouter},
+		{"users", s.seedUsers},
+		{"routers", s.seedRouters},
+		{"customers", s.seedCustomers},
+		{"casbin", s.seedCasbin},
 		{"system_settings", s.seedSystemSettings},
 		{"message_templates", s.seedMessageTemplates},
 		{"sequence_counters", s.seedSequenceCounters},

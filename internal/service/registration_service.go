@@ -97,7 +97,7 @@ func (s *RegistrationService) Approve(ctx context.Context, regID uuid.UUID, appr
 			Username:   reg.Phone,
 			Status:     "pending",
 		}
-		if err := s.subscriptionSvc.Create(ctx, sub); err == nil {
+		if err := s.subscriptionSvc.Create(ctx, sub, nil); err == nil {
 			username = sub.Username
 			password = sub.Password
 		}

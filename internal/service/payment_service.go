@@ -10,6 +10,7 @@ import (
 	"mikmongo/internal/domain/payment"
 	"mikmongo/internal/model"
 	"mikmongo/internal/repository"
+	gateway "mikmongo/pkg/payment"
 )
 
 // PaymentService handles payment business logic
@@ -86,21 +87,9 @@ func (s *PaymentService) GetPayment(ctx context.Context, id uuid.UUID) (*model.P
 	return s.paymentRepo.GetByID(ctx, id)
 }
 
-// GetByCustomer gets payments for a customer by listing all and filtering by CustomerID
+// GetByCustomer gets payments for a customer.
 func (s *PaymentService) GetByCustomer(ctx context.Context, customerID uuid.UUID) ([]model.Payment, error) {
-	// PaymentRepository has no GetByCustomerID; use List and filter
-	all, err := s.paymentRepo.List(ctx, 10000, 0)
-	if err != nil {
-		return nil, err
-	}
-	customerIDStr := customerID.String()
-	var result []model.Payment
-	for _, p := range all {
-		if p.CustomerID == customerIDStr {
-			result = append(result, p)
-		}
-	}
-	return result, nil
+	return s.paymentRepo.GetByCustomerID(ctx, customerID)
 }
 
 // List lists payments
@@ -189,7 +178,12 @@ func (s *PaymentService) Confirm(ctx context.Context, paymentID uuid.UUID, proce
 
 		now := time.Now()
 		p.Status = "confirmed"
-		p.ProcessedBy = &processedByID
+		// Only set ProcessedBy if processedByID is a valid UUID (gateway-sourced confirmations are not UUIDs).
+		if _, err := uuid.Parse(processedByID); err == nil {
+			p.ProcessedBy = &processedByID
+		} else {
+			p.ProcessedBy = nil
+		}
 		p.ProcessedAt = &now
 		p.AllocatedAmount = totalAllocated
 		return txPayment.Update(ctx, p)
@@ -291,4 +285,46 @@ func (s *PaymentService) UploadProof(ctx context.Context, paymentID uuid.UUID, i
 	}
 	p.ProofImage = &imageURL
 	return s.paymentRepo.Update(ctx, p)
+}
+
+// SetGatewayInfo stores gateway data on a payment after an invoice has been created.
+// Returns an error if a gateway invoice already exists for this payment to prevent
+// orphaned invoices from being silently overwritten.
+func (s *PaymentService) SetGatewayInfo(
+	ctx context.Context,
+	paymentID uuid.UUID,
+	gatewayName, gatewayTrxID, paymentURL, rawJSON string,
+) error {
+	p, err := s.paymentRepo.GetByID(ctx, paymentID)
+	if err != nil {
+		return err
+	}
+	if p.GatewayTrxID != nil && *p.GatewayTrxID != "" {
+		return fmt.Errorf("payment %s already has a gateway invoice (%s), cancel it before creating a new one", paymentID, *p.GatewayTrxID)
+	}
+	p.GatewayName = &gatewayName
+	p.GatewayTrxID = &gatewayTrxID
+	p.GatewayPaymentURL = &paymentURL
+	p.GatewayResponse = &rawJSON
+	return s.paymentRepo.Update(ctx, p)
+}
+
+// HandleGatewayWebhook processes a parsed webhook event from a payment gateway.
+// It looks up the payment by UUID (the gateway's external_id) and confirms or rejects it.
+func (s *PaymentService) HandleGatewayWebhook(ctx context.Context, event *gateway.WebhookEvent) error {
+	paymentID, err := uuid.Parse(event.ExternalID)
+	if err != nil {
+		return fmt.Errorf("gateway webhook: invalid external_id %q: %w", event.ExternalID, err)
+	}
+	switch event.Status {
+	case "confirmed":
+		return s.Confirm(ctx, paymentID, "gateway:"+event.GatewayID)
+	case "rejected":
+		return s.Reject(ctx, paymentID, "gateway: "+event.Status)
+	case "pending":
+		return nil // transitional status — no action needed
+	default:
+		// Return an error so the gateway retries; unhandled statuses should not be silently acknowledged.
+		return fmt.Errorf("gateway webhook: unhandled status %q for payment %s", event.Status, paymentID)
+	}
 }

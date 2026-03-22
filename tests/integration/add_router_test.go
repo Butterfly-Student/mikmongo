@@ -10,11 +10,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap"
+	mikrotik "github.com/Butterfly-Student/go-ros"
+	"github.com/Butterfly-Student/go-ros/client"
 	"mikmongo/internal/model"
 	"mikmongo/internal/repository/postgres"
 	"mikmongo/internal/service"
-	"mikmongo/pkg/mikrotik"
-	"mikmongo/pkg/mikrotik/client"
 	"mikmongo/tests/integration/testutil"
 )
 

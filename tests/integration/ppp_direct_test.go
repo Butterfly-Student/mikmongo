@@ -8,9 +8,9 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"mikmongo/pkg/mikrotik"
-	"mikmongo/pkg/mikrotik/client"
-	mkdomain "mikmongo/pkg/mikrotik/domain"
+	mikrotik "github.com/Butterfly-Student/go-ros"
+	"github.com/Butterfly-Student/go-ros/client"
+	mkdomain "github.com/Butterfly-Student/go-ros/domain"
 )
 
 const defaultTimeout = 30 * time.Second

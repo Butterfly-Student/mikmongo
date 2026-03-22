@@ -5,7 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"mikmongo/internal/model"
+	"mikmongo/internal/dto"
 	"mikmongo/internal/service"
 	"mikmongo/pkg/response"
 )
@@ -22,20 +22,17 @@ func NewUserHandler(svc *service.AuthService) *UserHandler {
 
 // Create handles user creation
 func (h *UserHandler) Create(c *gin.Context) {
-	var req struct {
-		model.User
-		Password string `json:"password" binding:"required"`
-	}
+	var req dto.CreateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.BadRequest(c, err.Error())
 		return
 	}
-	if err := h.service.CreateUser(c.Request.Context(), &req.User, req.Password); err != nil {
+	user := req.ToModel()
+	if err := h.service.CreateUser(c.Request.Context(), user, req.Password); err != nil {
 		response.Error(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	req.User.PasswordHash = ""
-	response.Created(c, req.User)
+	response.Created(c, dto.UserToResponse(user))
 }
 
 // Get handles getting a user by ID
@@ -50,7 +47,7 @@ func (h *UserHandler) Get(c *gin.Context) {
 		response.NotFound(c, err.Error())
 		return
 	}
-	response.OK(c, user)
+	response.OK(c, dto.UserToResponse(user))
 }
 
 // List handles listing users
@@ -61,7 +58,7 @@ func (h *UserHandler) List(c *gin.Context) {
 		response.InternalServerError(c, err.Error())
 		return
 	}
-	response.WithMeta(c, http.StatusOK, users, &response.Meta{Total: count, Limit: limit, Offset: offset})
+	response.WithMeta(c, http.StatusOK, dto.UsersToResponse(users), &response.Meta{Total: count, Limit: limit, Offset: offset})
 }
 
 // Delete handles deleting a user

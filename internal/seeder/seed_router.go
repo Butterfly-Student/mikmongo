@@ -5,38 +5,38 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"encoding/base64"
+	"fmt"
 )
 
-func (s *Seeder) seedRouter(ctx context.Context) error {
-	if s.cfg.RouterAddress == "" {
-		return nil // skip when no address configured
+func (s *Seeder) seedRouters(ctx context.Context) error {
+	routers := []struct {
+		name     string
+		address  string
+		apiPort  int
+		username string
+		password string
+		isMaster bool
+	}{
+		{"Router Utama", "192.168.233.1", 8728, "admin", "r00t", true},
+		{"Router 2", "192.168.27.1", 8728, "admin", "r00t", false},
 	}
 
-	name := s.cfg.RouterName
-	if name == "" {
-		name = "Router Utama"
-	}
-	apiPort := s.cfg.RouterAPIPort
-	if apiPort == 0 {
-		apiPort = 8728
-	}
-	username := s.cfg.RouterUsername
-	if username == "" {
-		username = "admin"
-	}
+	for _, r := range routers {
+		encPass, err := encryptAESGCM(r.password, s.cfg.EncryptionKey)
+		if err != nil {
+			return fmt.Errorf("encrypt router %s: %w", r.address, err)
+		}
 
-	encPass, err := encryptAESGCM(s.cfg.RouterPassword, s.cfg.EncryptionKey)
-	if err != nil {
-		return err
+		_, err = s.db.ExecContext(ctx, `
+			INSERT INTO mikrotik_routers (name, address, api_port, username, password_encrypted, is_master, is_active)
+			SELECT $1::varchar, $2::varchar, $3::int, $4::varchar, $5::text, $6::boolean, true
+			WHERE NOT EXISTS (SELECT 1 FROM mikrotik_routers WHERE address = $2::varchar AND deleted_at IS NULL)
+		`, r.name, r.address, r.apiPort, r.username, encPass, r.isMaster)
+		if err != nil {
+			return fmt.Errorf("insert router %s: %w", r.address, err)
+		}
 	}
-
-	// No unique constraint on address, use WHERE NOT EXISTS to avoid duplicates
-	_, err = s.db.ExecContext(ctx, `
-		INSERT INTO mikrotik_routers (name, address, api_port, username, password_encrypted, is_master, is_active)
-		SELECT $1::varchar, $2::varchar, $3::int, $4::varchar, $5::text, true, true
-		WHERE NOT EXISTS (SELECT 1 FROM mikrotik_routers WHERE address = $2::varchar AND deleted_at IS NULL)
-	`, name, s.cfg.RouterAddress, apiPort, username, encPass)
-	return err
+	return nil
 }
 
 // encryptAESGCM mirrors the logic in internal/service/router_service.go

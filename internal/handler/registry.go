@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"mikmongo/internal/handler/mikrotik/mikhmon"
 	"mikmongo/internal/repository"
 	"mikmongo/internal/service"
 	"mikmongo/pkg/jwt"
@@ -21,7 +22,8 @@ type Registry struct {
 	SystemSetting    *SystemSettingHandler
 	CustomerPortal   *CustomerPortalHandler
 	Report           *ReportHandler
-	Mikrotik         interface{} // MikroTik handler registry (set after creation)
+	Mikrotik         interface{}       // MikroTik handler registry (set after creation)
+	Mikhmon          *mikhmon.Registry // Mikhmon handler registry
 }
 
 // NewRegistry creates a new handler registry
