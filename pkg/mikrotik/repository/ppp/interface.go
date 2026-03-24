@@ -8,8 +8,8 @@ import (
 
 // Proplist constants for PPP Secret
 const (
-	ProplistPPPSecretDefault  = ".id,name,profile,service,disabled"
-	ProplistPPPProfileDefault = ".id,name,local-address,remote-address"
+	ProplistPPPSecretDefault  = ".id,name,profile,service,disabled,password,comment,remote-address,caller-id,local-address"
+	ProplistPPPProfileDefault = ".id,name,local-address,remote-address,rate-limit,dns-server,session-timeout,idle-timeout,only-one,parent-queue"
 )
 
 // SecretRepository defines the interface for PPP secret data access

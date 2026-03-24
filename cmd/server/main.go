@@ -127,6 +127,11 @@ func main() {
 		SequenceCounterRepo:      pgRepo.SequenceCounterRepo,
 		MessageTemplateRepo:      pgRepo.MessageTemplateRepo,
 		AuditLogRepo:             pgRepo.AuditLogRepo,
+		HotspotSaleRepo:          pgRepo.HotspotSaleRepo,
+		SalesAgentRepo:           pgRepo.SalesAgentRepo,
+		AgentInvoiceRepo:         pgRepo.AgentInvoiceRepo,
+		CashEntryRepo:            pgRepo.CashEntryRepo,
+		PettyCashFundRepo:        pgRepo.PettyCashFundRepo,
 	}
 
 	// Domains
@@ -190,6 +195,18 @@ func main() {
 
 	// Initialize Mikhmon handler registry
 	handlerRegistry.Mikhmon = mikhmon.NewRegistry(mikrotikRegistry)
+
+	// Initialize HotspotSale + SalesAgent handlers
+	hotspotSaleSvc := service.NewHotspotSaleService(
+		mikrotikRegistry.Mikhmon.Voucher,
+		pgRepo.HotspotSaleRepo,
+		pgRepo.SalesAgentRepo,
+	)
+	handlerRegistry.HotspotSale = handler.NewHotspotSaleHandler(hotspotSaleSvc)
+	handlerRegistry.SalesAgent = handler.NewSalesAgentHandler(pgRepo.SalesAgentRepo, pgRepo.SystemSettingRepo)
+	handlerRegistry.AgentInvoice = handler.NewAgentInvoiceHandler(serviceRegistry.AgentInvoice)
+	handlerRegistry.AgentPortal = handler.NewAgentPortalHandler(pgRepo.SalesAgentRepo, serviceRegistry.AgentInvoice, hotspotSaleSvc, jwtService)
+	handlerRegistry.CashManagement = handler.NewCashManagementHandler(serviceRegistry.CashManagement)
 
 	// Casbin RBAC enforcer
 	casbinEnforcer, err := casbinpkg.NewEnforcer(db)

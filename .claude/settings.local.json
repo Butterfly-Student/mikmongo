@@ -46,7 +46,22 @@
       "Bash(sed -n '21,30p' /c/Users/masji/web/Mikrotik/mikmongo/tests/integration/pppoE_complete_lifecycle_test.go)",
       "Bash(sed -n '21,30p' /c/Users/masji/web/Mikrotik/mikmongo/tests/integration/router_service_test.go)",
       "Bash(echo \"=== $f ===\")",
-      "Read(//c/Users/masji/web/Mikrotik/mikmongo/tests/integration/**)"
+      "Read(//c/Users/masji/web/Mikrotik/mikmongo/tests/integration/**)",
+      "Bash(TEST_DB_USER=mikmongo TEST_DB_PASSWORD=mikmongo TEST_DB_NAME=mikmongo_test TEST_MIKROTIK_HOST=192.168.233.1 TEST_MIKROTIK_PASS=r00t TEST_MIKROTIK_USER=admin TEST_MIKROTIK_PORT=8728 go test -tags=\"integration mikrotik_legacy\" -timeout 120s -v -run \"TestSubscriptionMikroTikIntegration|TestMikrotikModulesDirect\" ./tests/integration/...)",
+      "Bash(TEST_DB_USER=mikmongo TEST_DB_PASSWORD=mikmongo TEST_DB_NAME=mikmongo_test TEST_MIKROTIK_HOST=192.168.233.1 TEST_MIKROTIK_PASS=r00t TEST_MIKROTIK_USER=admin TEST_MIKROTIK_PORT=8728 go test -tags=\"integration mikrotik_legacy\" -timeout 120s -run \"TestSubscriptionMikroTikIntegration\" ./tests/integration/...)",
+      "Bash(TEST_DB_USER=mikmongo TEST_DB_PASSWORD=mikmongo TEST_DB_NAME=mikmongo_test TEST_MIKROTIK_HOST=192.168.233.1 TEST_MIKROTIK_PASS=r00t TEST_MIKROTIK_USER=admin TEST_MIKROTIK_PORT=8728 go test -tags=\"integration mikrotik_legacy\" -timeout 120s -v -run \"TestSubscriptionMikroTikIntegration\" ./tests/integration/...)",
+      "Bash(TEST_DB_USER=mikmongo TEST_DB_PASSWORD=mikmongo TEST_DB_NAME=mikmongo_test TEST_MIKROTIK_HOST=192.168.233.1 TEST_MIKROTIK_PASS=r00t TEST_MIKROTIK_USER=admin TEST_MIKROTIK_PORT=8728 go test -tags=\"integration mikrotik_legacy\" -vet=off -timeout 120s -v -run \"TestSubscriptionMikroTikIntegration\" ./tests/integration/...)",
+      "Bash(docker compose:*)",
+      "Bash(docker run:*)",
+      "Bash(TEST_DB_HOST=localhost TEST_DB_PORT=5433 TEST_DB_USER=mikhmon TEST_DB_PASSWORD=secret TEST_DB_NAME=mikmongo_test TEST_REDIS_HOST=localhost TEST_REDIS_PORT=6380 TEST_REDIS_DB=15 go test -v -tags=integration ./tests/integration/... -run \"TestHotspotSale_|TestSalesAgent_|TestAPIHotspotSale_|TestAPISalesAgent_|TestAPICreateSalesAgent|TestAPIGetSalesAgent|TestAPIListSalesAgents|TestAPIUpdateSalesAgent|TestAPIDeleteSalesAgent|TestAPIUpsertProfilePrice|TestAPIListProfilePrices\" -timeout 180s)",
+      "Bash(TEST_DB_HOST=localhost TEST_DB_PORT=5433 TEST_DB_USER=mikhmon TEST_DB_PASSWORD=secret TEST_DB_NAME=mikmongo_test TEST_REDIS_HOST=localhost TEST_REDIS_PORT=6380 TEST_REDIS_DB=15 go test -v -tags=integration ./tests/integration/... -run \"TestAPICreateSalesAgent$\" -timeout 60s)",
+      "Bash(TEST_DB_HOST=localhost TEST_DB_PORT=5433 TEST_DB_USER=mikhmon TEST_DB_PASSWORD=secret TEST_DB_NAME=mikmongo_test TEST_REDIS_HOST=localhost TEST_REDIS_PORT=6380 TEST_REDIS_DB=15 go test -v -tags=integration ./tests/integration/... -run \"TestAPICreateSalesAgent_Debug\" -timeout 60s)",
+      "Bash(TEST_DB_HOST=localhost TEST_DB_PORT=5433 TEST_DB_USER=mikhmon TEST_DB_PASSWORD=secret TEST_DB_NAME=mikmongo_test TEST_REDIS_HOST=localhost TEST_REDIS_PORT=6380 TEST_REDIS_DB=15 go test -v -tags=integration ./tests/integration/... -timeout 300s)",
+      "Bash(TEST_DB_HOST=localhost TEST_DB_PORT=5433 TEST_DB_USER=mikhmon TEST_DB_PASSWORD=secret TEST_DB_NAME=mikmongo_test TEST_REDIS_HOST=localhost TEST_REDIS_PORT=6380 TEST_REDIS_DB=15 go test -v -count=1 -tags=integration ./tests/integration/... -timeout 300s)",
+      "Bash(tee /tmp/integration_full.txt)",
+      "Bash(tee /tmp/unit_full.txt)",
+      "Bash(docker stop:*)",
+      "Bash(xargs -I {} basename {})"
     ]
   }
 }

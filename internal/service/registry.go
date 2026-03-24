@@ -22,6 +22,8 @@ type Registry struct {
 	Router           *RouterService
 	Notification     *NotificationService
 	Report           *ReportService
+	AgentInvoice     *AgentInvoiceService
+	CashManagement   *CashManagementService
 	Mikrotik         interface{} // Mikrotik registry is set separately to avoid import cycle
 }
 
@@ -96,6 +98,24 @@ func NewRegistry(
 
 	report := NewReportService(db)
 
+	agentInvoice := NewAgentInvoiceService(
+		repo.AgentInvoiceRepo,
+		repo.HotspotSaleRepo,
+		repo.SalesAgentRepo,
+		repo.SequenceCounterRepo,
+	)
+
+	cashMgmt := NewCashManagementService(
+		repo.CashEntryRepo,
+		repo.PettyCashFundRepo,
+		repo.SequenceCounterRepo,
+		db,
+	)
+
+	// Inject cash management into services for auto-recording
+	payment.SetCashManagementService(cashMgmt)
+	agentInvoice.SetCashManagementService(cashMgmt)
+
 	return &Registry{
 		Auth:             auth,
 		Customer:         customerSvc,
@@ -105,6 +125,8 @@ func NewRegistry(
 		Subscription:     subscription,
 		Registration:     registration,
 		Router:           router,
+		AgentInvoice:     agentInvoice,
+		CashManagement:   cashMgmt,
 		Notification:     notification,
 		Report:           report,
 	}

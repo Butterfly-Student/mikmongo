@@ -23,7 +23,7 @@ func NewRegistry(
 	c := cron.New()
 	return &Registry{
 		cron:              c,
-		billingScheduler:  NewBillingScheduler(c, services.Billing, q.BillingProducer),
+		billingScheduler:  NewBillingScheduler(c, services.Billing, services.AgentInvoice, q.BillingProducer),
 		isolateScheduler:  NewIsolateScheduler(c, services.Billing),
 		reminderScheduler: NewReminderScheduler(c, services.Billing),
 		syncScheduler:     NewSyncScheduler(c, services.Router, services.Subscription),

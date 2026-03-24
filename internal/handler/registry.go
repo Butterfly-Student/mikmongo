@@ -22,6 +22,11 @@ type Registry struct {
 	SystemSetting    *SystemSettingHandler
 	CustomerPortal   *CustomerPortalHandler
 	Report           *ReportHandler
+	HotspotSale      *HotspotSaleHandler
+	SalesAgent       *SalesAgentHandler
+	AgentInvoice     *AgentInvoiceHandler
+	AgentPortal      *AgentPortalHandler
+	CashManagement   *CashManagementHandler
 	Mikrotik         interface{}       // MikroTik handler registry (set after creation)
 	Mikhmon          *mikhmon.Registry // Mikhmon handler registry
 }

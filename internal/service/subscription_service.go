@@ -285,13 +285,14 @@ func (s *SubscriptionService) createInMikroTik(ctx context.Context, mt MikrotikC
 		Password: sub.Password,
 		Profile:  profile.Name,
 		Comment:  fmt.Sprintf("sub:%s", sub.ID),
+		Service:  "pppoe", // default sama dengan gembok-simple
 	}
 	if sub.StaticIP != nil {
 		secret.RemoteAddress = *sub.StaticIP
 	}
 	if mtCfg != nil {
 		if mtCfg.Service != nil {
-			secret.Service = *mtCfg.Service
+			secret.Service = *mtCfg.Service // override jika eksplisit
 		}
 		if mtCfg.LocalAddress != nil {
 			secret.LocalAddress = *mtCfg.LocalAddress
@@ -338,13 +339,14 @@ func (s *SubscriptionService) updateInMikroTik(ctx context.Context, mt MikrotikC
 		Password: sub.Password,
 		Profile:  profile.Name,
 		Comment:  fmt.Sprintf("sub:%s", sub.ID),
+		Service:  "pppoe", // default sama dengan gembok-simple
 	}
 	if sub.StaticIP != nil {
 		secret.RemoteAddress = *sub.StaticIP
 	}
 	if mtCfg != nil {
 		if mtCfg.Service != nil {
-			secret.Service = *mtCfg.Service
+			secret.Service = *mtCfg.Service // override jika eksplisit
 		}
 		if mtCfg.LocalAddress != nil {
 			secret.LocalAddress = *mtCfg.LocalAddress

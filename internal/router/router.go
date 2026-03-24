@@ -18,6 +18,9 @@ func New(handlers *handler.Registry, mw *middleware.Registry) *gin.Engine {
 	// Public routes (health, login, registration, webhooks, portal)
 	registerPublicRoutes(r, handlers, mw)
 
+	// Agent portal (agent JWT required)
+	registerAgentPortalRoutes(r, handlers, mw)
+
 	// Admin API (JWT required + RBAC)
 	v1 := r.Group("/api/v1")
 	v1.Use(mw.Auth.Authenticate())

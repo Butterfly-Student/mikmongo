@@ -55,6 +55,11 @@ func buildTestRouterFull(t *testing.T, suite *TestSuite) (*gin.Engine, *handler.
 		MessageTemplateRepo:      repos.MessageTemplateRepo,
 		AuditLogRepo:             repos.AuditLogRepo,
 		Transactor:               repos.Transactor,
+		HotspotSaleRepo:          repos.HotspotSaleRepo,
+		SalesAgentRepo:           repos.SalesAgentRepo,
+		AgentInvoiceRepo:         repos.AgentInvoiceRepo,
+		CashEntryRepo:            repos.CashEntryRepo,
+		PettyCashFundRepo:        repos.PettyCashFundRepo,
 	}
 
 	domainReg := domain.NewRegistry(
@@ -69,6 +74,16 @@ func buildTestRouterFull(t *testing.T, suite *TestSuite) (*gin.Engine, *handler.
 
 	svcReg := service.NewRegistry(repoReg, domainReg, jwtSvc, testSecret, suite.DB, suite.RedisClient, zap.NewNop())
 	handlerReg := handler.NewRegistry(svcReg, repos.SystemSettingRepo, jwtSvc)
+
+	// Wire HotspotSale + SalesAgent + AgentInvoice handlers.
+	// VoucherGenerator is nil: HotspotSaleHandler only calls ListSales in tests (not GenerateBatch).
+	hotspotSaleSvc := service.NewHotspotSaleService(nil, repos.HotspotSaleRepo, repos.SalesAgentRepo)
+	handlerReg.HotspotSale = handler.NewHotspotSaleHandler(hotspotSaleSvc)
+	handlerReg.SalesAgent = handler.NewSalesAgentHandler(repos.SalesAgentRepo, repos.SystemSettingRepo)
+	handlerReg.AgentInvoice = handler.NewAgentInvoiceHandler(svcReg.AgentInvoice)
+	handlerReg.AgentPortal = handler.NewAgentPortalHandler(repos.SalesAgentRepo, svcReg.AgentInvoice, hotspotSaleSvc, jwtSvc)
+	handlerReg.CashManagement = handler.NewCashManagementHandler(svcReg.CashManagement)
+
 	enforcer, err := casbinpkg.NewEnforcer(suite.DB)
 	require.NoError(t, err)
 	mwReg := middleware.NewRegistry(zap.NewNop(), jwtSvc, suite.RedisClient, enforcer)
@@ -195,6 +210,11 @@ func buildRootTestRouter(t *testing.T, suite *TestSuite) *gin.Engine {
 		MessageTemplateRepo:      repos.MessageTemplateRepo,
 		AuditLogRepo:             repos.AuditLogRepo,
 		Transactor:               repos.Transactor,
+		HotspotSaleRepo:          repos.HotspotSaleRepo,
+		SalesAgentRepo:           repos.SalesAgentRepo,
+		AgentInvoiceRepo:         repos.AgentInvoiceRepo,
+		CashEntryRepo:            repos.CashEntryRepo,
+		PettyCashFundRepo:        repos.PettyCashFundRepo,
 	}
 
 	domainReg := domain.NewRegistry(
@@ -209,6 +229,14 @@ func buildRootTestRouter(t *testing.T, suite *TestSuite) *gin.Engine {
 
 	svcReg := service.NewRegistry(repoReg, domainReg, jwtSvc, testSecret, suite.RootDB, suite.RedisClient, zap.NewNop())
 	handlerReg := handler.NewRegistry(svcReg, repos.SystemSettingRepo, jwtSvc)
+
+	hotspotSaleSvc := service.NewHotspotSaleService(nil, repos.HotspotSaleRepo, repos.SalesAgentRepo)
+	handlerReg.HotspotSale = handler.NewHotspotSaleHandler(hotspotSaleSvc)
+	handlerReg.SalesAgent = handler.NewSalesAgentHandler(repos.SalesAgentRepo, repos.SystemSettingRepo)
+	handlerReg.AgentInvoice = handler.NewAgentInvoiceHandler(svcReg.AgentInvoice)
+	handlerReg.AgentPortal = handler.NewAgentPortalHandler(repos.SalesAgentRepo, svcReg.AgentInvoice, hotspotSaleSvc, jwtSvc)
+	handlerReg.CashManagement = handler.NewCashManagementHandler(svcReg.CashManagement)
+
 	enforcer, err := casbinpkg.NewEnforcer(suite.RootDB)
 	require.NoError(t, err)
 	mwReg := middleware.NewRegistry(zap.NewNop(), jwtSvc, suite.RedisClient, enforcer)

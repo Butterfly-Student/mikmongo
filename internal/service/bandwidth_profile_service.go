@@ -80,7 +80,13 @@ func (s *BandwidthProfileService) Create(ctx context.Context, profile *model.Ban
 
 // syncPPPProfile syncs PPP profile to MikroTik with optional extra fields from mtCfg.
 func (s *BandwidthProfileService) syncPPPProfile(ctx context.Context, mt *mikrotik.Client, profile *model.BandwidthProfile, mtCfg *PPPProfileConfig) error {
-	rateLimit := fmt.Sprintf("%dk/%dk", profile.UploadSpeed/1024, profile.DownloadSpeed/1024)
+	var rateLimit string
+	if profile.RateLimit != nil && *profile.RateLimit != "" {
+		rateLimit = *profile.RateLimit
+	} else {
+		// auto-compute dari kbps: format upload/download (sama dengan gembok)
+		rateLimit = fmt.Sprintf("%dk/%dk", profile.UploadSpeed, profile.DownloadSpeed)
+	}
 
 	pppProfile := &mkdomain.PPPProfile{
 		Name:      profile.Name,

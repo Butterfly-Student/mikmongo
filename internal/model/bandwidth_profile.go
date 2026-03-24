@@ -24,6 +24,7 @@ type BandwidthProfile struct {
 	SortOrder          int            `gorm:"type:integer;default:0"`
 	GracePeriodDays    int            `gorm:"type:integer;not null;default:3"`
 	IsolateProfileName *string        `gorm:"type:varchar(100)"`
+	RateLimit          *string        `gorm:"type:varchar(100);column:rate_limit"`
 	CreatedAt          time.Time      `gorm:"type:timestamptz;not null;default:CURRENT_TIMESTAMP"`
 	UpdatedAt          time.Time      `gorm:"type:timestamptz;not null;default:CURRENT_TIMESTAMP"`
 	DeletedAt          gorm.DeletedAt `gorm:"index"`

@@ -4,6 +4,7 @@ package mikrotik
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/Butterfly-Student/go-ros/repository/firewall"
 	goroshotspot "github.com/Butterfly-Student/go-ros/repository/hotspot"
@@ -14,6 +15,7 @@ import (
 	"github.com/google/uuid"
 
 	mkdomain "github.com/Butterfly-Student/go-ros/domain"
+	mikhmonDomain "github.com/Butterfly-Student/go-ros/domain/mikhmon"
 	"mikmongo/internal/service"
 	"mikmongo/internal/service/mikrotik/mikhmon"
 )
@@ -28,10 +30,13 @@ type Registry struct {
 	IPAddress *IPAddressService
 	Monitor   *MonitorService
 	Mikhmon   *mikhmon.Registry
+	Report    *ReportService
+	Script    *ScriptService
 }
 
 // NewRegistry creates a Registry backed by routerSvc for connection management.
 func NewRegistry(routerSvc *service.RouterService) *Registry {
+	mk := mikhmon.NewRegistry(routerSvc)
 	return &Registry{
 		PPP:       &PPPService{routerSvc: routerSvc},
 		Hotspot:   &HotspotService{routerSvc: routerSvc},
@@ -40,7 +45,9 @@ func NewRegistry(routerSvc *service.RouterService) *Registry {
 		IPPool:    &IPPoolService{routerSvc: routerSvc},
 		IPAddress: &IPAddressService{routerSvc: routerSvc},
 		Monitor:   &MonitorService{routerSvc: routerSvc},
-		Mikhmon:   mikhmon.NewRegistry(routerSvc),
+		Mikhmon:   mk,
+		Report:    &ReportService{mikhmon: mk},
+		Script:    &ScriptService{mikhmon: mk},
 	}
 }
 
@@ -469,4 +476,52 @@ func (s *MonitorService) GetInterfaces(ctx context.Context, routerID uuid.UUID) 
 	}
 	repo := gorosmonitor.NewRepository(c.Conn())
 	return repo.Interface().GetInterfaces(ctx)
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Report Service
+// ──────────────────────────────────────────────────────────────────────────────
+
+// ReportService delegates to the Mikhmon report service.
+type ReportService struct {
+	mikhmon *mikhmon.Registry
+}
+
+// GetSalesReports returns sales reports for a router filtered by owner.
+// Pass an empty owner to retrieve all reports.
+func (s *ReportService) GetSalesReports(ctx context.Context, routerID uuid.UUID, owner string) ([]*mikhmonDomain.SalesReport, error) {
+	return s.mikhmon.Report.GetReportsByOwner(ctx, routerID, owner)
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Script Service
+// ──────────────────────────────────────────────────────────────────────────────
+
+// ScriptService generates RouterOS scripts for hotspot profiles and expiry actions.
+type ScriptService struct {
+	mikhmon *mikhmon.Registry
+}
+
+// GenerateOnLoginScript generates a RouterOS on-login script for a hotspot profile.
+// req carries the profile name, validity, price and other optional fields.
+func (s *ScriptService) GenerateOnLoginScript(req *mkdomain.ProfileRequest) string {
+	data := &mikhmonDomain.OnLoginScriptData{
+		ProfileName: req.Name,
+		Validity:    req.Validity,
+		Price:       req.Price,
+	}
+	return s.mikhmon.Profile.GenerateOnLoginScript(data)
+}
+
+// GenerateExpiredAction returns a RouterOS script that changes an expired user's
+// profile to the given isolate profile name.
+func (s *ScriptService) GenerateExpiredAction(isolateProfile string) string {
+	return fmt.Sprintf(
+		`:local expiredUsers [/ppp secret find where profile!=%q]`+"\n"+
+			`:foreach u in=$expiredUsers do={`+"\n"+
+			`  :local name [/ppp secret get $u name]`+"\n"+
+			`  /ppp secret set $u profile=%q`+"\n"+
+			`}`,
+		isolateProfile, isolateProfile,
+	)
 }

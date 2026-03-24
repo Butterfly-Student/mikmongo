@@ -25,6 +25,7 @@ type PaymentService struct {
 	transactor      repository.Transactor
 	customerSvc     *CustomerService
 	notificationSvc *NotificationService
+	cashSvc         *CashManagementService
 }
 
 // NewPaymentService creates a new payment service
@@ -58,6 +59,11 @@ func (s *PaymentService) SetCustomerService(c *CustomerService) {
 // SetNotificationService injects notification service
 func (s *PaymentService) SetNotificationService(n *NotificationService) {
 	s.notificationSvc = n
+}
+
+// SetCashManagementService injects cash management service for auto-recording income.
+func (s *PaymentService) SetCashManagementService(c *CashManagementService) {
+	s.cashSvc = c
 }
 
 func (s *PaymentService) generatePaymentNumber(ctx context.Context) (string, error) {
@@ -193,6 +199,9 @@ func (s *PaymentService) Confirm(ctx context.Context, paymentID uuid.UUID, proce
 	}
 
 	// Post-tx side effects (not rolled back if they fail — acceptable for notifications).
+	if s.cashSvc != nil {
+		_ = s.cashSvc.RecordPaymentIncome(ctx, p)
+	}
 	if s.customerSvc != nil && len(unpaid) > 0 {
 		allPaid := true
 		for _, inv := range unpaid {

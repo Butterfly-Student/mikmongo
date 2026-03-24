@@ -105,6 +105,25 @@ func (s *Service) GeneratePortal(customerID, customerCode string) (string, error
 	return token.SignedString(s.secret)
 }
 
+// GenerateAgent creates a JWT token for agent portal access
+func (s *Service) GenerateAgent(agentID, username string) (string, error) {
+	claims := Claims{
+		UserID:    agentID,
+		Email:     username,
+		Role:      "agent_portal",
+		TokenType: "access",
+		RegisteredClaims: jwt.RegisteredClaims{
+			ID:        uuid.NewString(),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(s.expiry)),
+			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			NotBefore: jwt.NewNumericDate(time.Now()),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	return token.SignedString(s.secret)
+}
+
 // Validate validates a JWT token
 func (s *Service) Validate(tokenString string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {

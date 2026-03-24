@@ -17,8 +17,9 @@ type Registry struct {
 	RequestID      gin.HandlerFunc
 	CORS           gin.HandlerFunc
 	PortalAuth     *PortalAuthMiddleware
-	MikrotikRouter *MikrotikRouterMiddleware
-	RBAC           gin.HandlerFunc
+	AgentPortalAuth *AgentPortalAuthMiddleware
+	MikrotikRouter  *MikrotikRouterMiddleware
+	RBAC            gin.HandlerFunc
 }
 
 // NewRegistry creates a new middleware registry
@@ -31,8 +32,9 @@ func NewRegistry(logger *zap.Logger, jwtService *jwt.Service, redisClient *redis
 		RateLimit:      NewRateLimitMiddleware(redisClient),
 		RequestID:      requestid.New(),
 		CORS:           NewCORSMiddleware(),
-		PortalAuth:     NewPortalAuthMiddleware(jwtService),
-		MikrotikRouter: NewMikrotikRouterMiddleware(),
+		PortalAuth:      NewPortalAuthMiddleware(jwtService),
+		AgentPortalAuth: NewAgentPortalAuthMiddleware(jwtService),
+		MikrotikRouter:  NewMikrotikRouterMiddleware(),
 		RBAC:           CasbinMiddleware(enforcer),
 	}
 }

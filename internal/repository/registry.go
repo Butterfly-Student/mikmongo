@@ -18,4 +18,9 @@ type Registry struct {
 	MessageTemplateRepo      MessageTemplateRepository
 	AuditLogRepo             AuditLogRepository
 	Transactor               Transactor
+	HotspotSaleRepo          HotspotSaleRepository
+	SalesAgentRepo           SalesAgentRepository
+	AgentInvoiceRepo         AgentInvoiceRepository
+	CashEntryRepo            CashEntryRepository
+	PettyCashFundRepo        PettyCashFundRepository
 }

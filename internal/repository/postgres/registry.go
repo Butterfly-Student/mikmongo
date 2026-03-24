@@ -24,6 +24,11 @@ type Registry struct {
 	MessageTemplateRepo      repository.MessageTemplateRepository
 	AuditLogRepo             repository.AuditLogRepository
 	Transactor               repository.Transactor
+	HotspotSaleRepo          repository.HotspotSaleRepository
+	SalesAgentRepo           repository.SalesAgentRepository
+	AgentInvoiceRepo         repository.AgentInvoiceRepository
+	CashEntryRepo            repository.CashEntryRepository
+	PettyCashFundRepo        repository.PettyCashFundRepository
 }
 
 // NewRepository creates a new postgres repository registry
@@ -45,5 +50,10 @@ func NewRepository(db *gorm.DB) *Registry {
 		MessageTemplateRepo:      NewMessageTemplateRepository(db),
 		AuditLogRepo:             NewAuditLogRepository(db),
 		Transactor:               NewTransactor(db),
+		HotspotSaleRepo:          NewHotspotSaleRepository(db),
+		SalesAgentRepo:           NewSalesAgentRepository(db),
+		AgentInvoiceRepo:         NewAgentInvoiceRepository(db),
+		CashEntryRepo:            NewCashEntryRepository(db),
+		PettyCashFundRepo:        NewPettyCashFundRepository(db),
 	}
 }
