@@ -78,6 +78,16 @@ func NewClient(cfg client.Config) (*Client, error) {
 	return NewClientFromConnection(c), nil
 }
 
+// RunRaw executes any RouterOS command and returns raw map results.
+func (c *Client) RunRaw(ctx context.Context, args []string) ([]map[string]string, error) {
+	return c.conn.RunRaw(ctx, args)
+}
+
+// ListenRaw starts a streaming RouterOS command and sends raw data to resultChan.
+func (c *Client) ListenRaw(ctx context.Context, args []string, resultChan chan<- map[string]string) (func() error, error) {
+	return c.conn.ListenRaw(ctx, args, resultChan)
+}
+
 // NewClientFromConnection creates a Client facade from a managed connection.
 func NewClientFromConnection(c *client.Client) *Client {
 	return &Client{

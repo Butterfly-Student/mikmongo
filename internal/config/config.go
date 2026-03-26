@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -11,9 +12,10 @@ import (
 // Config holds all configuration
 type Config struct {
 	App struct {
-		Name string
-		Env  string
-		Port string
+		Name           string
+		Env            string
+		Port           string
+		AllowedOrigins []string // CORS and WebSocket allowed origins
 	}
 	DB struct {
 		Host     string
@@ -55,6 +57,14 @@ type Config struct {
 		SecretKey    string
 		WebhookToken string
 	}
+	GoWA struct {
+		BaseURL  string
+		Username string
+		Password string
+		DeviceID string
+		GroupID  string
+		Timeout  int
+	}
 	Seed struct {
 		AutoMigrate    bool
 		AdminEmail     string
@@ -81,6 +91,7 @@ func Load() *Config {
 	config.App.Name = env("APP_NAME", "MikMongo")
 	config.App.Env = env("APP_ENV", "development")
 	config.App.Port = env("APP_PORT", "8080")
+	config.App.AllowedOrigins = parseOrigins(env("ALLOWED_ORIGINS", "*"))
 
 	// DB
 	config.DB.Host = env("DB_HOST", "localhost")
@@ -122,6 +133,14 @@ func Load() *Config {
 	config.Xendit.SecretKey = os.Getenv("XENDIT_SECRET_KEY")
 	config.Xendit.WebhookToken = os.Getenv("XENDIT_WEBHOOK_SECRET")
 
+	// GoWA
+	config.GoWA.BaseURL = env("GOWA_BASE_URL", "http://localhost:3000")
+	config.GoWA.Username = os.Getenv("GOWA_USERNAME")
+	config.GoWA.Password = os.Getenv("GOWA_PASSWORD")
+	config.GoWA.DeviceID = os.Getenv("GOWA_DEVICE_ID")
+	config.GoWA.GroupID = os.Getenv("GOWA_GROUP_ID")
+	config.GoWA.Timeout = envInt("GOWA_TIMEOUT", 30)
+
 	// Seed
 	config.Seed.AutoMigrate = envBool("AUTO_MIGRATE")
 	config.Seed.AdminEmail = os.Getenv("SEED_ADMIN_EMAIL")
@@ -156,6 +175,22 @@ func envInt(key string, fallback int) int {
 func envBool(key string) bool {
 	v := os.Getenv(key)
 	return v == "true" || v == "1" || v == "yes"
+}
+
+// parseOrigins splits a comma-separated string of origins.
+func parseOrigins(s string) []string {
+	if s == "" {
+		return nil
+	}
+	parts := strings.Split(s, ",")
+	origins := make([]string, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			origins = append(origins, p)
+		}
+	}
+	return origins
 }
 
 // GetDSN returns database connection string

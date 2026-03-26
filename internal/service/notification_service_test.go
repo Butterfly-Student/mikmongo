@@ -20,7 +20,7 @@ func newNotificationServiceWithMocks() (
 ) {
 	templateRepo := &mocks.MockMessageTemplateRepository{}
 	settingRepo := &mocks.MockSystemSettingRepository{}
-	svc := NewNotificationService(templateRepo, settingRepo)
+	svc := NewNotificationService(templateRepo, settingRepo, nil)
 	return svc, templateRepo, settingRepo
 }
 
@@ -251,4 +251,131 @@ func TestSendViaWhatsApp_NilClient_ReturnsError(t *testing.T) {
 
 	err := svc.SendViaWhatsApp(ctx, "081234567890", "test message")
 	assert.ErrorContains(t, err, "WhatsApp client not configured")
+}
+
+// --- Agent Invoice Notification Tests ---
+
+func makeAgentPhone(phone string) *string { return &phone }
+
+func TestSendAgentInvoiceCreated_NilPhone_Skips(t *testing.T) {
+	ctx := context.Background()
+	svc, _, _, waMock, _ := newNotificationSvcWithClientMocks()
+
+	agent := &model.SalesAgent{Name: "Agen Budi", Phone: nil}
+	invoice := &model.AgentInvoice{
+		InvoiceNumber: "AINV-001",
+		TotalAmount:   500_000,
+		PeriodEnd:     time.Date(2024, time.April, 30, 0, 0, 0, 0, time.UTC),
+	}
+
+	err := svc.SendAgentInvoiceCreated(ctx, agent, invoice)
+	assert.NoError(t, err)
+	waMock.AssertNotCalled(t, "SendMessage", mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestSendAgentInvoiceCreated_WithPhone_SendsWA(t *testing.T) {
+	ctx := context.Background()
+	svc, templateRepo, _, waMock, _ := newNotificationSvcWithClientMocks()
+
+	phone := "081234567890"
+	agent := &model.SalesAgent{Name: "Agen Budi", Phone: makeAgentPhone(phone)}
+	invoice := &model.AgentInvoice{
+		InvoiceNumber: "AINV-001",
+		TotalAmount:   500_000,
+		PeriodEnd:     time.Date(2024, time.April, 30, 0, 0, 0, 0, time.UTC),
+	}
+
+	tmpl := &model.MessageTemplate{
+		Body:     "Tagihan {{invoice_no}} sebesar {{amount}} jatuh tempo {{due_date}}",
+		Channel:  "whatsapp",
+		IsActive: true,
+	}
+	templateRepo.On("GetByEventAndChannel", ctx, "agent_invoice_created", "whatsapp").Return(tmpl, nil)
+	waMock.On("SendMessage", ctx, phone, mock.AnythingOfType("string")).Return(nil)
+
+	err := svc.SendAgentInvoiceCreated(ctx, agent, invoice)
+	require.NoError(t, err)
+	waMock.AssertCalled(t, "SendMessage", ctx, phone, mock.AnythingOfType("string"))
+}
+
+func TestSendAgentInvoicePaid_NilPhone_Skips(t *testing.T) {
+	ctx := context.Background()
+	svc, _, _, waMock, _ := newNotificationSvcWithClientMocks()
+
+	agent := &model.SalesAgent{Name: "Agen Siti", Phone: nil}
+	invoice := &model.AgentInvoice{
+		InvoiceNumber: "AINV-002",
+		TotalAmount:   300_000,
+		PaidAmount:    300_000,
+	}
+
+	err := svc.SendAgentInvoicePaid(ctx, agent, invoice)
+	assert.NoError(t, err)
+	waMock.AssertNotCalled(t, "SendMessage", mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestSendAgentInvoicePaid_WithPhone_SendsWA(t *testing.T) {
+	ctx := context.Background()
+	svc, templateRepo, _, waMock, _ := newNotificationSvcWithClientMocks()
+
+	phone := "082345678901"
+	agent := &model.SalesAgent{Name: "Agen Siti", Phone: makeAgentPhone(phone)}
+	invoice := &model.AgentInvoice{
+		InvoiceNumber: "AINV-002",
+		TotalAmount:   300_000,
+		PaidAmount:    300_000,
+	}
+
+	tmpl := &model.MessageTemplate{
+		Body:     "Pembayaran {{invoice_no}} sebesar {{amount}} diterima",
+		Channel:  "whatsapp",
+		IsActive: true,
+	}
+	templateRepo.On("GetByEventAndChannel", ctx, "agent_invoice_paid", "whatsapp").Return(tmpl, nil)
+	waMock.On("SendMessage", ctx, phone, mock.AnythingOfType("string")).Return(nil)
+
+	err := svc.SendAgentInvoicePaid(ctx, agent, invoice)
+	require.NoError(t, err)
+	waMock.AssertCalled(t, "SendMessage", ctx, phone, mock.AnythingOfType("string"))
+}
+
+func TestSendAgentInvoiceReminder_NilPhone_Skips(t *testing.T) {
+	ctx := context.Background()
+	svc, _, _, waMock, _ := newNotificationSvcWithClientMocks()
+
+	agent := &model.SalesAgent{Name: "Agen Rudi", Phone: nil}
+	invoice := &model.AgentInvoice{
+		InvoiceNumber: "AINV-003",
+		TotalAmount:   150_000,
+		PeriodEnd:     time.Now().AddDate(0, 0, 3),
+	}
+
+	err := svc.SendAgentInvoiceReminder(ctx, agent, invoice)
+	assert.NoError(t, err)
+	waMock.AssertNotCalled(t, "SendMessage", mock.Anything, mock.Anything, mock.Anything)
+}
+
+func TestSendAgentInvoiceReminder_WithPhone_SendsWA(t *testing.T) {
+	ctx := context.Background()
+	svc, templateRepo, _, waMock, _ := newNotificationSvcWithClientMocks()
+
+	phone := "083456789012"
+	agent := &model.SalesAgent{Name: "Agen Rudi", Phone: makeAgentPhone(phone)}
+	invoice := &model.AgentInvoice{
+		InvoiceNumber: "AINV-003",
+		TotalAmount:   150_000,
+		PeriodEnd:     time.Date(2024, time.May, 15, 0, 0, 0, 0, time.UTC),
+	}
+
+	tmpl := &model.MessageTemplate{
+		Body:     "Pengingat: Tagihan {{invoice_no}} sebesar {{amount}} jatuh tempo {{due_date}}",
+		Channel:  "whatsapp",
+		IsActive: true,
+	}
+	templateRepo.On("GetByEventAndChannel", ctx, "agent_invoice_reminder", "whatsapp").Return(tmpl, nil)
+	waMock.On("SendMessage", ctx, phone, mock.AnythingOfType("string")).Return(nil)
+
+	err := svc.SendAgentInvoiceReminder(ctx, agent, invoice)
+	require.NoError(t, err)
+	waMock.AssertCalled(t, "SendMessage", ctx, phone, mock.AnythingOfType("string"))
 }

@@ -23,24 +23,30 @@ func NewAuthMiddleware(jwtService *jwt.Service, redisClient *redis.Client) *Auth
 	}
 }
 
-// Authenticate validates the JWT token from Authorization header
+// Authenticate validates the JWT token from Authorization header or query param.
+// For WebSocket endpoints, browsers cannot set custom headers, so the token
+// can be passed as ?token=<jwt> query parameter.
 func (m *AuthMiddleware) Authenticate() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		var token string
+
 		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
+		if authHeader != "" {
+			parts := strings.SplitN(authHeader, " ", 2)
+			if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
+				response.Unauthorized(c, "invalid authorization header format")
+				c.Abort()
+				return
+			}
+			token = parts[1]
+		} else if qToken := c.Query("token"); qToken != "" {
+			// Allow token via query param (WebSocket support)
+			token = qToken
+		} else {
 			response.Unauthorized(c, "missing authorization header")
 			c.Abort()
 			return
 		}
-
-		parts := strings.SplitN(authHeader, " ", 2)
-		if len(parts) != 2 || strings.ToLower(parts[0]) != "bearer" {
-			response.Unauthorized(c, "invalid authorization header format")
-			c.Abort()
-			return
-		}
-
-		token := parts[1]
 		claims, err := m.jwtService.Validate(token)
 		if err != nil {
 			response.Unauthorized(c, "invalid token")

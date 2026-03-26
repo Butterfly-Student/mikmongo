@@ -78,14 +78,7 @@ func up028(ctx context.Context, tx *sql.Tx) error {
 		}
 	}
 
-	// Seed sequence counter for KAS000001
-	if _, err := tx.ExecContext(ctx, `
-		INSERT INTO sequence_counters (name, prefix, padding, last_number)
-		VALUES ('cash_entry_number', 'KAS', 6, 0)
-		ON CONFLICT (name) DO NOTHING
-	`); err != nil {
-		return err
-	}
+	// Seed data moved to internal/seeder/seed_sequences.go
 
 	return nil
 }
@@ -95,9 +88,6 @@ func down028(ctx context.Context, tx *sql.Tx) error {
 		return err
 	}
 	if _, err := tx.ExecContext(ctx, `DROP TABLE IF EXISTS petty_cash_funds`); err != nil {
-		return err
-	}
-	if _, err := tx.ExecContext(ctx, `DELETE FROM sequence_counters WHERE name = 'cash_entry_number'`); err != nil {
 		return err
 	}
 	return nil

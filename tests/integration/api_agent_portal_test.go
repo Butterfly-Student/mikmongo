@@ -165,8 +165,7 @@ func TestAgentPortalChangePassword(t *testing.T) {
 
 	newPassword := "newpassword456"
 	w := makeRequest(t, engine, http.MethodPut, "/agent-portal/v1/profile/password", token, map[string]string{
-		"old_password": password,
-		"new_password": newPassword,
+		"password": newPassword,
 	})
 	require.Equal(t, http.StatusOK, w.Code, w.Body.String())
 

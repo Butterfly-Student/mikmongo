@@ -288,3 +288,52 @@ func (c *Client) ListenArgsQueue(args []string, queueSize int) (*routeros.Listen
 	}
 	return conn.ListenArgsQueueContext(c.asyncCtx, args, queueSize)
 }
+
+// RunRaw executes any RouterOS command and returns raw map results.
+// args is the full command including path, e.g. []string{"/ip/address/print", "?interface=ether1"}
+func (c *Client) RunRaw(ctx context.Context, args []string) ([]map[string]string, error) {
+	reply, err := c.RunArgsContext(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+	results := make([]map[string]string, 0, len(reply.Re))
+	for _, re := range reply.Re {
+		results = append(results, re.Map)
+	}
+	return results, nil
+}
+
+// ListenRaw starts a streaming RouterOS command and sends raw data to resultChan.
+// Returns a cancel function. Closes resultChan when done.
+func (c *Client) ListenRaw(ctx context.Context, args []string, resultChan chan<- map[string]string) (func() error, error) {
+	listenReply, err := c.ListenArgsContext(ctx, args)
+	if err != nil {
+		return nil, err
+	}
+
+	go func() {
+		defer close(resultChan)
+		for {
+			select {
+			case <-ctx.Done():
+				listenReply.Cancel()
+				return
+			case sentence, ok := <-listenReply.Chan():
+				if !ok {
+					return
+				}
+				select {
+				case resultChan <- sentence.Map:
+				case <-ctx.Done():
+					listenReply.Cancel()
+					return
+				}
+			}
+		}
+	}()
+
+	return func() error {
+		_, err := listenReply.Cancel()
+		return err
+	}, nil
+}

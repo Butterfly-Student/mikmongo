@@ -2,6 +2,7 @@ package service
 
 import (
 	"mikmongo/internal/domain"
+	"mikmongo/internal/notification"
 	"mikmongo/internal/repository"
 	"mikmongo/pkg/jwt"
 	"mikmongo/pkg/redis"
@@ -36,11 +37,12 @@ func NewRegistry(
 	db *gorm.DB,
 	redisClient *redis.Client,
 	logger *zap.Logger,
+	gowaClient notification.WhatsAppSender,
 ) *Registry {
 
 	router := NewRouterService(repo.RouterDeviceRepo, encKey, redisClient, logger)
 
-	notification := NewNotificationService(repo.MessageTemplateRepo, repo.SystemSettingRepo)
+	notificationSvc := NewNotificationService(repo.MessageTemplateRepo, repo.SystemSettingRepo, gowaClient)
 
 	subscription := NewSubscriptionService(
 		repo.SubscriptionRepo,
@@ -70,7 +72,7 @@ func NewRegistry(
 		repo.SequenceCounterRepo,
 		d.Billing,
 	)
-	billing.SetNotificationService(notification)
+	billing.SetNotificationService(notificationSvc)
 	billing.SetSubscriptionService(subscription)
 
 	payment := NewPaymentService(
@@ -84,14 +86,14 @@ func NewRegistry(
 		repo.Transactor,
 	)
 	payment.SetCustomerService(customerSvc)
-	payment.SetNotificationService(notification)
+	payment.SetNotificationService(notificationSvc)
 
 	registration := NewRegistrationService(
 		repo.CustomerRegistrationRepo,
 		customerSvc,
 		subscription,
 	)
-	registration.SetNotificationService(notification)
+	registration.SetNotificationService(notificationSvc)
 
 	auth := NewAuthService(repo.UserRepo, jwtService, redisClient)
 	bandwidth := NewBandwidthProfileService(repo.BandwidthProfileRepo, router, redisClient)
@@ -127,7 +129,7 @@ func NewRegistry(
 		Router:           router,
 		AgentInvoice:     agentInvoice,
 		CashManagement:   cashMgmt,
-		Notification:     notification,
+		Notification:     notificationSvc,
 		Report:           report,
 	}
 }

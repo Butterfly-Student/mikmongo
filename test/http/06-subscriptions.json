@@ -1,0 +1,208 @@
+[
+  {
+    "v": 11,
+    "name": "06 - Subscriptions",
+    "folders": [
+      {
+        "v": 11,
+        "name": "CRUD",
+        "folders": [],
+        "requests": [
+          {
+            "v": "17",
+            "name": "List Subscriptions",
+            "method": "GET",
+            "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/subscriptions",
+            "params": [
+              { "key": "limit", "value": "20", "active": true, "description": "" },
+              { "key": "offset", "value": "0", "active": true, "description": "" }
+            ],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "List subscriptions for a router (enriched with MikroTik data)"
+          },
+          {
+            "v": "17",
+            "name": "Create Subscription",
+            "method": "POST",
+            "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/subscriptions",
+            "params": [],
+            "headers": [
+              { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+            ],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": {
+              "contentType": "application/json",
+              "body": "{\n  \"customer_id\": \"<<customerId>>\",\n  \"plan_id\": \"<<profileId>>\",\n  \"username\": \"user01\",\n  \"password\": \"secret123\",\n  \"static_ip\": \"10.0.0.100\",\n  \"gateway\": \"10.0.0.1\",\n  \"billing_day\": 1,\n  \"auto_isolate\": true,\n  \"grace_period_days\": 3,\n  \"notes\": \"New subscription\",\n  \"mt_service\": \"pppoe\",\n  \"mt_local_address\": \"10.0.0.1\",\n  \"mt_routes\": \"10.0.0.0/24\"\n}"
+            },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Create subscription + PPP secret on MikroTik"
+          },
+          {
+            "v": "17",
+            "name": "Get Subscription",
+            "method": "GET",
+            "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/subscriptions/<<subscriptionId>>",
+            "params": [],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Get subscription by ID (enriched with MikroTik data)"
+          },
+          {
+            "v": "17",
+            "name": "Update Subscription",
+            "method": "PUT",
+            "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/subscriptions/<<subscriptionId>>",
+            "params": [],
+            "headers": [
+              { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+            ],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": {
+              "contentType": "application/json",
+              "body": "{\n  \"plan_id\": \"<<profileId>>\",\n  \"notes\": \"Updated subscription\"\n}"
+            },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Update subscription (partial)"
+          },
+          {
+            "v": "17",
+            "name": "Delete Subscription",
+            "method": "DELETE",
+            "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/subscriptions/<<subscriptionId>>",
+            "params": [],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Delete subscription"
+          }
+        ],
+        "auth": { "authType": "inherit", "authActive": true },
+        "headers": [],
+        "variables": [],
+        "description": null
+      },
+      {
+        "v": 11,
+        "name": "Lifecycle",
+        "folders": [],
+        "requests": [
+          {
+            "v": "17",
+            "name": "Activate",
+            "method": "POST",
+            "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/subscriptions/<<subscriptionId>>/activate",
+            "params": [],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Activate subscription (enable PPP secret)"
+          },
+          {
+            "v": "17",
+            "name": "Isolate",
+            "method": "POST",
+            "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/subscriptions/<<subscriptionId>>/isolate",
+            "params": [],
+            "headers": [
+              { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+            ],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": {
+              "contentType": "application/json",
+              "body": "{\n  \"reason\": \"Belum bayar\"\n}"
+            },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Isolate subscription (switch to isolir profile)"
+          },
+          {
+            "v": "17",
+            "name": "Restore",
+            "method": "POST",
+            "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/subscriptions/<<subscriptionId>>/restore",
+            "params": [],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Restore isolated subscription"
+          },
+          {
+            "v": "17",
+            "name": "Suspend",
+            "method": "POST",
+            "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/subscriptions/<<subscriptionId>>/suspend",
+            "params": [],
+            "headers": [
+              { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+            ],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": {
+              "contentType": "application/json",
+              "body": "{\n  \"reason\": \"Customer request\"\n}"
+            },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Suspend subscription (disable PPP secret)"
+          },
+          {
+            "v": "17",
+            "name": "Terminate",
+            "method": "POST",
+            "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/subscriptions/<<subscriptionId>>/terminate",
+            "params": [],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Terminate subscription permanently"
+          }
+        ],
+        "auth": { "authType": "inherit", "authActive": true },
+        "headers": [],
+        "variables": [],
+        "description": null
+      }
+    ],
+    "requests": [],
+    "auth": { "authType": "bearer", "authActive": true, "token": "<<token>>" },
+    "headers": [],
+    "variables": [],
+    "description": null
+  }
+]

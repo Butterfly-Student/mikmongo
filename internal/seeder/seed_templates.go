@@ -6,6 +6,7 @@ func (s *Seeder) seedMessageTemplates(ctx context.Context) error {
 	templates := []struct {
 		event, channel, subject, body string
 	}{
+		// Base templates
 		{"invoice_created", "whatsapp", "", "Halo {{name}},\n\nInvoice {{invoice_no}} sebesar Rp{{amount}} telah dibuat.\nJatuh tempo: {{due_date}}\n\nSilakan lakukan pembayaran sebelum tanggal jatuh tempo.\n\nTerima kasih."},
 		{"invoice_created", "email", "Invoice {{invoice_no}} - Rp{{amount}}", "Halo {{name}},\n\nInvoice {{invoice_no}} sebesar Rp{{amount}} telah dibuat.\nJatuh tempo: {{due_date}}\n\nSilakan lakukan pembayaran sebelum tanggal jatuh tempo.\n\nTerima kasih."},
 		{"payment_reminder", "whatsapp", "", "Halo {{name}},\n\nPengingat: Invoice {{invoice_no}} sebesar Rp{{amount}} akan jatuh tempo pada {{due_date}}.\n\nSegera lakukan pembayaran untuk menghindari isolasi layanan.\n\nTerima kasih."},
@@ -14,10 +15,13 @@ func (s *Seeder) seedMessageTemplates(ctx context.Context) error {
 		{"registration_approved", "whatsapp", "", "Halo {{name}},\n\nPendaftaran Anda telah disetujui!\nUsername: {{username}}\nPassword: {{password}}\n\nSelamat menikmati layanan kami."},
 		{"registration_rejected", "whatsapp", "", "Halo {{name}},\n\nMohon maaf, pendaftaran Anda ditolak.\nAlasan: {{reason}}\n\nSilakan hubungi kami untuk informasi lebih lanjut."},
 		{"suspension_warning", "whatsapp", "", "Halo {{name}},\n\nLayanan Anda akan dinonaktifkan mulai {{date}} karena: {{reason}}.\n\nHubungi kami untuk informasi lebih lanjut."},
+		// Agent notification templates
+		{"agent_invoice_created", "whatsapp", "", "Halo {{name}}, invoice {{invoice_no}} sebesar Rp {{amount}} telah diterbitkan. Jatuh tempo: {{due_date}}. Silahkan lakukan pembayaran."},
+		{"agent_invoice_paid", "whatsapp", "", "Halo {{name}}, pembayaran invoice {{invoice_no}} sebesar Rp {{amount}} telah dikonfirmasi. Terima kasih!"},
+		{"agent_invoice_reminder", "whatsapp", "", "Halo {{name}}, invoice {{invoice_no}} sebesar Rp {{amount}} akan jatuh tempo pada {{due_date}}. Mohon segera lakukan pembayaran."},
 	}
 
 	for _, t := range templates {
-		// Use the same query structure but with NULL for empty subject to avoid type inference issues
 		_, err := s.db.ExecContext(ctx, `
 			INSERT INTO message_templates (event, channel, subject, body, is_active)
 			VALUES ($1, $2, NULLIF($3, ''), $4, true)

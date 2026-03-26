@@ -1,0 +1,56 @@
+[
+  {
+    "v": 11,
+    "name": "18 - Hotspot Sales",
+    "folders": [],
+    "requests": [
+      {
+        "v": "17",
+        "name": "List All Hotspot Sales",
+        "method": "GET",
+        "endpoint": "<<baseUrl>>/api/v1/hotspot-sales",
+        "params": [
+          { "key": "router_id", "value": "", "active": false, "description": "Filter by router UUID" },
+          { "key": "agent_id", "value": "", "active": false, "description": "Filter by agent UUID" },
+          { "key": "profile", "value": "", "active": false, "description": "Filter by profile name" },
+          { "key": "batch_code", "value": "", "active": false, "description": "Filter by batch code" },
+          { "key": "date_from", "value": "", "active": false, "description": "YYYY-MM-DD" },
+          { "key": "date_to", "value": "", "active": false, "description": "YYYY-MM-DD" },
+          { "key": "limit", "value": "20", "active": true, "description": "" },
+          { "key": "offset", "value": "0", "active": true, "description": "" }
+        ],
+        "headers": [],
+        "auth": { "authType": "inherit", "authActive": true },
+        "body": { "contentType": null, "body": null },
+        "preRequestScript": "",
+        "testScript": "",
+        "requestVariables": [],
+        "responses": {},
+        "description": "List all hotspot sales (global)"
+      },
+      {
+        "v": "17",
+        "name": "List Hotspot Sales by Router",
+        "method": "GET",
+        "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/hotspot-sales",
+        "params": [
+          { "key": "agent_id", "value": "", "active": false, "description": "Filter by agent UUID" },
+          { "key": "limit", "value": "20", "active": true, "description": "" },
+          { "key": "offset", "value": "0", "active": true, "description": "" }
+        ],
+        "headers": [],
+        "auth": { "authType": "inherit", "authActive": true },
+        "body": { "contentType": null, "body": null },
+        "preRequestScript": "",
+        "testScript": "",
+        "requestVariables": [],
+        "responses": {},
+        "description": "List hotspot sales scoped to a router"
+      }
+    ],
+    "auth": { "authType": "bearer", "authActive": true, "token": "<<token>>" },
+    "headers": [],
+    "variables": [],
+    "description": null
+  }
+]

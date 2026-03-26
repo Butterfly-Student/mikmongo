@@ -1,6 +1,6 @@
 # Laporan Hasil Testing — mikmongo ISP Billing System
 
-**Tanggal:** 2026-03-16 (diperbarui — Tier 4 + fix semua pre-existing integration test failures)
+**Tanggal:** 2026-03-25 (diperbarui — Security hardening + Migration/Seeder consolidation)
 **Environment:** Windows 11, Go 1.23, PostgreSQL 17 (Docker), Redis 7 (Docker)
 **Database:** `mikmongo_test` @ localhost:5432 (user: mikmongo)
 **Redis:** DB=15 @ localhost:6379 (dedicated test DB, di-flush setiap test)
@@ -15,9 +15,65 @@
 | 2 | Service Unit Tests (Mock) | 49 | ✅ 49 | 0 | ~2.2s |
 | 3 | Integration Tests (PostgreSQL + Redis) | 63 | ✅ 63 | 0 | ~30s |
 | 4 | API Handler Tests (Full HTTP Stack) | 36 | ✅ 36 | 0 | ~2.6s |
-| **Total** | | **225** | **✅ 225** | **0** | |
+| 5 | Security & WebSocket Unit Tests | 24 | ✅ 24 | 0 | ~2.5s |
+| 6 | Migration + Seeder Integration | 1 (manual) | ✅ 1 | 0 | ~10s |
+| **Total** | | **249 + 1 manual** | **✅ All** | **0** | |
 
-> **Perubahan dari sesi ini:** Tier 4 API handler tests ditambahkan (36 tests baru).
+> **Perubahan 2026-03-25: Migration/Seeder Consolidation**
+>
+> Seed data yang sebelumnya ada di 4 migration files (020, 027, 028, 029) dipindahkan
+> seluruhnya ke `internal/seeder/`. Prinsip: **migrations = schema, seeder = data**.
+>
+> **Migration changes:**
+> - `020_seed_system_data.go` — no-op (100% duplikat dengan seeder)
+> - `027_agent_portal_settings.go` — hapus INSERT, sisakan ALTER TABLE
+> - `028_create_cash_management.go` — hapus INSERT sequence, sisakan CREATE TABLE
+> - `029_agent_notification_templates.go` — no-op (100% seed data)
+>
+> **Seeder additions:**
+> - `seed_settings.go` — +3 agent billing settings (dari migration 027) + description field
+> - `seed_templates.go` — +3 agent notification templates (dari migration 029)
+> - `seed_sequences.go` — +1 cash_entry_number sequence (dari migration 028)
+>
+> **Verified via fresh DB seed (Docker PostgreSQL):**
+> - system_settings: 9 records (6 base + 3 agent)
+> - message_templates: 11 records (8 base + 3 agent)
+> - sequence_counters: 4 records (invoice, payment, customer_code, cash_entry)
+
+---
+
+> **Perubahan 2026-03-25: Security Hardening**
+>
+> Code review menemukan 3 CRITICAL, 4 HIGH, dan 5 MEDIUM issues. Semua telah diperbaiki:
+>
+> **CRITICAL fixes:**
+> - WebSocket `CheckOrigin` sekarang validasi origin dari `ALLOWED_ORIGINS` env var (bukan `return true`)
+> - Raw RouterOS command endpoint (`/raw/run`, `/raw/ws/listen`) sekarang punya command allowlist — memblokir `reboot`, `shutdown`, `user/add`, `remove`, `set`, dll
+> - CORS middleware sekarang menggunakan configured origins (bukan hardcoded `*`)
+>
+> **HIGH fixes:**
+> - Auth middleware support query param `?token=<jwt>` untuk WebSocket (browser tidak bisa set custom header)
+> - Semua WebSocket handler punya read limit (4KB), read/write deadline, dan pong handler
+> - Boilerplate WS handler di-refactor ke shared `ws.UpgradeAndConfigure()` + `ws.ForwardChannel[T]()`
+> - Notification service: silent error suppression pada template render dan DB query diperbaiki
+>
+> **MEDIUM fixes:**
+> - `RawListenRequest` DTO sekarang punya `binding:"required,min=1,max=20"` validation
+> - Interface name parameter divalidasi dengan regex `^[a-zA-Z0-9_\-\.]{1,64}$`
+> - `renderGoTemplate` sekarang return error (bukan fallback ke raw template)
+>
+> **24 tests baru:**
+> - `pkg/ws/upgrader_test.go` (6) — CheckOrigin: no header, allow all, allowed, case-insensitive, rejected, empty config
+> - `pkg/ws/stream_test.go` (2) — ValidateInterfaceName: valid names, invalid names
+> - `internal/handler/mikrotik/raw_handler_test.go` (6) — validateRawArgs: empty, too many, allowed, blocked commands, blocked verbs, case-insensitive
+> - `internal/config/config_test.go` (4) — parseOrigins: wildcard, multiple, empty, spaces-only
+> - `internal/notification/gowa_client_test.go` (6) — NormalizePhone + GoWA client (sudah ada sebelumnya)
+>
+> **Files modified:** 12 files. **Files created:** 6 files (4 test, 1 stream helper, 1 updated).
+
+---
+
+> **Perubahan sebelumnya (2026-03-16):** Tier 4 API handler tests ditambahkan (36 tests baru).
 > 5 file integration tests diperbaiki dari pre-existing "sql: transaction has already been committed
 > or rolled back" — root cause: shared transaction di-rollback pada sub-test pertama
 > (`defer suite.Cleanup(t)` inside `t.Run`), sehingga sub-tests berikutnya gagal.

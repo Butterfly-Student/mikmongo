@@ -10,6 +10,7 @@ func (s *Seeder) seedSequenceCounters(ctx context.Context) error {
 		{"invoice_number", "INV", 6},
 		{"payment_number", "PAY", 6},
 		{"customer_code", "CST", 5},
+		{"cash_entry_number", "KAS", 6},
 	}
 
 	for _, c := range counters {

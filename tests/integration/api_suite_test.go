@@ -72,7 +72,7 @@ func buildTestRouterFull(t *testing.T, suite *TestSuite) (*gin.Engine, *handler.
 		domain.NewNotificationDomain(),
 	)
 
-	svcReg := service.NewRegistry(repoReg, domainReg, jwtSvc, testSecret, suite.DB, suite.RedisClient, zap.NewNop())
+	svcReg := service.NewRegistry(repoReg, domainReg, jwtSvc, testSecret, suite.DB, suite.RedisClient, zap.NewNop(), nil)
 	handlerReg := handler.NewRegistry(svcReg, repos.SystemSettingRepo, jwtSvc)
 
 	// Wire HotspotSale + SalesAgent + AgentInvoice handlers.
@@ -227,7 +227,7 @@ func buildRootTestRouter(t *testing.T, suite *TestSuite) *gin.Engine {
 		domain.NewNotificationDomain(),
 	)
 
-	svcReg := service.NewRegistry(repoReg, domainReg, jwtSvc, testSecret, suite.RootDB, suite.RedisClient, zap.NewNop())
+	svcReg := service.NewRegistry(repoReg, domainReg, jwtSvc, testSecret, suite.RootDB, suite.RedisClient, zap.NewNop(), nil)
 	handlerReg := handler.NewRegistry(svcReg, repos.SystemSettingRepo, jwtSvc)
 
 	hotspotSaleSvc := service.NewHotspotSaleService(nil, repos.HotspotSaleRepo, repos.SalesAgentRepo)

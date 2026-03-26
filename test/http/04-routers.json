@@ -1,0 +1,176 @@
+[
+  {
+    "v": 11,
+    "name": "04 - Routers",
+    "folders": [],
+    "requests": [
+      {
+        "v": "17",
+        "name": "List Routers",
+        "method": "GET",
+        "endpoint": "<<baseUrl>>/api/v1/routers",
+        "params": [
+          { "key": "limit", "value": "20", "active": true, "description": "" },
+          { "key": "offset", "value": "0", "active": true, "description": "" }
+        ],
+        "headers": [],
+        "auth": { "authType": "inherit", "authActive": true },
+        "body": { "contentType": null, "body": null },
+        "preRequestScript": "",
+        "testScript": "",
+        "requestVariables": [],
+        "responses": {},
+        "description": "List all MikroTik routers"
+      },
+      {
+        "v": "17",
+        "name": "Create Router",
+        "method": "POST",
+        "endpoint": "<<baseUrl>>/api/v1/routers",
+        "params": [],
+        "headers": [
+          { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+        ],
+        "auth": { "authType": "inherit", "authActive": true },
+        "body": {
+          "contentType": "application/json",
+          "body": "{\n  \"name\": \"Router Utama\",\n  \"address\": \"192.168.1.1\",\n  \"area\": \"Area 1\",\n  \"api_port\": 8728,\n  \"rest_port\": 443,\n  \"username\": \"admin\",\n  \"password\": \"admin123\",\n  \"use_ssl\": false,\n  \"is_master\": true,\n  \"notes\": \"Main router\"\n}"
+        },
+        "preRequestScript": "",
+        "testScript": "",
+        "requestVariables": [],
+        "responses": {},
+        "description": "Add a new MikroTik router"
+      },
+      {
+        "v": "17",
+        "name": "Get Selected Router",
+        "method": "GET",
+        "endpoint": "<<baseUrl>>/api/v1/routers/selected",
+        "params": [],
+        "headers": [],
+        "auth": { "authType": "inherit", "authActive": true },
+        "body": { "contentType": null, "body": null },
+        "preRequestScript": "",
+        "testScript": "",
+        "requestVariables": [],
+        "responses": {},
+        "description": "Get current user's selected router"
+      },
+      {
+        "v": "17",
+        "name": "Select Router",
+        "method": "POST",
+        "endpoint": "<<baseUrl>>/api/v1/routers/select/<<routerId>>",
+        "params": [],
+        "headers": [],
+        "auth": { "authType": "inherit", "authActive": true },
+        "body": { "contentType": null, "body": null },
+        "preRequestScript": "",
+        "testScript": "",
+        "requestVariables": [],
+        "responses": {},
+        "description": "Set active router for current user"
+      },
+      {
+        "v": "17",
+        "name": "Get Router",
+        "method": "GET",
+        "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>",
+        "params": [],
+        "headers": [],
+        "auth": { "authType": "inherit", "authActive": true },
+        "body": { "contentType": null, "body": null },
+        "preRequestScript": "",
+        "testScript": "",
+        "requestVariables": [],
+        "responses": {},
+        "description": "Get router by ID"
+      },
+      {
+        "v": "17",
+        "name": "Update Router",
+        "method": "PUT",
+        "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>",
+        "params": [],
+        "headers": [
+          { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+        ],
+        "auth": { "authType": "inherit", "authActive": true },
+        "body": {
+          "contentType": "application/json",
+          "body": "{\n  \"name\": \"Router Utama Updated\",\n  \"address\": \"192.168.1.2\",\n  \"notes\": \"Updated router\"\n}"
+        },
+        "preRequestScript": "",
+        "testScript": "",
+        "requestVariables": [],
+        "responses": {},
+        "description": "Update router fields (partial)"
+      },
+      {
+        "v": "17",
+        "name": "Delete Router",
+        "method": "DELETE",
+        "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>",
+        "params": [],
+        "headers": [],
+        "auth": { "authType": "inherit", "authActive": true },
+        "body": { "contentType": null, "body": null },
+        "preRequestScript": "",
+        "testScript": "",
+        "requestVariables": [],
+        "responses": {},
+        "description": "Delete router"
+      },
+      {
+        "v": "17",
+        "name": "Test Connection",
+        "method": "POST",
+        "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/test-connection",
+        "params": [],
+        "headers": [],
+        "auth": { "authType": "inherit", "authActive": true },
+        "body": { "contentType": null, "body": null },
+        "preRequestScript": "",
+        "testScript": "",
+        "requestVariables": [],
+        "responses": {},
+        "description": "Test connection to MikroTik router"
+      },
+      {
+        "v": "17",
+        "name": "Sync Device",
+        "method": "POST",
+        "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/sync",
+        "params": [],
+        "headers": [],
+        "auth": { "authType": "inherit", "authActive": true },
+        "body": { "contentType": null, "body": null },
+        "preRequestScript": "",
+        "testScript": "",
+        "requestVariables": [],
+        "responses": {},
+        "description": "Sync single router device"
+      },
+      {
+        "v": "17",
+        "name": "Sync All Devices",
+        "method": "POST",
+        "endpoint": "<<baseUrl>>/api/v1/routers/sync-all",
+        "params": [],
+        "headers": [],
+        "auth": { "authType": "inherit", "authActive": true },
+        "body": { "contentType": null, "body": null },
+        "preRequestScript": "",
+        "testScript": "",
+        "requestVariables": [],
+        "responses": {},
+        "description": "Sync all router devices"
+      }
+    ],
+    "auth": { "authType": "bearer", "authActive": true, "token": "<<token>>" },
+    "headers": [],
+    "variables": [],
+    "description": null
+  }
+]

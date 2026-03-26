@@ -13,6 +13,7 @@ import (
 	"mikmongo/internal/config"
 	"mikmongo/internal/domain"
 	"mikmongo/internal/handler"
+	mikrotikHandler "mikmongo/internal/handler/mikrotik"
 	"mikmongo/internal/handler/mikrotik/mikhmon"
 	"mikmongo/internal/middleware"
 	_ "mikmongo/internal/migration"
@@ -23,13 +24,16 @@ import (
 	"mikmongo/internal/router"
 	"mikmongo/internal/scheduler"
 	"mikmongo/internal/seeder"
+	"mikmongo/internal/notification"
 	"mikmongo/internal/service"
 	"mikmongo/internal/service/mikrotik"
+	"mikmongo/pkg/gowa"
 	"mikmongo/pkg/jwt"
 	"mikmongo/pkg/logger"
 	xenditpkg "mikmongo/pkg/payment/xendit"
 	"mikmongo/pkg/rabbitmq"
 	"mikmongo/pkg/redis"
+	"mikmongo/pkg/ws"
 
 	"github.com/google/uuid"
 	"github.com/pressly/goose/v3"
@@ -49,6 +53,9 @@ func main() {
 		zap.String("env", cfg.App.Env),
 		zap.String("port", cfg.App.Port),
 	)
+
+	// Configure WebSocket allowed origins from environment
+	ws.SetAllowedOrigins(cfg.App.AllowedOrigins)
 
 	// Database
 	db, err := gorm.Open(gormpg.Open(cfg.GetDSN()), &gorm.Config{})
@@ -148,6 +155,19 @@ func main() {
 	// Queue
 	queueRegistry := queue.NewRegistry(rabbitClient)
 
+	// GoWA WhatsApp client
+	var waClient notification.WhatsAppSender
+	if cfg.GoWA.Username != "" {
+		gowaClient := gowa.New(&gowa.Config{
+			BaseURL:  cfg.GoWA.BaseURL,
+			Username: cfg.GoWA.Username,
+			Password: cfg.GoWA.Password,
+			DeviceID: cfg.GoWA.DeviceID,
+			Timeout:  time.Duration(cfg.GoWA.Timeout) * time.Second,
+		})
+		waClient = notification.NewGoWAClient(gowaClient, cfg.GoWA.GroupID)
+	}
+
 	// Services
 	encKey := cfg.JWT.Secret
 	serviceRegistry := service.NewRegistry(
@@ -158,6 +178,7 @@ func main() {
 		db,
 		redisClient,
 		logg.Logger,
+		waClient,
 	)
 
 	// Initialize Mikrotik service registry
@@ -193,7 +214,8 @@ func main() {
 	handlerRegistry.CustomerPortal.SetProvider("xendit", xenditClient)
 	handlerRegistry.Webhook.SetXenditProvider(xenditClient)
 
-	// Initialize Mikhmon handler registry
+	// Initialize MikroTik handler registry
+	handlerRegistry.Mikrotik = mikrotikHandler.NewRegistry(mikrotikRegistry, serviceRegistry.Router)
 	handlerRegistry.Mikhmon = mikhmon.NewRegistry(mikrotikRegistry)
 
 	// Initialize HotspotSale + SalesAgent handlers
@@ -215,7 +237,7 @@ func main() {
 	}
 
 	// Middleware
-	middlewareRegistry := middleware.NewRegistry(logg.Logger, jwtService, redisClient, casbinEnforcer)
+	middlewareRegistry := middleware.NewRegistry(logg.Logger, jwtService, redisClient, casbinEnforcer, cfg.App.AllowedOrigins)
 
 	// Router
 	r := router.New(handlerRegistry, middlewareRegistry)

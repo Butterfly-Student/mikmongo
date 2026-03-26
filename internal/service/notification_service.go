@@ -20,14 +20,17 @@ type NotificationService struct {
 	emailClient  notification.EmailSender
 }
 
-// NewNotificationService creates a new notification service
+// NewNotificationService creates a new notification service.
+// gowaClient may be nil — WhatsApp sending will be skipped.
 func NewNotificationService(
 	templateRepo repository.MessageTemplateRepository,
 	settingRepo repository.SystemSettingRepository,
+	gowaClient notification.WhatsAppSender,
 ) *NotificationService {
 	return &NotificationService{
 		templateRepo: templateRepo,
 		settingRepo:  settingRepo,
+		gowaClient:   gowaClient,
 	}
 }
 
@@ -47,16 +50,8 @@ func NewNotificationServiceWithClients(
 	}
 }
 
-// initClients lazily initializes GoWA and Email clients from system_settings
-func (s *NotificationService) initClients(ctx context.Context) {
-	if s.gowaClient == nil {
-		gowaURL := s.getSetting(ctx, "notification", "gowa_url")
-		gowaSender := s.getSetting(ctx, "notification", "gowa_sender")
-		gowaKey := s.getSetting(ctx, "notification", "gowa_auth_key")
-		if gowaURL != "" {
-			s.gowaClient = notification.NewGoWAClient(gowaURL, gowaSender, gowaKey)
-		}
-	}
+// initEmailClient lazily initializes the email client from DB settings.
+func (s *NotificationService) initEmailClient(ctx context.Context) {
 	if s.emailClient == nil {
 		smtpHost := s.getSetting(ctx, "notification", "smtp_host")
 		smtpPort := s.getSetting(ctx, "notification", "smtp_port")
@@ -93,18 +88,17 @@ func (s *NotificationService) RenderTemplate(tmplBody string, data map[string]st
 func renderGoTemplate(tmplBody string, data map[string]string) (string, error) {
 	t, err := template.New("msg").Parse(tmplBody)
 	if err != nil {
-		return tmplBody, nil // fallback to raw
+		return "", fmt.Errorf("failed to parse template: %w", err)
 	}
 	var buf bytes.Buffer
 	if err := t.Execute(&buf, data); err != nil {
-		return tmplBody, nil
+		return "", fmt.Errorf("failed to execute template: %w", err)
 	}
 	return buf.String(), nil
 }
 
 // SendViaWhatsApp sends a WhatsApp message
 func (s *NotificationService) SendViaWhatsApp(ctx context.Context, phone, message string) error {
-	s.initClients(ctx)
 	if s.gowaClient == nil {
 		return fmt.Errorf("WhatsApp client not configured")
 	}
@@ -113,21 +107,30 @@ func (s *NotificationService) SendViaWhatsApp(ctx context.Context, phone, messag
 
 // SendViaEmail sends an email
 func (s *NotificationService) SendViaEmail(ctx context.Context, to, subject, body string) error {
-	s.initClients(ctx)
+	s.initEmailClient(ctx)
 	if s.emailClient == nil {
 		return fmt.Errorf("Email client not configured")
 	}
 	return s.emailClient.SendEmail(ctx, to, subject, body)
 }
 
-// RenderAndSend renders template and sends via specified channel
+// RenderAndSend renders template and sends via specified channel.
+// Returns nil if the template is not found or inactive (not an error).
+// Returns an error if the DB query fails or sending fails.
 func (s *NotificationService) RenderAndSend(ctx context.Context, event, channel, to string, data map[string]string) error {
 	tmpl, err := s.templateRepo.GetByEventAndChannel(ctx, event, channel)
-	if err != nil || !tmpl.IsActive {
-		return nil // skip if no template
+	if err != nil {
+		// Template not found is acceptable — skip silently
+		return nil
+	}
+	if !tmpl.IsActive {
+		return nil
 	}
 
-	body, _ := s.RenderTemplate(tmpl.Body, data)
+	body, err := s.RenderTemplate(tmpl.Body, data)
+	if err != nil {
+		return fmt.Errorf("render template body for %s/%s: %w", event, channel, err)
+	}
 
 	switch channel {
 	case "whatsapp":
@@ -135,12 +138,34 @@ func (s *NotificationService) RenderAndSend(ctx context.Context, event, channel,
 	case "email":
 		subject := ""
 		if tmpl.Subject != nil {
-			subj, _ := s.RenderTemplate(*tmpl.Subject, data)
+			subj, err := s.RenderTemplate(*tmpl.Subject, data)
+			if err != nil {
+				return fmt.Errorf("render template subject for %s/%s: %w", event, channel, err)
+			}
 			subject = subj
 		}
 		return s.SendViaEmail(ctx, to, subject, body)
 	}
 	return nil
+}
+
+// SendToGroup renders a template and sends it to the configured WhatsApp group.
+func (s *NotificationService) SendToGroup(ctx context.Context, event string, data map[string]string) error {
+	if s.gowaClient == nil {
+		return nil
+	}
+	tmpl, err := s.templateRepo.GetByEventAndChannel(ctx, event, "whatsapp")
+	if err != nil {
+		return nil // template not found — skip
+	}
+	if !tmpl.IsActive {
+		return nil
+	}
+	body, err := s.RenderTemplate(tmpl.Body, data)
+	if err != nil {
+		return fmt.Errorf("render group template for %s: %w", event, err)
+	}
+	return s.gowaClient.SendGroupMessage(ctx, body)
 }
 
 // SendInvoiceCreated sends invoice created notification
@@ -224,4 +249,45 @@ func (s *NotificationService) SendSuspensionWarning(ctx context.Context, custome
 		"reason": reason,
 	}
 	return s.RenderAndSend(ctx, "suspension_warning", "whatsapp", customer.Phone, data)
+}
+
+// SendAgentInvoiceCreated sends notification when an agent invoice is created
+func (s *NotificationService) SendAgentInvoiceCreated(ctx context.Context, agent *model.SalesAgent, invoice *model.AgentInvoice) error {
+	if agent.Phone == nil {
+		return nil
+	}
+	data := map[string]string{
+		"name":       agent.Name,
+		"invoice_no": invoice.InvoiceNumber,
+		"amount":     fmt.Sprintf("%.0f", invoice.TotalAmount),
+		"due_date":   invoice.PeriodEnd.Format("02-01-2006"),
+	}
+	return s.RenderAndSend(ctx, "agent_invoice_created", "whatsapp", *agent.Phone, data)
+}
+
+// SendAgentInvoicePaid sends notification when an agent invoice is paid
+func (s *NotificationService) SendAgentInvoicePaid(ctx context.Context, agent *model.SalesAgent, invoice *model.AgentInvoice) error {
+	if agent.Phone == nil {
+		return nil
+	}
+	data := map[string]string{
+		"name":       agent.Name,
+		"invoice_no": invoice.InvoiceNumber,
+		"amount":     fmt.Sprintf("%.0f", invoice.PaidAmount),
+	}
+	return s.RenderAndSend(ctx, "agent_invoice_paid", "whatsapp", *agent.Phone, data)
+}
+
+// SendAgentInvoiceReminder sends payment reminder for an agent invoice
+func (s *NotificationService) SendAgentInvoiceReminder(ctx context.Context, agent *model.SalesAgent, invoice *model.AgentInvoice) error {
+	if agent.Phone == nil {
+		return nil
+	}
+	data := map[string]string{
+		"name":       agent.Name,
+		"invoice_no": invoice.InvoiceNumber,
+		"amount":     fmt.Sprintf("%.0f", invoice.TotalAmount),
+		"due_date":   invoice.PeriodEnd.Format("02-01-2006"),
+	}
+	return s.RenderAndSend(ctx, "agent_invoice_reminder", "whatsapp", *agent.Phone, data)
 }

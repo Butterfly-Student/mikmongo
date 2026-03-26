@@ -1,6 +1,7 @@
 package handler
 
 import (
+	mikrotikHandler "mikmongo/internal/handler/mikrotik"
 	"mikmongo/internal/handler/mikrotik/mikhmon"
 	"mikmongo/internal/repository"
 	"mikmongo/internal/service"
@@ -27,7 +28,7 @@ type Registry struct {
 	AgentInvoice     *AgentInvoiceHandler
 	AgentPortal      *AgentPortalHandler
 	CashManagement   *CashManagementHandler
-	Mikrotik         interface{}       // MikroTik handler registry (set after creation)
+	Mikrotik         *mikrotikHandler.Registry // MikroTik handler registry (set after creation)
 	Mikhmon          *mikhmon.Registry // Mikhmon handler registry
 }
 

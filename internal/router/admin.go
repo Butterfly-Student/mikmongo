@@ -81,6 +81,13 @@ func registerAdminRoutes(v1 *gin.RouterGroup, handlers *handler.Registry) {
 
 			// Mikhmon (scoped to router)
 			mikrotikRouter.RegisterMikhmonRoutes(router, handlers)
+
+			// MikroTik API routes (PPP, Hotspot, Network, Monitor, Raw)
+			mikrotikRouter.RegisterPPPRoutes(router, handlers)
+			mikrotikRouter.RegisterHotspotRoutes(router, handlers)
+			mikrotikRouter.RegisterNetworkRoutes(router, handlers)
+			mikrotikRouter.RegisterMonitorRoutes(router, handlers)
+			mikrotikRouter.RegisterRawRoutes(router, handlers)
 		}
 	}
 

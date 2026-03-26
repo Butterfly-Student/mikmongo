@@ -1,0 +1,200 @@
+[
+  {
+    "v": 11,
+    "name": "23 - Customer Portal",
+    "folders": [
+      {
+        "v": 11,
+        "name": "Public",
+        "folders": [],
+        "requests": [
+          {
+            "v": "17",
+            "name": "Portal Login",
+            "method": "POST",
+            "endpoint": "<<baseUrl>>/portal/v1/login",
+            "params": [],
+            "headers": [
+              { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+            ],
+            "auth": { "authType": "none", "authActive": true },
+            "body": {
+              "contentType": "application/json",
+              "body": "{\n  \"identifier\": \"08123456789\",\n  \"password\": \"portal123\"\n}"
+            },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Login with phone/email and password. Copy token to portalToken env var."
+          }
+        ],
+        "auth": { "authType": "none", "authActive": true },
+        "headers": [],
+        "variables": [],
+        "description": null
+      },
+      {
+        "v": 11,
+        "name": "Authenticated",
+        "folders": [],
+        "requests": [
+          {
+            "v": "17",
+            "name": "Get Profile",
+            "method": "GET",
+            "endpoint": "<<baseUrl>>/portal/v1/profile",
+            "params": [],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Get customer profile"
+          },
+          {
+            "v": "17",
+            "name": "Change Password",
+            "method": "PUT",
+            "endpoint": "<<baseUrl>>/portal/v1/profile/password",
+            "params": [],
+            "headers": [
+              { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+            ],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": {
+              "contentType": "application/json",
+              "body": "{\n  \"password\": \"newportal456\"\n}"
+            },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Change portal password"
+          },
+          {
+            "v": "17",
+            "name": "Get Subscriptions",
+            "method": "GET",
+            "endpoint": "<<baseUrl>>/portal/v1/subscriptions",
+            "params": [],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "List customer's subscriptions"
+          },
+          {
+            "v": "17",
+            "name": "Get Invoices",
+            "method": "GET",
+            "endpoint": "<<baseUrl>>/portal/v1/invoices",
+            "params": [],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "List customer's invoices"
+          },
+          {
+            "v": "17",
+            "name": "Get Invoice Detail",
+            "method": "GET",
+            "endpoint": "<<baseUrl>>/portal/v1/invoices/<<invoiceId>>",
+            "params": [],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Get invoice detail"
+          },
+          {
+            "v": "17",
+            "name": "Create Payment",
+            "method": "POST",
+            "endpoint": "<<baseUrl>>/portal/v1/payments",
+            "params": [],
+            "headers": [
+              { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+            ],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": {
+              "contentType": "application/json",
+              "body": "{\n  \"amount\": 150000,\n  \"payment_method\": \"bank_transfer\"\n}"
+            },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Initiate payment from portal"
+          },
+          {
+            "v": "17",
+            "name": "List Payments",
+            "method": "GET",
+            "endpoint": "<<baseUrl>>/portal/v1/payments",
+            "params": [],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "List customer's payments"
+          },
+          {
+            "v": "17",
+            "name": "Get Payment Detail",
+            "method": "GET",
+            "endpoint": "<<baseUrl>>/portal/v1/payments/<<paymentId>>",
+            "params": [],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Get payment detail"
+          },
+          {
+            "v": "17",
+            "name": "Pay with Gateway",
+            "method": "POST",
+            "endpoint": "<<baseUrl>>/portal/v1/payments/<<paymentId>>/pay",
+            "params": [],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Pay via payment gateway (returns redirect URL)"
+          }
+        ],
+        "auth": { "authType": "inherit", "authActive": true },
+        "headers": [],
+        "variables": [],
+        "description": null
+      }
+    ],
+    "requests": [],
+    "auth": { "authType": "bearer", "authActive": true, "token": "<<portalToken>>" },
+    "headers": [],
+    "variables": [],
+    "description": "Customer self-service portal. Use portalToken env var."
+  }
+]

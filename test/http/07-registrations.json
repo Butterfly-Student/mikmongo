@@ -1,0 +1,128 @@
+[
+  {
+    "v": 11,
+    "name": "07 - Registrations",
+    "folders": [
+      {
+        "v": 11,
+        "name": "Public",
+        "folders": [],
+        "requests": [
+          {
+            "v": "17",
+            "name": "Create Registration",
+            "method": "POST",
+            "endpoint": "<<baseUrl>>/api/v1/register",
+            "params": [],
+            "headers": [
+              { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+            ],
+            "auth": { "authType": "none", "authActive": true },
+            "body": {
+              "contentType": "application/json",
+              "body": "{\n  \"full_name\": \"Calon Pelanggan\",\n  \"phone\": \"08111222333\",\n  \"email\": \"calon@example.com\",\n  \"address\": \"Jl. Baru No. 5\",\n  \"latitude\": -6.2100,\n  \"longitude\": 106.8500,\n  \"notes\": \"Ingin pasang internet\",\n  \"bandwidth_profile_id\": \"<<profileId>>\"\n}"
+            },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Public registration form submission"
+          }
+        ],
+        "auth": { "authType": "none", "authActive": true },
+        "headers": [],
+        "variables": [],
+        "description": null
+      },
+      {
+        "v": 11,
+        "name": "Admin",
+        "folders": [],
+        "requests": [
+          {
+            "v": "17",
+            "name": "List Registrations",
+            "method": "GET",
+            "endpoint": "<<baseUrl>>/api/v1/registrations",
+            "params": [
+              { "key": "limit", "value": "20", "active": true, "description": "" },
+              { "key": "offset", "value": "0", "active": true, "description": "" }
+            ],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "List all registrations"
+          },
+          {
+            "v": "17",
+            "name": "Get Registration",
+            "method": "GET",
+            "endpoint": "<<baseUrl>>/api/v1/registrations/<<registrationId>>",
+            "params": [],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Get registration by ID"
+          },
+          {
+            "v": "17",
+            "name": "Approve Registration",
+            "method": "POST",
+            "endpoint": "<<baseUrl>>/api/v1/registrations/<<registrationId>>/approve",
+            "params": [],
+            "headers": [
+              { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+            ],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": {
+              "contentType": "application/json",
+              "body": "{\n  \"router_id\": \"<<routerId>>\",\n  \"profile_id\": \"<<profileId>>\"\n}"
+            },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Approve registration (creates customer + subscription)"
+          },
+          {
+            "v": "17",
+            "name": "Reject Registration",
+            "method": "POST",
+            "endpoint": "<<baseUrl>>/api/v1/registrations/<<registrationId>>/reject",
+            "params": [],
+            "headers": [
+              { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+            ],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": {
+              "contentType": "application/json",
+              "body": "{\n  \"reason\": \"Area belum terjangkau\"\n}"
+            },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Reject registration with reason"
+          }
+        ],
+        "auth": { "authType": "inherit", "authActive": true },
+        "headers": [],
+        "variables": [],
+        "description": null
+      }
+    ],
+    "requests": [],
+    "auth": { "authType": "bearer", "authActive": true, "token": "<<token>>" },
+    "headers": [],
+    "variables": [],
+    "description": null
+  }
+]
