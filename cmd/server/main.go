@@ -64,6 +64,7 @@ func main() {
 	}
 
 	// Auto-migrate + seed (when AUTO_MIGRATE=true)
+	// Drops all tables, re-runs all migrations from scratch, then seeds.
 	if cfg.Seed.AutoMigrate {
 		sqlDB, err := db.DB()
 		if err != nil {
@@ -72,11 +73,21 @@ func main() {
 		if err := goose.SetDialect("postgres"); err != nil {
 			logg.Fatal("Failed to set goose dialect", zap.Error(err))
 		}
+
+		// Reset: roll back ALL migrations (drops tables in reverse order)
+		logg.Info("Resetting database (dropping all tables)...")
+		if err := goose.Reset(sqlDB, "."); err != nil {
+			logg.Warn("goose.Reset failed (first run?), continuing...", zap.Error(err))
+		}
+
+		// Up: re-run all migrations from scratch
+		logg.Info("Running all migrations from scratch...")
 		if err := goose.Up(sqlDB, "."); err != nil {
 			logg.Fatal("Failed to run migrations", zap.Error(err))
 		}
 		logg.Info("Migrations completed")
 
+		// Seed all data
 		seedCfg := seeder.Config{
 			EncryptionKey: cfg.JWT.Secret,
 		}

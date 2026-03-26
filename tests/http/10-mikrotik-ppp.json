@@ -1,0 +1,193 @@
+[
+  {
+    "v": 11,
+    "name": "10 - MikroTik PPP",
+    "folders": [
+      {
+        "v": 11,
+        "name": "Profiles",
+        "folders": [],
+        "requests": [
+          {
+            "v": "17",
+            "name": "Get PPP Profiles",
+            "method": "GET",
+            "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/ppp/profiles",
+            "params": [],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "List all PPP profiles from MikroTik"
+          },
+          {
+            "v": "17",
+            "name": "Add PPP Profile",
+            "method": "POST",
+            "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/ppp/profiles",
+            "params": [],
+            "headers": [
+              { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+            ],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": {
+              "contentType": "application/json",
+              "body": "{\n  \"name\": \"10M-Profile\",\n  \"local_address\": \"10.0.0.1\",\n  \"remote_address\": \"pool-10m\",\n  \"rate_limit\": \"10M/10M\",\n  \"only_one\": \"yes\",\n  \"comment\": \"10 Mbps profile\"\n}"
+            },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Create PPP profile on MikroTik"
+          },
+          {
+            "v": "17",
+            "name": "Get PPP Profile by Name",
+            "method": "GET",
+            "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/ppp/profiles/10M-Profile",
+            "params": [],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Get PPP profile by name"
+          },
+          {
+            "v": "17",
+            "name": "Remove PPP Profile",
+            "method": "DELETE",
+            "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/ppp/profiles/*1",
+            "params": [],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Remove PPP profile by MikroTik ID (e.g., *1)"
+          }
+        ],
+        "auth": { "authType": "inherit", "authActive": true },
+        "headers": [],
+        "variables": [],
+        "description": null
+      },
+      {
+        "v": 11,
+        "name": "Secrets",
+        "folders": [],
+        "requests": [
+          {
+            "v": "17",
+            "name": "Get PPP Secrets",
+            "method": "GET",
+            "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/ppp/secrets",
+            "params": [
+              { "key": "profile", "value": "", "active": false, "description": "Filter by profile name" }
+            ],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "List all PPP secrets"
+          },
+          {
+            "v": "17",
+            "name": "Add PPP Secret",
+            "method": "POST",
+            "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/ppp/secrets",
+            "params": [],
+            "headers": [
+              { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+            ],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": {
+              "contentType": "application/json",
+              "body": "{\n  \"name\": \"user01\",\n  \"password\": \"secret123\",\n  \"profile\": \"10M-Profile\",\n  \"service\": \"pppoe\",\n  \"local_address\": \"10.0.0.1\",\n  \"remote_address\": \"10.0.0.100\",\n  \"comment\": \"Customer user01\"\n}"
+            },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Create PPP secret on MikroTik"
+          },
+          {
+            "v": "17",
+            "name": "Get PPP Secret by Name",
+            "method": "GET",
+            "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/ppp/secrets/user01",
+            "params": [],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Get PPP secret by name"
+          },
+          {
+            "v": "17",
+            "name": "Remove PPP Secret",
+            "method": "DELETE",
+            "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/ppp/secrets/*1",
+            "params": [],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Remove PPP secret by MikroTik ID"
+          }
+        ],
+        "auth": { "authType": "inherit", "authActive": true },
+        "headers": [],
+        "variables": [],
+        "description": null
+      },
+      {
+        "v": 11,
+        "name": "Active",
+        "folders": [],
+        "requests": [
+          {
+            "v": "17",
+            "name": "Get PPP Active",
+            "method": "GET",
+            "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/ppp/active",
+            "params": [],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "List currently active PPP connections"
+          }
+        ],
+        "auth": { "authType": "inherit", "authActive": true },
+        "headers": [],
+        "variables": [],
+        "description": null
+      }
+    ],
+    "requests": [],
+    "auth": { "authType": "bearer", "authActive": true, "token": "<<token>>" },
+    "headers": [],
+    "variables": [],
+    "description": null
+  }
+]

@@ -1,0 +1,131 @@
+[
+  {
+    "v": 11,
+    "name": "03 - Customers",
+    "folders": [],
+    "requests": [
+      {
+        "v": "17",
+        "name": "List Customers",
+        "method": "GET",
+        "endpoint": "<<baseUrl>>/api/v1/customers",
+        "params": [
+          { "key": "limit", "value": "20", "active": true, "description": "" },
+          { "key": "offset", "value": "0", "active": true, "description": "" }
+        ],
+        "headers": [],
+        "auth": { "authType": "inherit", "authActive": true },
+        "body": { "contentType": null, "body": null },
+        "preRequestScript": "",
+        "testScript": "",
+        "requestVariables": [],
+        "responses": {},
+        "description": "List all customers with pagination"
+      },
+      {
+        "v": "17",
+        "name": "Create Customer",
+        "method": "POST",
+        "endpoint": "<<baseUrl>>/api/v1/customers",
+        "params": [],
+        "headers": [
+          { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+        ],
+        "auth": { "authType": "inherit", "authActive": true },
+        "body": {
+          "contentType": "application/json",
+          "body": "{\n  \"full_name\": \"Budi Santoso\",\n  \"phone\": \"08123456789\",\n  \"email\": \"budi@example.com\",\n  \"address\": \"Jl. Merdeka No. 1\",\n  \"latitude\": -6.2088,\n  \"longitude\": 106.8456,\n  \"plan_id\": \"<<profileId>>\",\n  \"router_id\": \"<<routerId>>\",\n  \"username\": \"budi\",\n  \"password\": \"budi123\",\n  \"static_ip\": \"10.0.0.100\"\n}"
+        },
+        "preRequestScript": "",
+        "testScript": "",
+        "requestVariables": [],
+        "responses": {},
+        "description": "Create customer with subscription"
+      },
+      {
+        "v": "17",
+        "name": "Get Customer",
+        "method": "GET",
+        "endpoint": "<<baseUrl>>/api/v1/customers/<<customerId>>",
+        "params": [],
+        "headers": [],
+        "auth": { "authType": "inherit", "authActive": true },
+        "body": { "contentType": null, "body": null },
+        "preRequestScript": "",
+        "testScript": "",
+        "requestVariables": [],
+        "responses": {},
+        "description": "Get customer by ID"
+      },
+      {
+        "v": "17",
+        "name": "Update Customer",
+        "method": "PUT",
+        "endpoint": "<<baseUrl>>/api/v1/customers/<<customerId>>",
+        "params": [],
+        "headers": [
+          { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+        ],
+        "auth": { "authType": "inherit", "authActive": true },
+        "body": {
+          "contentType": "application/json",
+          "body": "{\n  \"full_name\": \"Budi Santoso Updated\",\n  \"phone\": \"08198765432\",\n  \"email\": \"budi.new@example.com\",\n  \"address\": \"Jl. Sudirman No. 2\",\n  \"notes\": \"Customer VIP\"\n}"
+        },
+        "preRequestScript": "",
+        "testScript": "",
+        "requestVariables": [],
+        "responses": {},
+        "description": "Update customer fields (partial update)"
+      },
+      {
+        "v": "17",
+        "name": "Delete Customer",
+        "method": "DELETE",
+        "endpoint": "<<baseUrl>>/api/v1/customers/<<customerId>>",
+        "params": [],
+        "headers": [],
+        "auth": { "authType": "inherit", "authActive": true },
+        "body": { "contentType": null, "body": null },
+        "preRequestScript": "",
+        "testScript": "",
+        "requestVariables": [],
+        "responses": {},
+        "description": "Soft delete customer"
+      },
+      {
+        "v": "17",
+        "name": "Activate Account",
+        "method": "POST",
+        "endpoint": "<<baseUrl>>/api/v1/customers/<<customerId>>/activate-account",
+        "params": [],
+        "headers": [],
+        "auth": { "authType": "inherit", "authActive": true },
+        "body": { "contentType": null, "body": null },
+        "preRequestScript": "",
+        "testScript": "",
+        "requestVariables": [],
+        "responses": {},
+        "description": "Activate customer account"
+      },
+      {
+        "v": "17",
+        "name": "Deactivate Account",
+        "method": "POST",
+        "endpoint": "<<baseUrl>>/api/v1/customers/<<customerId>>/deactivate-account",
+        "params": [],
+        "headers": [],
+        "auth": { "authType": "inherit", "authActive": true },
+        "body": { "contentType": null, "body": null },
+        "preRequestScript": "",
+        "testScript": "",
+        "requestVariables": [],
+        "responses": {},
+        "description": "Deactivate customer account"
+      }
+    ],
+    "auth": { "authType": "bearer", "authActive": true, "token": "<<token>>" },
+    "headers": [],
+    "variables": [],
+    "description": null
+  }
+]

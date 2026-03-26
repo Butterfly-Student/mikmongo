@@ -1,0 +1,204 @@
+[
+  {
+    "v": 11,
+    "name": "16 - Sales Agents",
+    "folders": [
+      {
+        "v": 11,
+        "name": "CRUD",
+        "folders": [],
+        "requests": [
+          {
+            "v": "17",
+            "name": "List Sales Agents",
+            "method": "GET",
+            "endpoint": "<<baseUrl>>/api/v1/sales-agents",
+            "params": [
+              { "key": "limit", "value": "20", "active": true, "description": "" },
+              { "key": "offset", "value": "0", "active": true, "description": "" }
+            ],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "List all sales agents"
+          },
+          {
+            "v": "17",
+            "name": "Create Sales Agent",
+            "method": "POST",
+            "endpoint": "<<baseUrl>>/api/v1/sales-agents",
+            "params": [],
+            "headers": [
+              { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+            ],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": {
+              "contentType": "application/json",
+              "body": "{\n  \"router_id\": \"<<routerId>>\",\n  \"name\": \"Agen Budi\",\n  \"phone\": \"08123456789\",\n  \"username\": \"agenbudi\",\n  \"password\": \"password123\",\n  \"status\": \"active\",\n  \"voucher_mode\": \"vc\",\n  \"voucher_length\": 6,\n  \"voucher_type\": \"alphanumeric\",\n  \"bill_discount\": 0,\n  \"billing_cycle\": \"monthly\",\n  \"billing_day\": 1\n}"
+            },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Create a new sales agent"
+          },
+          {
+            "v": "17",
+            "name": "Get Sales Agent",
+            "method": "GET",
+            "endpoint": "<<baseUrl>>/api/v1/sales-agents/<<agentId>>",
+            "params": [],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Get sales agent by ID"
+          },
+          {
+            "v": "17",
+            "name": "Update Sales Agent",
+            "method": "PUT",
+            "endpoint": "<<baseUrl>>/api/v1/sales-agents/<<agentId>>",
+            "params": [],
+            "headers": [
+              { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+            ],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": {
+              "contentType": "application/json",
+              "body": "{\n  \"name\": \"Agen Budi Updated\",\n  \"phone\": \"08198765432\",\n  \"bill_discount\": 10\n}"
+            },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Update sales agent (partial)"
+          },
+          {
+            "v": "17",
+            "name": "Delete Sales Agent",
+            "method": "DELETE",
+            "endpoint": "<<baseUrl>>/api/v1/sales-agents/<<agentId>>",
+            "params": [],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Delete sales agent"
+          }
+        ],
+        "auth": { "authType": "inherit", "authActive": true },
+        "headers": [],
+        "variables": [],
+        "description": null
+      },
+      {
+        "v": 11,
+        "name": "Profile Prices",
+        "folders": [],
+        "requests": [
+          {
+            "v": "17",
+            "name": "List Profile Prices",
+            "method": "GET",
+            "endpoint": "<<baseUrl>>/api/v1/sales-agents/<<agentId>>/profile-prices",
+            "params": [],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "List profile prices for agent"
+          },
+          {
+            "v": "17",
+            "name": "Upsert Profile Price",
+            "method": "PUT",
+            "endpoint": "<<baseUrl>>/api/v1/sales-agents/<<agentId>>/profile-prices/1jam",
+            "params": [],
+            "headers": [
+              { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+            ],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": {
+              "contentType": "application/json",
+              "body": "{\n  \"base_price\": 3000,\n  \"selling_price\": 5000,\n  \"voucher_length\": 6,\n  \"is_active\": true\n}"
+            },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Set or update price for a profile"
+          }
+        ],
+        "auth": { "authType": "inherit", "authActive": true },
+        "headers": [],
+        "variables": [],
+        "description": null
+      },
+      {
+        "v": 11,
+        "name": "Agent Invoices",
+        "folders": [],
+        "requests": [
+          {
+            "v": "17",
+            "name": "List Agent Invoices",
+            "method": "GET",
+            "endpoint": "<<baseUrl>>/api/v1/sales-agents/<<agentId>>/invoices",
+            "params": [],
+            "headers": [],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": { "contentType": null, "body": null },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "List invoices for a specific agent"
+          },
+          {
+            "v": "17",
+            "name": "Generate Agent Invoice",
+            "method": "POST",
+            "endpoint": "<<baseUrl>>/api/v1/sales-agents/<<agentId>>/invoices/generate",
+            "params": [],
+            "headers": [
+              { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+            ],
+            "auth": { "authType": "inherit", "authActive": true },
+            "body": {
+              "contentType": "application/json",
+              "body": "{\n  \"period_start\": \"2024-01-01\",\n  \"period_end\": \"2024-01-31\"\n}"
+            },
+            "preRequestScript": "",
+            "testScript": "",
+            "requestVariables": [],
+            "responses": {},
+            "description": "Generate invoice for agent based on sales period"
+          }
+        ],
+        "auth": { "authType": "inherit", "authActive": true },
+        "headers": [],
+        "variables": [],
+        "description": null
+      }
+    ],
+    "requests": [],
+    "auth": { "authType": "bearer", "authActive": true, "token": "<<token>>" },
+    "headers": [],
+    "variables": [],
+    "description": null
+  }
+]
