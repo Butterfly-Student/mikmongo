@@ -38,7 +38,7 @@
             "auth": { "authType": "inherit", "authActive": true },
             "body": {
               "contentType": "application/json",
-              "body": "{\n  \"customer_id\": \"<<customerId>>\",\n  \"plan_id\": \"<<profileId>>\",\n  \"username\": \"user01\",\n  \"password\": \"secret123\",\n  \"static_ip\": \"10.0.0.100\",\n  \"gateway\": \"10.0.0.1\",\n  \"billing_day\": 1,\n  \"auto_isolate\": true,\n  \"grace_period_days\": 3,\n  \"notes\": \"New subscription\",\n  \"mt_service\": \"pppoe\",\n  \"mt_local_address\": \"10.0.0.1\",\n  \"mt_routes\": \"10.0.0.0/24\"\n}"
+              "body": "{\n  \"customer_id\": \"<<customerId>>\",\n  \"plan_id\": \"<<profileId>>\",\n  \"username\": \"testsub_002\",\n  \"password\": \"secret123\",\n  \"billing_day\": 1,\n  \"auto_isolate\": true,\n  \"notes\": \"Test subscription\"\n}"
             },
             "preRequestScript": "",
             "testScript": "",

@@ -20,7 +20,7 @@
             "auth": { "authType": "none", "authActive": true },
             "body": {
               "contentType": "application/json",
-              "body": "{\n  \"email\": \"admin@example.com\",\n  \"password\": \"password123\"\n}"
+              "body": "{\n  \"email\": \"superadmin@mikmongo.local\",\n  \"password\": \"NewPassword123!\"\n}"
             },
             "preRequestScript": "",
             "testScript": "",
@@ -73,26 +73,6 @@
             "requestVariables": [],
             "responses": {},
             "description": "Get current authenticated user profile"
-          },
-          {
-            "v": "17",
-            "name": "Change Password",
-            "method": "POST",
-            "endpoint": "<<baseUrl>>/api/v1/auth/change-password",
-            "params": [],
-            "headers": [
-              { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
-            ],
-            "auth": { "authType": "inherit", "authActive": true },
-            "body": {
-              "contentType": "application/json",
-              "body": "{\n  \"old_password\": \"password123\",\n  \"new_password\": \"newpassword456\"\n}"
-            },
-            "preRequestScript": "",
-            "testScript": "",
-            "requestVariables": [],
-            "responses": {},
-            "description": "Change password for current user"
           },
           {
             "v": "17",
