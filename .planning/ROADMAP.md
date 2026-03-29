@@ -1,187 +1,119 @@
 # Roadmap: MikMongo Dashboard
 
-**Created:** 2026-03-30
-**Granularity:** Coarse (5 phases)
-**Execution:** Parallel where possible
+## Overview
 
-## Phase 1 — Foundation & Auth
-**Goal:** Project scaffold berjalan di `dashboard/`, semua 3 portal dapat login dan mengakses halaman yang terproteksi.
+Dashboard web frontend untuk MikMongo ISP management system. Dibangun di `dashboard/` menggunakan React 19 + TanStack stack + Shadcn/UI. Menyediakan 3 portal: Admin Dashboard (superadmin/admin/teknisi), Sales Agent Portal, dan Customer Portal. Mengonsumsi API Go Gin yang sudah ada di `/api/v1`, `/agent-portal/v1`, dan `/portal/v1`.
 
-**Deliverables:**
-- Vite + React 19 + TypeScript project di `dashboard/`
-- TanStack Router v1 file-based routing dengan 3 route trees: `/_admin`, `/_agent`, `/_customer`
-- Auth flow: login, JWT storage, auto-refresh, logout untuk ketiga portal
-- Zustand auth store dengan RBAC (superadmin/admin/teknisi)
-- Axios API client dengan interceptors (auth header, refresh token, error handling)
-- Shared AppShell layout: Sidebar, Topbar, mobile nav (hamburger)
-- Dark/light mode dengan system preference + toggle
-- Shadcn/UI + Tailwind CSS v4 design tokens (warna, spacing, typography)
-- Loading states, error boundaries, toast notifications (Sonner)
-- Admin dashboard overview page (summary cards — data dari API `/api/v1/reports/summary`)
+## Phases
 
-**Requirements covered:** SETUP-01~10, AUTH-01~08, ADMIN-01~03
+**Phase Numbering:**
+- Integer phases (1-5): Milestone v1.0 work
 
-**Success criteria:**
-- `npm run dev` berjalan di `dashboard/`
-- Login sebagai superadmin/admin/teknisi → redirect ke dashboard admin
-- Login sebagai agent → redirect ke portal agent
-- Login sebagai customer → redirect ke portal customer
-- Akses route admin tanpa token → redirect ke `/login`
-- Teknisi tidak bisa akses halaman user management
-- Dark/light mode toggle berfungsi
+- [ ] **Phase 1: Foundation & Auth** - Vite+React scaffold, auth 3 portal, layout, dark/light mode
+- [ ] **Phase 2: Admin Network Management** - Router, Bandwidth Profiles, Customer, Subscription CRUD
+- [ ] **Phase 3: Billing, Finance & Agents** - Invoice, Payment, Registration, Sales Agent, Cash Management
+- [ ] **Phase 4: Reports, Live Monitor & Settings** - Reports charts, WebSocket real-time, MikroTik monitor, Settings
+- [ ] **Phase 5: Agent Portal & Customer Portal** - Sales agent portal, customer portal, polish
 
----
+## Phase Details
 
-## Phase 2 — Admin Network Management
-**Goal:** Admin dapat mengelola router MikroTik, bandwidth profiles, customers, dan subscriptions.
+### Phase 1: Foundation & Auth
+**Goal**: Project scaffold berjalan di `dashboard/`, semua 3 portal dapat login dan mengakses halaman yang terproteksi dengan RBAC.
+**Depends on**: Nothing (first phase)
+**Requirements**: SETUP-01, SETUP-02, SETUP-03, SETUP-04, SETUP-05, SETUP-06, SETUP-07, SETUP-08, SETUP-09, SETUP-10, AUTH-01, AUTH-02, AUTH-03, AUTH-04, AUTH-05, AUTH-06, AUTH-07, AUTH-08, ADMIN-01, ADMIN-02, ADMIN-03
+**Success Criteria** (what must be TRUE):
+  1. `npm run dev` berjalan di `dashboard/` tanpa error
+  2. Login superadmin/admin/teknisi → redirect ke dashboard admin dengan summary cards
+  3. Login agent → redirect ke portal agent halaman kosong
+  4. Login customer → redirect ke portal customer halaman kosong
+  5. Akses route admin tanpa token → redirect ke `/login`
+  6. Teknisi tidak bisa akses halaman user management (403 atau menu disembunyikan)
+  7. Dark/light mode toggle berfungsi, mengikuti system preference default
+**Plans**: TBD
 
-**Deliverables:**
-- **Customer management:** tabel dengan server-side pagination/search/filter, CRUD forms, activate/deactivate, detail page
-- **Router management:** tabel, CRUD, select active router, test connection, sync (TanStack Table + TanStack Form)
-- **Bandwidth Profiles:** CRUD scoped per router
-- **Subscription management:** tabel dengan filter router+status, CRUD, aksi activate/isolate/restore/suspend/terminate, status badges
-- Shared reusable table components dengan TanStack Table v8
-- Reusable form components dengan TanStack Form v1 + Zod validation
-- Confirmation dialog component (delete, destructive actions)
-- TanStack Virtual untuk tabel dengan ribuan baris
+Plans:
+- [ ] 01-01: Project scaffold — Vite + React 19 + TypeScript + TanStack Router + Shadcn/UI + Tailwind CSS v4
+- [ ] 01-02: Auth system — Zustand store, API client, login/logout/refresh untuk 3 portal, RBAC guards
+- [ ] 01-03: Shared layout — AppShell, Sidebar, Topbar, mobile nav, dark/light mode, overview page
 
-**Requirements covered:** CUST-01~06, ROUT-01~08, BWP-01~03, SUB-01~06
+### Phase 2: Admin Network Management
+**Goal**: Admin dapat mengelola router MikroTik, bandwidth profiles, pelanggan, dan subscription melalui tabel dan form.
+**Depends on**: Phase 1
+**Requirements**: CUST-01, CUST-02, CUST-03, CUST-04, CUST-05, CUST-06, ROUT-01, ROUT-02, ROUT-03, ROUT-04, ROUT-05, ROUT-06, ROUT-07, ROUT-08, BWP-01, BWP-02, BWP-03, SUB-01, SUB-02, SUB-03, SUB-04, SUB-05, SUB-06
+**Success Criteria** (what must be TRUE):
+  1. Admin dapat CRUD customer, tabel ter-paginate dengan search dan filter
+  2. Admin dapat CRUD router, test connection, sync device berhasil
+  3. Bandwidth profiles dapat dikelola per router
+  4. Subscription dapat dibuat dan status-nya dapat diubah (isolate/restore/suspend/terminate)
+  5. Tabel 500+ rows scroll lancar dengan TanStack Virtual
+**Plans**: TBD
 
-**Success criteria:**
-- Buat customer baru, muncul di tabel ✓
-- Edit customer, perubahan tersimpan ✓
-- Buat router, test connection, sync berhasil ✓
-- Buat subscription, ubah status (isolate → restore), status badge berubah ✓
-- Tabel 500+ rows scroll lancar dengan TanStack Virtual ✓
-- Semua form validasi dengan Zod (field required, format email/phone) ✓
+Plans:
+- [ ] 02-01: Customer management — tabel server-side, CRUD forms, activate/deactivate, detail page
+- [ ] 02-02: Router management — tabel, CRUD, select/sync/test-connection, bandwidth profiles CRUD
+- [ ] 02-03: Subscription management — tabel filter router+status, CRUD, aksi lifecycle, status badges
 
----
+### Phase 3: Billing, Finance & Agents
+**Goal**: Admin dapat mengelola siklus billing lengkap: invoice, pembayaran, approval registrasi, komisi sales agent, dan kas.
+**Depends on**: Phase 1
+**Requirements**: INV-01, INV-02, INV-03, INV-04, INV-05, PAY-01, PAY-02, PAY-03, PAY-04, PAY-05, PAY-06, REG-01, REG-02, REG-03, AGENT-01, AGENT-02, AGENT-03, AGENT-04, AGENT-05, AGENT-06, AGENT-07, AINV-01, AINV-02, AINV-03, AINV-04, AINV-05, CASH-01, CASH-02, CASH-03, CASH-04, CASH-05, CASH-06
+**Success Criteria** (what must be TRUE):
+  1. Trigger monthly billing → invoice muncul di tabel
+  2. Confirm payment → invoice status berubah jadi paid
+  3. Approve registrasi → customer + subscription baru terbuat
+  4. Upsert harga profile agent → tersimpan dan tampil di tabel
+  5. Approve cash entry → saldo berubah di summary kas
+  6. Semua angka tampil format IDR (Rp 1.500.000)
+**Plans**: TBD
 
-## Phase 3 — Billing, Finance & Agents
-**Goal:** Admin dapat mengelola invoice, pembayaran, registrasi pelanggan baru, komisi sales agent, dan kas.
+Plans:
+- [ ] 03-01: Invoice & Payment management — tabel, detail, CRUD, confirm/reject/refund, gateway
+- [ ] 03-02: Registration approvals + Sales Agent management — CRUD, profile prices, agent invoices
+- [ ] 03-03: Cash Management — cash entries CRUD+approve/reject, petty cash, summary saldo
 
-**Deliverables:**
-- **Invoice management:** tabel filter status/tanggal, detail, cancel, overdue list, trigger monthly billing
-- **Payment management:** tabel, create manual, detail, confirm/reject/refund, initiate gateway
-- **Registration approvals:** tabel pending, approve/reject dengan form
-- **Sales Agent management:** CRUD, profile prices per bandwidth profile, agent invoices, generate invoice
-- **Agent Invoice management:** tabel, detail, mark paid, cancel, process scheduled
-- **Cash Management:** cash entries CRUD + approve/reject, petty cash CRUD, summary saldo
-- Currency formatter IDR, date formatter WIB/WITA/WIT dengan date-fns + id locale
-- Status badges untuk semua entity (invoice, payment, subscription, cash)
+### Phase 4: Reports, Live Monitor & Settings
+**Goal**: Admin dapat melihat laporan bisnis dengan grafik, memonitor MikroTik secara real-time via WebSocket, dan mengelola pengaturan sistem.
+**Depends on**: Phase 2, Phase 3
+**Requirements**: RPT-01, RPT-02, RPT-03, RPT-04, RPT-05, RPT-06, LIVE-01, LIVE-02, LIVE-03, LIVE-04, LIVE-05, SYS-01, SYS-02
+**Success Criteria** (what must be TRUE):
+  1. Summary report dengan date range menampilkan data dari API dengan grafik Recharts
+  2. PPP Active Sessions update real-time tanpa refresh halaman
+  3. Resource Monitor (CPU/memory/traffic) update grafik setiap detik via WebSocket
+  4. Disconnect → indicator WebSocket "disconnected" muncul, reconnect otomatis
+  5. Superadmin bisa CRUD user sistem, admin tidak bisa akses menu ini
+**Plans**: TBD
 
-**Requirements covered:** INV-01~05, PAY-01~06, REG-01~03, AGENT-01~07, AINV-01~05, CASH-01~06
+Plans:
+- [ ] 04-01: Reports — summary, subscriptions, cash flow, cash balance, reconciliation (Recharts)
+- [ ] 04-02: MikroTik Live Monitor — WebSocket PPP/hotspot sessions, resource monitor, Mikhmon
+- [ ] 04-03: System Settings + User Management (superadmin only)
 
-**Success criteria:**
-- Generate monthly billing → invoice muncul di tabel ✓
-- Confirm payment → invoice status berubah jadi paid ✓
-- Approve registrasi → customer + subscription baru terbuat ✓
-- Upsert harga profile agent → tersimpan ✓
-- Approve cash entry → saldo berubah di summary ✓
-- Semua angka tampil dalam format IDR (Rp 1.500.000) ✓
+### Phase 5: Agent Portal & Customer Portal
+**Goal**: Sales agent dan customer dapat mengakses portal masing-masing untuk self-service, semua halaman usable di mobile.
+**Depends on**: Phase 1
+**Requirements**: SPORT-01, SPORT-02, SPORT-03, SPORT-04, SPORT-05, SPORT-06, CPORT-01, CPORT-02, CPORT-03, CPORT-04, CPORT-05, CPORT-06, CPORT-07
+**Success Criteria** (what must be TRUE):
+  1. Agent login → dashboard agent (bukan admin) dengan summary pendapatan
+  2. Agent bisa lihat dan request payment dari agent invoice
+  3. Customer login → melihat detail langganan aktif
+  4. Customer bisa bayar invoice unpaid via payment gateway
+  5. Semua halaman usable di layar 375px (mobile-first verified)
+**Plans**: TBD
 
----
+Plans:
+- [ ] 05-01: Sales Agent Portal — login, dashboard, profile, invoices, request payment, hotspot sales
+- [ ] 05-02: Customer Portal — login, dashboard, profile, subscriptions, invoices, payments
+- [ ] 05-03: Polish — loading skeletons, empty states, error states, responsive audit, a11y
 
-## Phase 4 — Reports, Live Monitor & Settings
-**Goal:** Admin dapat melihat laporan bisnis, monitoring MikroTik real-time via WebSocket, dan mengelola pengaturan sistem.
+## Progress
 
-**Deliverables:**
-- **Reports:** summary report, subscription report, cash flow + balance, reconciliation — dengan Recharts untuk grafik, date range picker
-- **MikroTik Live Monitor:**
-  - WebSocket client dengan auto-reconnect (reconnecting-websocket library)
-  - PPP Active Sessions table (real-time update)
-  - Hotspot Active Users table (real-time update)
-  - Resource Monitor: grafik CPU/memory/traffic per interface (Recharts, update setiap 2-3 detik)
-  - Connection status indicator di UI
-- **Mikhmon:** voucher management, hotspot profile, expire management, hotspot report
-- **System Settings:** list settings, form edit per setting (key-value)
-- **User Management** (superadmin only): CRUD users sistem
-- Export/print view untuk laporan
+**Execution Order:**
+Phase 1 → Phase 2 + Phase 3 (paralel) → Phase 4 → Phase 5
 
-**Requirements covered:** RPT-01~06, LIVE-01~05, SYS-01~02
-
-**Success criteria:**
-- Summary report dengan date range menampilkan data dari API ✓
-- Cash flow chart render dengan data bulanan ✓
-- WebSocket PPP sessions update real-time tanpa full refresh ✓
-- Resource monitor CPU chart update setiap detik ✓
-- Disconnect WiFi → indicator WebSocket "disconnected" muncul, reconnect otomatis ✓
-- Superadmin bisa buat user baru, admin tidak bisa akses menu ini ✓
-
----
-
-## Phase 5 — Agent Portal & Customer Portal
-**Goal:** Sales agent dan customer dapat mengakses portal masing-masing untuk self-service.
-
-**Deliverables:**
-- **Sales Agent Portal:**
-  - Login page agent (`/agent/login`)
-  - Dashboard: summary pendapatan, invoice pending, recent sales
-  - Profile + ganti password form
-  - Tabel agent invoices + detail
-  - Request payment dari agent invoice
-  - Daftar hotspot sales
-- **Customer Portal:**
-  - Login page customer (`/customer/login`)
-  - Dashboard: status langganan, tagihan terdekat
-  - Profile + ganti password form
-  - Detail langganan aktif (bandwidth, IP, status, expire)
-  - Riwayat invoice + detail
-  - Halaman pembayaran: list unpaid invoice + tombol bayar via gateway
-  - Redirect ke payment gateway
-- Polishing: loading skeletons di semua halaman, empty states, error states
-- Responsive audit: test di 375px, 768px, 1024px, 1440px
-- Accessibility: keyboard navigation, focus states, aria labels
-
-**Requirements covered:** SPORT-01~06, CPORT-01~07
-
-**Success criteria:**
-- Agent login → dashboard agent (bukan admin dashboard) ✓
-- Agent lihat invoices, klik "Request Payment" → status berubah ✓
-- Customer login → melihat langganan aktif ✓
-- Customer lihat invoice unpaid, klik bayar → redirect gateway ✓
-- Semua halaman usable di layar 375px (mobile) ✓
-- Lighthouse mobile score ≥ 80 ✓
-
----
-
-## Phase Dependencies
-
-```
-Phase 1 (Foundation)
-    ↓
-Phase 2 (Network Mgmt) ──┐
-    ↓                     │ dapat paralel setelah Phase 1
-Phase 3 (Billing)  ──────┘
-    ↓
-Phase 4 (Reports + Live)
-    ↓
-Phase 5 (Portals)
-```
-
-> Phase 2 dan 3 **dapat dikerjakan paralel** karena tidak saling bergantung.
-> Phase 4 membutuhkan Phase 2+3 selesai (laporan butuh data subscription + payment).
-> Phase 5 dapat mulai setelah Phase 1 selesai (portals hanya butuh auth + API client).
-
----
-
-## Technology Decisions
-
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| Routing | TanStack Router v1 (file-based) | Type-safe, code-splitting otomatis, route guards via `beforeLoad` |
-| Data fetching | TanStack Query v5 | Caching, background refetch, optimistic updates, devtools |
-| Tables | TanStack Table v8 + TanStack Virtual v3 | Server-side pagination, virtual scroll untuk ribuan baris |
-| Forms | TanStack Form v1 + Zod | Type-safe form state, schema validation |
-| UI Components | Shadcn/UI | Headless, accessible, customizable, tidak opinionated |
-| Styling | Tailwind CSS v4 | Utility-first, mobile-first, CSS variables via @theme |
-| State | Zustand v5 | Lightweight, tidak over-engineered untuk auth state |
-| Charts | Recharts v2 | React-native, composable, cukup untuk ISP charts |
-| WebSocket | reconnecting-websocket | Auto-reconnect, drop-in replacement for native WebSocket |
-| Date | date-fns v4 + id locale | Lightweight, timezone-aware, Indonesian locale |
-| Toast | Sonner | Modern, accessible, minimal config |
-| HTTP | Axios | Interceptors untuk auth + refresh token |
-
----
-*Roadmap created: 2026-03-30*
-*Run `/gsd:plan-phase 1` to start Phase 1 execution.*
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 1. Foundation & Auth | 0/3 | Not started | - |
+| 2. Admin Network Management | 0/3 | Not started | - |
+| 3. Billing, Finance & Agents | 0/3 | Not started | - |
+| 4. Reports, Live Monitor & Settings | 0/3 | Not started | - |
+| 5. Agent Portal & Customer Portal | 0/3 | Not started | - |
