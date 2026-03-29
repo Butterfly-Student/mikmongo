@@ -29,7 +29,7 @@ Dashboard web frontend untuk MikMongo ISP management system. Dibangun di `dashbo
   5. Akses route admin tanpa token → redirect ke `/login`
   6. Teknisi tidak bisa akses halaman user management (403 atau menu disembunyikan)
   7. Dark/light mode toggle berfungsi, mengikuti system preference default
-**Plans**: TBD
+**Plans**: Ready to execute
 
 Plans:
 - [ ] 01-01: Project scaffold — Vite + React 19 + TypeScript + TanStack Router + Shadcn/UI + Tailwind CSS v4
