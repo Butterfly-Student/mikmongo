@@ -7,11 +7,11 @@
 
 ### Foundation & Setup
 
-- [ ] **SETUP-01**: Project React + Vite + TypeScript terkonfigurasi di folder `dashboard/`
-- [ ] **SETUP-02**: TanStack Router v1 (file-based routing) terkonfigurasi dengan 3 route tree terpisah
-- [ ] **SETUP-03**: TanStack Query v5 dengan QueryClient global terkonfigurasi
-- [ ] **SETUP-04**: Shadcn/UI + Tailwind CSS v4 terkonfigurasi dengan design tokens
-- [ ] **SETUP-05**: Dark mode / light mode mengikuti system preference dengan toggle manual
+- [x] **SETUP-01**: Project React + Vite + TypeScript terkonfigurasi di folder `dashboard/`
+- [x] **SETUP-02**: TanStack Router v1 (file-based routing) terkonfigurasi dengan 3 route tree terpisah
+- [x] **SETUP-03**: TanStack Query v5 dengan QueryClient global terkonfigurasi
+- [x] **SETUP-04**: Shadcn/UI + Tailwind CSS v4 terkonfigurasi dengan design tokens
+- [x] **SETUP-05**: Dark mode / light mode mengikuti system preference dengan toggle manual
 - [ ] **SETUP-06**: API client (Axios) terkonfigurasi dengan interceptor untuk JWT, refresh token, dan error handling
 - [ ] **SETUP-07**: Zustand store untuk auth state (token, user, role, portal)
 - [ ] **SETUP-08**: Shared layout components: AppShell, Sidebar, Topbar, mobile nav
