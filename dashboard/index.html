@@ -4,16 +4,18 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MikMongo Dashboard</title>
     <script>
       (function () {
-        var stored = localStorage.getItem("theme");
-        var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-        if (stored === "dark" || (!stored && prefersDark)) {
-          document.documentElement.classList.add("dark");
-        }
-      })();
+        try {
+          var stored = localStorage.getItem("theme")
+          var prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches
+          if (stored === "dark" || (!stored && prefersDark)) {
+            document.documentElement.classList.add("dark")
+          }
+        } catch (_) {}
+      })()
     </script>
-    <title>MikMongo Dashboard</title>
   </head>
   <body>
     <div id="root"></div>
