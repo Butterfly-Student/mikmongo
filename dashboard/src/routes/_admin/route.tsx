@@ -1,7 +1,8 @@
-// Pathless layout route — wraps ALL admin routes at /dashboard, /customers, etc.
+// Pathless layout route — wraps ALL admin routes at /, /customers, etc.
 // The underscore prefix means this does NOT add a path segment.
 // Auth guard runs in beforeLoad before any child route renders.
 import { createFileRoute, redirect, Outlet } from "@tanstack/react-router"
+import { AppShell } from "@/components/layout/admin/AppShell"
 
 export const Route = createFileRoute("/_admin")({
   beforeLoad: ({ context, location }) => {
@@ -15,6 +16,13 @@ export const Route = createFileRoute("/_admin")({
       })
     }
   },
-  // Layout shell (AppShell) will be added in Plan 01-03 — for now render plain Outlet
-  component: () => <Outlet />,
+  component: AdminLayout,
 })
+
+function AdminLayout() {
+  return (
+    <AppShell>
+      <Outlet />
+    </AppShell>
+  )
+}

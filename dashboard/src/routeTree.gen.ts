@@ -11,7 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AdminRouteRouteImport } from './routes/_admin/route'
-import { Route as IndexRouteImport } from './routes/index'
+import { Route as AdminIndexRouteImport } from './routes/_admin/index'
 import { Route as CustomerLoginRouteImport } from './routes/customer/login'
 import { Route as AgentLoginRouteImport } from './routes/agent/login'
 import { Route as AdminDashboardRouteImport } from './routes/_admin/dashboard'
@@ -29,10 +29,10 @@ const AdminRouteRoute = AdminRouteRouteImport.update({
   id: '/_admin',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
+const AdminIndexRoute = AdminIndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
+  getParentRoute: () => AdminRouteRoute,
 } as any)
 const CustomerLoginRoute = CustomerLoginRouteImport.update({
   id: '/customer/login',
@@ -73,7 +73,7 @@ const AgentAgentAuthDashboardRoute = AgentAgentAuthDashboardRouteImport.update({
 } as any)
 
 export interface FileRoutesByFullPath {
-  '/': typeof IndexRoute
+  '/': typeof AdminIndexRoute
   '/login': typeof LoginRoute
   '/agent': typeof AgentAgentAuthRouteRouteWithChildren
   '/customer': typeof CustomerCustomerAuthRouteRouteWithChildren
@@ -84,19 +84,18 @@ export interface FileRoutesByFullPath {
   '/customer/dashboard': typeof CustomerCustomerAuthDashboardRoute
 }
 export interface FileRoutesByTo {
-  '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/agent': typeof AgentAgentAuthRouteRouteWithChildren
   '/customer': typeof CustomerCustomerAuthRouteRouteWithChildren
   '/dashboard': typeof AdminDashboardRoute
   '/agent/login': typeof AgentLoginRoute
   '/customer/login': typeof CustomerLoginRoute
+  '/': typeof AdminIndexRoute
   '/agent/dashboard': typeof AgentAgentAuthDashboardRoute
   '/customer/dashboard': typeof CustomerCustomerAuthDashboardRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
-  '/': typeof IndexRoute
   '/_admin': typeof AdminRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/agent/_agentAuth': typeof AgentAgentAuthRouteRouteWithChildren
@@ -104,6 +103,7 @@ export interface FileRoutesById {
   '/_admin/dashboard': typeof AdminDashboardRoute
   '/agent/login': typeof AgentLoginRoute
   '/customer/login': typeof CustomerLoginRoute
+  '/_admin/': typeof AdminIndexRoute
   '/agent/_agentAuth/dashboard': typeof AgentAgentAuthDashboardRoute
   '/customer/_customerAuth/dashboard': typeof CustomerCustomerAuthDashboardRoute
 }
@@ -121,18 +121,17 @@ export interface FileRouteTypes {
     | '/customer/dashboard'
   fileRoutesByTo: FileRoutesByTo
   to:
-    | '/'
     | '/login'
     | '/agent'
     | '/customer'
     | '/dashboard'
     | '/agent/login'
     | '/customer/login'
+    | '/'
     | '/agent/dashboard'
     | '/customer/dashboard'
   id:
     | '__root__'
-    | '/'
     | '/_admin'
     | '/login'
     | '/agent/_agentAuth'
@@ -140,12 +139,12 @@ export interface FileRouteTypes {
     | '/_admin/dashboard'
     | '/agent/login'
     | '/customer/login'
+    | '/_admin/'
     | '/agent/_agentAuth/dashboard'
     | '/customer/_customerAuth/dashboard'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
-  IndexRoute: typeof IndexRoute
   AdminRouteRoute: typeof AdminRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
   AgentAgentAuthRouteRoute: typeof AgentAgentAuthRouteRouteWithChildren
@@ -170,12 +169,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
+    '/_admin/': {
+      id: '/_admin/'
       path: '/'
       fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
+      preLoaderRoute: typeof AdminIndexRouteImport
+      parentRoute: typeof AdminRouteRoute
     }
     '/customer/login': {
       id: '/customer/login'
@@ -231,10 +230,12 @@ declare module '@tanstack/react-router' {
 
 interface AdminRouteRouteChildren {
   AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminIndexRoute: typeof AdminIndexRoute
 }
 
 const AdminRouteRouteChildren: AdminRouteRouteChildren = {
   AdminDashboardRoute: AdminDashboardRoute,
+  AdminIndexRoute: AdminIndexRoute,
 }
 
 const AdminRouteRouteWithChildren = AdminRouteRoute._addFileChildren(
@@ -267,7 +268,6 @@ const CustomerCustomerAuthRouteRouteWithChildren =
   )
 
 const rootRouteChildren: RootRouteChildren = {
-  IndexRoute: IndexRoute,
   AdminRouteRoute: AdminRouteRouteWithChildren,
   LoginRoute: LoginRoute,
   AgentAgentAuthRouteRoute: AgentAgentAuthRouteRouteWithChildren,
