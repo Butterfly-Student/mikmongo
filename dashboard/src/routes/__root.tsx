@@ -1,13 +1,15 @@
-// src/routes/__root.tsx
-// Root route — provides typed router context for all portals.
-// Full implementation: Plan 01-02 (auth store wired here).
+// Root route with typed context — auth state injected from main.tsx
 import { createRootRouteWithContext, Outlet } from "@tanstack/react-router"
-import { QueryClient } from "@tanstack/react-query"
+// NOTE: TanStackRouterDevtools intentionally omitted here — added in Plan 01-03
+// after @tanstack/router-devtools is installed in Plan 01-01
+import { ReactQueryDevtools } from "@tanstack/react-query-devtools"
+import type { QueryClient } from "@tanstack/react-query"
+import type { AdminRole } from "@/lib/rbac"
 
 export interface RouterContext {
   adminAuth: {
     isAuthenticated: boolean
-    role: string | null
+    role: AdminRole | null
     accessToken: string | null
   }
   agentAuth: {
@@ -22,5 +24,14 @@ export interface RouterContext {
 }
 
 export const Route = createRootRouteWithContext<RouterContext>()({
-  component: () => <Outlet />,
+  component: () => (
+    <>
+      <Outlet />
+      {import.meta.env.DEV && (
+        <>
+          <ReactQueryDevtools initialIsOpen={false} />
+        </>
+      )}
+    </>
+  ),
 })

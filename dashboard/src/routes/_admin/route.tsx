@@ -1,12 +1,20 @@
-// src/routes/_admin/route.tsx
-// Pathless layout: wraps all admin routes with auth guard + AppShell.
-// Auth guard implementation: Plan 01-02. AppShell: Plan 01-03.
-import { createFileRoute, Outlet } from "@tanstack/react-router"
+// Pathless layout route — wraps ALL admin routes at /dashboard, /customers, etc.
+// The underscore prefix means this does NOT add a path segment.
+// Auth guard runs in beforeLoad before any child route renders.
+import { createFileRoute, redirect, Outlet } from "@tanstack/react-router"
 
 export const Route = createFileRoute("/_admin")({
-  component: () => (
-    <div>
-      <Outlet />
-    </div>
-  ),
+  beforeLoad: ({ context, location }) => {
+    if (!context.adminAuth.isAuthenticated) {
+      throw redirect({
+        to: "/login",
+        search: {
+          // Preserve the URL the user was trying to access for post-login redirect
+          redirect: location.href,
+        },
+      })
+    }
+  },
+  // Layout shell (AppShell) will be added in Plan 01-03 — for now render plain Outlet
+  component: () => <Outlet />,
 })

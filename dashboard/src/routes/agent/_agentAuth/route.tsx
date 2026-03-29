@@ -1,7 +1,15 @@
-// src/routes/agent/_agentAuth/route.tsx
-// Pathless layout: wraps all agent-portal routes. Auth guard in Plan 01-02.
-import { createFileRoute, Outlet } from "@tanstack/react-router"
+// Pathless layout for agent portal auth guard
+// Renders children at /agent/dashboard, /agent/profile, etc.
+import { createFileRoute, redirect, Outlet } from "@tanstack/react-router"
 
 export const Route = createFileRoute("/agent/_agentAuth")({
+  beforeLoad: ({ context, location }) => {
+    if (!context.agentAuth.isAuthenticated) {
+      throw redirect({
+        to: "/agent/login",
+        search: { redirect: location.href },
+      })
+    }
+  },
   component: () => <Outlet />,
 })
