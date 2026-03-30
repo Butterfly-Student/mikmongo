@@ -14,9 +14,9 @@
 - [x] **SETUP-05**: Dark mode / light mode mengikuti system preference dengan toggle manual
 - [ ] **SETUP-06**: API client (Axios) terkonfigurasi dengan interceptor untuk JWT, refresh token, dan error handling
 - [ ] **SETUP-07**: Zustand store untuk auth state (token, user, role, portal)
-- [ ] **SETUP-08**: Shared layout components: AppShell, Sidebar, Topbar, mobile nav
-- [ ] **SETUP-09**: Mobile-first responsive breakpoints terkonfigurasi (mobile 375px → desktop 1440px)
-- [ ] **SETUP-10**: Zod schemas untuk validasi form dan response API
+- [x] **SETUP-08**: Shared layout components: AppShell, Sidebar, Topbar, mobile nav
+- [x] **SETUP-09**: Mobile-first responsive breakpoints terkonfigurasi (mobile 375px → desktop 1440px)
+- [x] **SETUP-10**: Zod schemas untuk validasi form dan response API
 
 ### Authentication (All Portals)
 
@@ -31,9 +31,9 @@
 
 ### Admin — Overview & Layout
 
-- [ ] **ADMIN-01**: Dashboard overview dengan summary cards: pelanggan aktif, revenue bulan ini, invoice overdue, router online
-- [ ] **ADMIN-02**: Sidebar navigasi dengan semua menu, collapsible di mobile
-- [ ] **ADMIN-03**: Topbar dengan info user, notifikasi, theme toggle, logout
+- [x] **ADMIN-01**: Dashboard overview dengan summary cards: pelanggan aktif, revenue bulan ini, invoice overdue, router online
+- [x] **ADMIN-02**: Sidebar navigasi dengan semua menu, collapsible di mobile
+- [x] **ADMIN-03**: Topbar dengan info user, notifikasi, theme toggle, logout
 
 ### Admin — Customer Management
 

@@ -3,14 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 current_phase: 01
-current_plan: 03
 status: in-progress
-last_updated: "2026-03-29T23:40:15.793Z"
+last_updated: "2026-03-30T04:07:08.764Z"
 progress:
   total_phases: 5
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
+  completed_plans: 3
 ---
 
 # Project State
@@ -18,14 +17,14 @@ progress:
 **Project:** MikMongo Dashboard
 **Started:** 2026-03-30
 **Current Phase:** 01
-**Last Session:** 2026-03-29T23:40:15.789Z
-**Next Action:** Execute Plan 01-03 (App Shell + Login Forms)
+**Last Session:** 2026-03-30T04:07:08.760Z
+**Next Action:** Phase 01 complete — proceed to Phase 02 (Admin Network Management)
 
 ## Phase Status
 
 | Phase | Name | Status | Started | Completed |
 |-------|------|--------|---------|-----------|
-| 1 | Foundation & Auth | In Progress | 2026-03-30 | — |
+| 1 | Foundation & Auth | Complete | 2026-03-30 | 2026-03-30 |
 | 2 | Admin Network Management | Pending | — | — |
 | 3 | Billing, Finance & Agents | Pending | — | — |
 | 4 | Reports, Live Monitor & Settings | Pending | — | — |
@@ -44,6 +43,8 @@ progress:
 | 2026-03-30 | isHydrated flag in Zustand gates RouterProvider | Prevents redirect-on-reload when localStorage tokens not yet loaded |
 | 2026-03-30 | RBAC hasPermission() is pure function | Testable without React, no side effects |
 | 2026-03-30 | RouterContext.adminAuth.role typed as AdminRole | Type-safe RBAC in route guards vs string |
+| 2026-03-30 | _admin/index.tsx replaces routes/index.tsx | Overview page is root admin route; two routes cannot own same / path |
+| 2026-03-30 | Sidebar superadminOnly uses adminUser.role | Nav visibility is not security boundary — simple string check sufficient |
 
 ## Blockers
 

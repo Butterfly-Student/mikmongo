@@ -9,7 +9,7 @@ Dashboard web frontend untuk MikMongo ISP management system. Dibangun di `dashbo
 **Phase Numbering:**
 - Integer phases (1-5): Milestone v1.0 work
 
-- [ ] **Phase 1: Foundation & Auth** - Vite+React scaffold, auth 3 portal, layout, dark/light mode
+- [x] **Phase 1: Foundation & Auth** - Vite+React scaffold, auth 3 portal, layout, dark/light mode (completed 2026-03-30)
 - [ ] **Phase 2: Admin Network Management** - Router, Bandwidth Profiles, Customer, Subscription CRUD
 - [ ] **Phase 3: Billing, Finance & Agents** - Invoice, Payment, Registration, Sales Agent, Cash Management
 - [ ] **Phase 4: Reports, Live Monitor & Settings** - Reports charts, WebSocket real-time, MikroTik monitor, Settings
@@ -34,7 +34,7 @@ Dashboard web frontend untuk MikMongo ISP management system. Dibangun di `dashbo
 Plans:
 - [x] 01-01: Project scaffold — Vite + React 19 + TypeScript + TanStack Router + Shadcn/UI + Tailwind CSS v4
 - [x] 01-02: Auth system — Zustand store, API client, login/logout/refresh untuk 3 portal, RBAC guards
-- [ ] 01-03: Shared layout — AppShell, Sidebar, Topbar, mobile nav, dark/light mode, overview page
+- [x] 01-03: Shared layout — AppShell, Sidebar, Topbar, mobile nav, dark/light mode, overview page
 
 ### Phase 2: Admin Network Management
 **Goal**: Admin dapat mengelola router MikroTik, bandwidth profiles, pelanggan, dan subscription melalui tabel dan form.
@@ -112,7 +112,7 @@ Phase 1 → Phase 2 + Phase 3 (paralel) → Phase 4 → Phase 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Auth | 2/3 | In Progress|  |
+| 1. Foundation & Auth | 3/3 | Complete   | 2026-03-30 |
 | 2. Admin Network Management | 0/3 | Not started | - |
 | 3. Billing, Finance & Agents | 0/3 | Not started | - |
 | 4. Reports, Live Monitor & Settings | 0/3 | Not started | - |
