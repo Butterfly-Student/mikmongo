@@ -51,7 +51,7 @@ func (r *paymentRepository) GetByTransactionID(ctx context.Context, transactionI
 }
 
 func (r *paymentRepository) Update(ctx context.Context, payment *model.Payment) error {
-	return r.db.WithContext(ctx).Save(payment).Error
+	return r.db.WithContext(ctx).Omit("Customer", "Processor", "Creator", "Refunder", "PaymentAllocations").Save(payment).Error
 }
 
 func (r *paymentRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status string) error {

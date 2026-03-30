@@ -22,7 +22,7 @@ func NewCustomerHandler(service *service.CustomerService) *CustomerHandler {
 	return &CustomerHandler{service: service}
 }
 
-// Create handles customer creation with auto subscription
+// Create handles customer creation, with optional subscription
 func (h *CustomerHandler) Create(c *gin.Context) {
 	var req dto.CreateCustomerRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -30,43 +30,51 @@ func (h *CustomerHandler) Create(c *gin.Context) {
 		return
 	}
 
-	// Generate username from FullName if not provided
-	username := req.Username
-	if username == "" {
-		username = generateUsernameFromFullName(req.FullName)
-	}
-
-	// Generate password from FullName if not provided
-	password := req.Password
-	if password == "" {
-		password = generatePasswordFromFullName(req.FullName)
-	}
-
 	customer := req.ToCustomerModel()
 
-	subscription := &model.Subscription{
-		PlanID:   req.PlanID,
-		RouterID: req.RouterID,
-		Username: username,
-		Password: password,
-		StaticIP: req.StaticIP,
-		Status:   "pending",
-	}
+	// If plan_id is provided, create customer with subscription
+	if req.PlanID != "" {
+		username := req.Username
+		if username == "" {
+			username = generateUsernameFromFullName(req.FullName)
+		}
+		password := req.Password
+		if password == "" {
+			password = generatePasswordFromFullName(req.FullName)
+		}
 
-	createdCustomer, createdSubscription, err := h.service.CreateWithSubscription(
-		c.Request.Context(),
-		customer,
-		subscription,
-	)
-	if err != nil {
-		response.Error(c, http.StatusBadRequest, err.Error())
+		subscription := &model.Subscription{
+			PlanID:   req.PlanID,
+			RouterID: req.RouterID,
+			Username: username,
+			Password: password,
+			StaticIP: req.StaticIP,
+			Status:   "pending",
+		}
+
+		createdCustomer, createdSubscription, err := h.service.CreateWithSubscription(
+			c.Request.Context(),
+			customer,
+			subscription,
+		)
+		if err != nil {
+			response.Error(c, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		response.Created(c, gin.H{
+			"customer":     dto.CustomerToResponse(createdCustomer),
+			"subscription": dto.SubscriptionToResponse(createdSubscription, nil),
+		})
 		return
 	}
 
-	response.Created(c, gin.H{
-		"customer":     dto.CustomerToResponse(createdCustomer),
-		"subscription": dto.SubscriptionToResponse(createdSubscription, nil),
-	})
+	// Create customer only (no subscription)
+	if err := h.service.Create(c.Request.Context(), customer); err != nil {
+		response.Error(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	response.Created(c, gin.H{"customer": dto.CustomerToResponse(customer)})
 }
 
 // generateUsernameFromFullName generates username from full name

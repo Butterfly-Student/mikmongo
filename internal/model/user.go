@@ -17,7 +17,7 @@ type User struct {
 	IsActive     bool           `gorm:"type:boolean;default:true"`
 	LastLogin    *time.Time     `gorm:"type:timestamptz"`
 	LastIP       string         `gorm:"type:varchar(45)"`
-	BearerKey    string         `gorm:"type:varchar(255);unique"`
+	BearerKey    *string        `gorm:"type:varchar(255);unique"`
 	CreatedAt    time.Time      `gorm:"type:timestamptz;not null;default:CURRENT_TIMESTAMP"`
 	UpdatedAt    time.Time      `gorm:"type:timestamptz;not null;default:CURRENT_TIMESTAMP"`
 	DeletedAt    gorm.DeletedAt `gorm:"index"`

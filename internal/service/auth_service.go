@@ -75,7 +75,7 @@ func (s *AuthService) Login(ctx context.Context, email, password string) (*Login
 
 	// Clear sensitive data
 	user.PasswordHash = ""
-	user.BearerKey = ""
+	user.BearerKey = nil
 
 	return &LoginResponse{
 		AccessToken:  accessToken,
@@ -142,7 +142,7 @@ func (s *AuthService) RefreshToken(ctx context.Context, refreshTokenString strin
 
 	// Clear sensitive data
 	user.PasswordHash = ""
-	user.BearerKey = ""
+	user.BearerKey = nil
 
 	return &LoginResponse{
 		AccessToken:  accessToken,
@@ -201,7 +201,7 @@ func (s *AuthService) GetUser(ctx context.Context, id uuid.UUID) (*model.User, e
 		return nil, err
 	}
 	user.PasswordHash = ""
-	user.BearerKey = ""
+	user.BearerKey = nil
 	return user, nil
 }
 
@@ -213,7 +213,7 @@ func (s *AuthService) ListUsers(ctx context.Context, limit, offset int) ([]model
 	}
 	for i := range users {
 		users[i].PasswordHash = ""
-		users[i].BearerKey = ""
+		users[i].BearerKey = nil
 	}
 	count, err := s.userRepo.Count(ctx)
 	return users, count, err

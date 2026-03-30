@@ -46,7 +46,7 @@ Plans:
   3. Bandwidth profiles dapat dikelola per router
   4. Subscription dapat dibuat dan status-nya dapat diubah (isolate/restore/suspend/terminate)
   5. Tabel 500+ rows scroll lancar dengan TanStack Virtual
-**Plans**: TBD
+**Plans**: 3 plans
 
 Plans:
 - [ ] 02-01: Customer management — tabel server-side, CRUD forms, activate/deactivate, detail page

@@ -72,7 +72,7 @@ func (h *BillingHandler) CancelInvoice(c *gin.Context) {
 
 // TriggerMonthlyBilling triggers monthly billing process
 func (h *BillingHandler) TriggerMonthlyBilling(c *gin.Context) {
-	if err := h.service.ProcessMonthlyBilling(c.Request.Context()); err != nil {
+	if err := h.service.ForceMonthlyBilling(c.Request.Context()); err != nil {
 		response.InternalServerError(c, err.Error())
 		return
 	}

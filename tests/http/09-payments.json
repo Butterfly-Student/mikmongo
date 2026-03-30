@@ -10,12 +10,28 @@
         "method": "GET",
         "endpoint": "<<baseUrl>>/api/v1/payments",
         "params": [
-          { "key": "limit", "value": "20", "active": true, "description": "" },
-          { "key": "offset", "value": "0", "active": true, "description": "" }
+          {
+            "key": "limit",
+            "value": "20",
+            "active": true,
+            "description": ""
+          },
+          {
+            "key": "offset",
+            "value": "0",
+            "active": true,
+            "description": ""
+          }
         ],
         "headers": [],
-        "auth": { "authType": "inherit", "authActive": true },
-        "body": { "contentType": null, "body": null },
+        "auth": {
+          "authType": "inherit",
+          "authActive": true
+        },
+        "body": {
+          "contentType": null,
+          "body": null
+        },
         "preRequestScript": "",
         "testScript": "",
         "requestVariables": [],
@@ -29,12 +45,20 @@
         "endpoint": "<<baseUrl>>/api/v1/payments",
         "params": [],
         "headers": [
-          { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "active": true,
+            "description": ""
+          }
         ],
-        "auth": { "authType": "inherit", "authActive": true },
+        "auth": {
+          "authType": "inherit",
+          "authActive": true
+        },
         "body": {
           "contentType": "application/json",
-          "body": "{\n  \"customer_id\": \"<<customerId>>\",\n  \"amount\": 150000,\n  \"payment_method\": \"bank_transfer\",\n  \"payment_date\": \"2024-01-15T00:00:00Z\",\n  \"bank_name\": \"BCA\",\n  \"bank_account_number\": \"1234567890\",\n  \"bank_account_name\": \"Budi Santoso\",\n  \"transaction_reference\": \"TRX-001\",\n  \"notes\": \"Pembayaran bulan Januari\"\n}"
+          "body": "{\n  \"customer_id\": \"<<customerId>>\",\n  \"amount\": 150000,\n  \"payment_method\": \"bank_transfer\",\n  \"payment_date\": \"2026-03-29T00:00:00Z\",\n  \"bank_name\": \"BCA\",\n  \"bank_account_number\": \"1234567890\",\n  \"bank_account_name\": \"Main Test Customer\",\n  \"transaction_reference\": \"TRX-TEST-002\",\n  \"notes\": \"Pembayaran bulan Maret 2026\"\n}"
         },
         "preRequestScript": "",
         "testScript": "",
@@ -49,8 +73,14 @@
         "endpoint": "<<baseUrl>>/api/v1/payments/<<paymentId>>",
         "params": [],
         "headers": [],
-        "auth": { "authType": "inherit", "authActive": true },
-        "body": { "contentType": null, "body": null },
+        "auth": {
+          "authType": "inherit",
+          "authActive": true
+        },
+        "body": {
+          "contentType": null,
+          "body": null
+        },
         "preRequestScript": "",
         "testScript": "",
         "requestVariables": [],
@@ -64,8 +94,14 @@
         "endpoint": "<<baseUrl>>/api/v1/payments/<<paymentId>>/confirm",
         "params": [],
         "headers": [],
-        "auth": { "authType": "inherit", "authActive": true },
-        "body": { "contentType": null, "body": null },
+        "auth": {
+          "authType": "inherit",
+          "authActive": true
+        },
+        "body": {
+          "contentType": null,
+          "body": null
+        },
         "preRequestScript": "",
         "testScript": "",
         "requestVariables": [],
@@ -79,9 +115,17 @@
         "endpoint": "<<baseUrl>>/api/v1/payments/<<paymentId>>/reject",
         "params": [],
         "headers": [
-          { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "active": true,
+            "description": ""
+          }
         ],
-        "auth": { "authType": "inherit", "authActive": true },
+        "auth": {
+          "authType": "inherit",
+          "authActive": true
+        },
         "body": {
           "contentType": "application/json",
           "body": "{\n  \"reason\": \"Bukti transfer tidak valid\"\n}"
@@ -99,9 +143,17 @@
         "endpoint": "<<baseUrl>>/api/v1/payments/<<paymentId>>/refund",
         "params": [],
         "headers": [
-          { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "active": true,
+            "description": ""
+          }
         ],
-        "auth": { "authType": "inherit", "authActive": true },
+        "auth": {
+          "authType": "inherit",
+          "authActive": true
+        },
         "body": {
           "contentType": "application/json",
           "body": "{\n  \"amount\": 150000,\n  \"reason\": \"Double payment\"\n}"
@@ -118,11 +170,22 @@
         "method": "POST",
         "endpoint": "<<baseUrl>>/api/v1/payments/<<paymentId>>/initiate-gateway",
         "params": [
-          { "key": "gateway", "value": "xendit", "active": true, "description": "Payment gateway: xendit or midtrans" }
+          {
+            "key": "gateway",
+            "value": "xendit",
+            "active": true,
+            "description": "Payment gateway: xendit or midtrans"
+          }
         ],
         "headers": [],
-        "auth": { "authType": "inherit", "authActive": true },
-        "body": { "contentType": null, "body": null },
+        "auth": {
+          "authType": "inherit",
+          "authActive": true
+        },
+        "body": {
+          "contentType": null,
+          "body": null
+        },
         "preRequestScript": "",
         "testScript": "",
         "requestVariables": [],
@@ -130,7 +193,11 @@
         "description": "Initiate payment via gateway (returns payment URL)"
       }
     ],
-    "auth": { "authType": "bearer", "authActive": true, "token": "<<token>>" },
+    "auth": {
+      "authType": "bearer",
+      "authActive": true,
+      "token": "<<token>>"
+    },
     "headers": [],
     "variables": [],
     "description": null

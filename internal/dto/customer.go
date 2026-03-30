@@ -17,8 +17,8 @@ type CreateCustomerRequest struct {
 	Latitude  *float64 `json:"latitude"`
 	Longitude *float64 `json:"longitude"`
 	// Subscription fields
-	PlanID   string  `json:"plan_id" binding:"required"`
-	RouterID string  `json:"router_id" binding:"required"`
+	PlanID   string  `json:"plan_id"`
+	RouterID string  `json:"router_id"`
 	Username string  `json:"username"`
 	Password string  `json:"password"`
 	StaticIP *string `json:"static_ip"`

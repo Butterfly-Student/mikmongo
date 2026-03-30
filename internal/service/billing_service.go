@@ -233,6 +233,33 @@ func (s *BillingService) ProcessMonthlyBilling(ctx context.Context) error {
 	return s.ProcessDailyBilling(ctx)
 }
 
+// ForceMonthlyBilling generates invoices for all active/isolated subscriptions
+// regardless of billing day. Used by the manual trigger endpoint.
+func (s *BillingService) ForceMonthlyBilling(ctx context.Context) error {
+	now := time.Now()
+
+	subs, err := s.subRepo.ListByStatus(ctx, "active")
+	if err != nil {
+		return err
+	}
+	isolatedSubs, _ := s.subRepo.ListByStatus(ctx, "isolated")
+	subs = append(subs, isolatedSubs...)
+
+	for _, sub := range subs {
+		customerID, err := uuid.Parse(sub.CustomerID)
+		if err != nil {
+			continue
+		}
+		customer, err := s.customerRepo.GetByID(ctx, customerID)
+		if err != nil || !customer.IsActive {
+			continue
+		}
+		subID, _ := uuid.Parse(sub.ID)
+		_, _ = s.GenerateInvoice(ctx, subID, now)
+	}
+	return nil
+}
+
 // CheckAndIsolateOverdue checks invoices and isolates subscriptions past grace period
 func (s *BillingService) CheckAndIsolateOverdue(ctx context.Context) error {
 	invoices, err := s.invoiceRepo.GetOverdue(ctx)

@@ -291,3 +291,27 @@ func TestRefundPayment_AlreadyRefunded(t *testing.T) {
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "refunded")
 }
+
+func TestConfirmPayment_NoInvoices_NoUnallocatedAmount(t *testing.T) {
+	ctx := context.Background()
+	svc, paymentRepo, invoiceRepo, _, _, _ := newPaymentServiceWithMocks()
+
+	paymentID := uuid.New()
+	customerID := uuid.New()
+
+	payment := &model.Payment{
+		ID:         paymentID.String(),
+		CustomerID: customerID.String(),
+		Amount:     100000,
+		Status:     "pending",
+	}
+
+	// GetByID is called twice: once before the transaction and once inside it (via funcTransactor).
+	paymentRepo.On("GetByID", ctx, paymentID).Return(payment, nil)
+	invoiceRepo.On("GetByCustomerIDForUpdate", ctx, customerID).Return([]model.Invoice{}, nil)
+	paymentRepo.On("Update", ctx, mock.AnythingOfType("*model.Payment")).Return(nil)
+
+	err := svc.Confirm(ctx, paymentID, "admin-001")
+	require.NoError(t, err)
+	assert.Equal(t, "confirmed", payment.Status)
+}

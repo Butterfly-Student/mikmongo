@@ -369,5 +369,52 @@ func TestCheckAndIsolateOverdue_WithinGracePeriod(t *testing.T) {
 	// subscriptionSvc is nil so Isolate() is never called; verify no panic
 }
 
+func TestForceMonthlyBilling_GeneratesRegardlessOfDay(t *testing.T) {
+	ctx := context.Background()
+	svc, invoiceRepo, itemRepo, subRepo, profileRepo, customerRepo, settingRepo, seqRepo := newBillingServiceWithMocks()
+
+	// Use a billing_day different from today to confirm the day check is bypassed
+	today := time.Now().Day()
+	billingDay := today%28 + 1
+	if billingDay == today {
+		billingDay = (today % 27) + 2
+	}
+
+	subID := uuid.New()
+	customerID := uuid.New()
+	planID := uuid.New()
+
+	sub := &model.Subscription{
+		ID:         subID.String(),
+		CustomerID: customerID.String(),
+		PlanID:     planID.String(),
+		Status:     "active",
+		BillingDay: intPtr(billingDay),
+	}
+	profile := &model.BandwidthProfile{
+		ID:           planID.String(),
+		Name:         "Paket 10Mbps",
+		PriceMonthly: 150_000,
+		TaxRate:      0,
+		BillingDay:   intPtr(billingDay),
+	}
+	customer := &model.Customer{ID: customerID.String(), FullName: "Budi", Phone: "081234", IsActive: true}
+
+	setupSettingAndSeq(settingRepo, seqRepo, 1)
+	subRepo.On("ListByStatus", ctx, "active").Return([]model.Subscription{*sub}, nil)
+	subRepo.On("ListByStatus", ctx, "isolated").Return([]model.Subscription{}, nil)
+	subRepo.On("GetByID", ctx, subID).Return(sub, nil)
+	customerRepo.On("GetByID", ctx, customerID).Return(customer, nil)
+	profileRepo.On("GetByID", ctx, planID).Return(profile, nil)
+	invoiceRepo.On("GetBySubscriptionAndPeriod", ctx, subID, mock.Anything, mock.Anything).Return(nil, fmt.Errorf("not found"))
+	invoiceRepo.On("Create", ctx, mock.AnythingOfType("*model.Invoice")).Return(nil)
+	itemRepo.On("Create", ctx, mock.AnythingOfType("*model.InvoiceItem")).Return(nil)
+
+	err := svc.ForceMonthlyBilling(ctx)
+	assert.NoError(t, err)
+	// Invoice must be created even though today != billingDay
+	invoiceRepo.AssertCalled(t, "Create", ctx, mock.AnythingOfType("*model.Invoice"))
+}
+
 // ensure fmt is used
 var _ = fmt.Sprintf

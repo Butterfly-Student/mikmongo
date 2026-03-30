@@ -14,12 +14,28 @@
             "method": "GET",
             "endpoint": "<<baseUrl>>/api/v1/sales-agents",
             "params": [
-              { "key": "limit", "value": "20", "active": true, "description": "" },
-              { "key": "offset", "value": "0", "active": true, "description": "" }
+              {
+                "key": "limit",
+                "value": "20",
+                "active": true,
+                "description": ""
+              },
+              {
+                "key": "offset",
+                "value": "0",
+                "active": true,
+                "description": ""
+              }
             ],
             "headers": [],
-            "auth": { "authType": "inherit", "authActive": true },
-            "body": { "contentType": null, "body": null },
+            "auth": {
+              "authType": "inherit",
+              "authActive": true
+            },
+            "body": {
+              "contentType": null,
+              "body": null
+            },
             "preRequestScript": "",
             "testScript": "",
             "requestVariables": [],
@@ -33,9 +49,17 @@
             "endpoint": "<<baseUrl>>/api/v1/sales-agents",
             "params": [],
             "headers": [
-              { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "active": true,
+                "description": ""
+              }
             ],
-            "auth": { "authType": "inherit", "authActive": true },
+            "auth": {
+              "authType": "inherit",
+              "authActive": true
+            },
             "body": {
               "contentType": "application/json",
               "body": "{\n  \"router_id\": \"<<routerId>>\",\n  \"name\": \"Agen Budi\",\n  \"phone\": \"08123456789\",\n  \"username\": \"agenbudi\",\n  \"password\": \"password123\",\n  \"status\": \"active\",\n  \"voucher_mode\": \"vc\",\n  \"voucher_length\": 6,\n  \"voucher_type\": \"alphanumeric\",\n  \"bill_discount\": 0,\n  \"billing_cycle\": \"monthly\",\n  \"billing_day\": 1\n}"
@@ -53,8 +77,14 @@
             "endpoint": "<<baseUrl>>/api/v1/sales-agents/<<agentId>>",
             "params": [],
             "headers": [],
-            "auth": { "authType": "inherit", "authActive": true },
-            "body": { "contentType": null, "body": null },
+            "auth": {
+              "authType": "inherit",
+              "authActive": true
+            },
+            "body": {
+              "contentType": null,
+              "body": null
+            },
             "preRequestScript": "",
             "testScript": "",
             "requestVariables": [],
@@ -68,9 +98,17 @@
             "endpoint": "<<baseUrl>>/api/v1/sales-agents/<<agentId>>",
             "params": [],
             "headers": [
-              { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "active": true,
+                "description": ""
+              }
             ],
-            "auth": { "authType": "inherit", "authActive": true },
+            "auth": {
+              "authType": "inherit",
+              "authActive": true
+            },
             "body": {
               "contentType": "application/json",
               "body": "{\n  \"name\": \"Agen Budi Updated\",\n  \"phone\": \"08198765432\",\n  \"bill_discount\": 10\n}"
@@ -85,11 +123,17 @@
             "v": "17",
             "name": "Delete Sales Agent",
             "method": "DELETE",
-            "endpoint": "<<baseUrl>>/api/v1/sales-agents/<<agentId>>",
+            "endpoint": "<<baseUrl>>/api/v1/sales-agents/21cd1ef8-a9c2-4543-b0a4-d34806056ff8",
             "params": [],
             "headers": [],
-            "auth": { "authType": "inherit", "authActive": true },
-            "body": { "contentType": null, "body": null },
+            "auth": {
+              "authType": "inherit",
+              "authActive": true
+            },
+            "body": {
+              "contentType": null,
+              "body": null
+            },
             "preRequestScript": "",
             "testScript": "",
             "requestVariables": [],
@@ -97,7 +141,10 @@
             "description": "Delete sales agent"
           }
         ],
-        "auth": { "authType": "inherit", "authActive": true },
+        "auth": {
+          "authType": "inherit",
+          "authActive": true
+        },
         "headers": [],
         "variables": [],
         "description": null
@@ -114,8 +161,14 @@
             "endpoint": "<<baseUrl>>/api/v1/sales-agents/<<agentId>>/profile-prices",
             "params": [],
             "headers": [],
-            "auth": { "authType": "inherit", "authActive": true },
-            "body": { "contentType": null, "body": null },
+            "auth": {
+              "authType": "inherit",
+              "authActive": true
+            },
+            "body": {
+              "contentType": null,
+              "body": null
+            },
             "preRequestScript": "",
             "testScript": "",
             "requestVariables": [],
@@ -129,9 +182,17 @@
             "endpoint": "<<baseUrl>>/api/v1/sales-agents/<<agentId>>/profile-prices/1jam",
             "params": [],
             "headers": [
-              { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "active": true,
+                "description": ""
+              }
             ],
-            "auth": { "authType": "inherit", "authActive": true },
+            "auth": {
+              "authType": "inherit",
+              "authActive": true
+            },
             "body": {
               "contentType": "application/json",
               "body": "{\n  \"base_price\": 3000,\n  \"selling_price\": 5000,\n  \"voucher_length\": 6,\n  \"is_active\": true\n}"
@@ -143,7 +204,10 @@
             "description": "Set or update price for a profile"
           }
         ],
-        "auth": { "authType": "inherit", "authActive": true },
+        "auth": {
+          "authType": "inherit",
+          "authActive": true
+        },
         "headers": [],
         "variables": [],
         "description": null
@@ -160,8 +224,14 @@
             "endpoint": "<<baseUrl>>/api/v1/sales-agents/<<agentId>>/invoices",
             "params": [],
             "headers": [],
-            "auth": { "authType": "inherit", "authActive": true },
-            "body": { "contentType": null, "body": null },
+            "auth": {
+              "authType": "inherit",
+              "authActive": true
+            },
+            "body": {
+              "contentType": null,
+              "body": null
+            },
             "preRequestScript": "",
             "testScript": "",
             "requestVariables": [],
@@ -175,9 +245,17 @@
             "endpoint": "<<baseUrl>>/api/v1/sales-agents/<<agentId>>/invoices/generate",
             "params": [],
             "headers": [
-              { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "active": true,
+                "description": ""
+              }
             ],
-            "auth": { "authType": "inherit", "authActive": true },
+            "auth": {
+              "authType": "inherit",
+              "authActive": true
+            },
             "body": {
               "contentType": "application/json",
               "body": "{\n  \"period_start\": \"2024-01-01\",\n  \"period_end\": \"2024-01-31\"\n}"
@@ -189,14 +267,21 @@
             "description": "Generate invoice for agent based on sales period"
           }
         ],
-        "auth": { "authType": "inherit", "authActive": true },
+        "auth": {
+          "authType": "inherit",
+          "authActive": true
+        },
         "headers": [],
         "variables": [],
         "description": null
       }
     ],
     "requests": [],
-    "auth": { "authType": "bearer", "authActive": true, "token": "<<token>>" },
+    "auth": {
+      "authType": "bearer",
+      "authActive": true,
+      "token": "<<token>>"
+    },
     "headers": [],
     "variables": [],
     "description": null

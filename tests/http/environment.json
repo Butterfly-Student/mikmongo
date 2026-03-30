@@ -3,22 +3,107 @@
   "id": "mikmongo-dev",
   "name": "MikMongo Development",
   "variables": [
-    { "key": "baseUrl", "initialValue": "http://localhost:8080", "currentValue": "http://localhost:8080", "secret": false },
-    { "key": "token", "initialValue": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYmIzY2IyNjItOGY2MC00MDM0LTgwNDEtNDJhODI3OTgwM2I2IiwiZW1haWwiOiJzdXBlcmFkbWluQG1pa21vbmdvLmxvY2FsIiwicm9sZSI6InN1cGVyYWRtaW4iLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc0NTg0MjQzLCJuYmYiOjE3NzQ1ODA2NDMsImlhdCI6MTc3NDU4MDY0MywianRpIjoiMGRjNTA2NzYtN2YyMS00NTJjLThkNmMtYzdlODZhY2YyZmMzIn0.c0CcG3Q5v8pRLIvu_mLG5M80FfuMMtMxgi_5kBgEWHs", "currentValue": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYmIzY2IyNjItOGY2MC00MDM0LTgwNDEtNDJhODI3OTgwM2I2IiwiZW1haWwiOiJzdXBlcmFkbWluQG1pa21vbmdvLmxvY2FsIiwicm9sZSI6InN1cGVyYWRtaW4iLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc0NTg0MjQzLCJuYmYiOjE3NzQ1ODA2NDMsImlhdCI6MTc3NDU4MDY0MywianRpIjoiMGRjNTA2NzYtN2YyMS00NTJjLThkNmMtYzdlODZhY2YyZmMzIn0.c0CcG3Q5v8pRLIvu_mLG5M80FfuMMtMxgi_5kBgEWHs", "secret": true },
-    { "key": "refreshToken", "initialValue": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYmIzY2IyNjItOGY2MC00MDM0LTgwNDEtNDJhODI3OTgwM2I2IiwiZW1haWwiOiJzdXBlcmFkbWluQG1pa21vbmdvLmxvY2FsIiwicm9sZSI6InN1cGVyYWRtaW4iLCJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc3NTE4NTQ0MywibmJmIjoxNzc0NTgwNjQzLCJpYXQiOjE3NzQ1ODA2NDMsImp0aSI6ImJmYTY4Yzc4LWNkMGQtNGQ0MS04NzFlLTNkY2M1Yjg2OTI1MCJ9.g3TFSrC-IBAzySvl0phqIJ5Ts4LngCRXR_b82-7Bap0", "currentValue": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiYmIzY2IyNjItOGY2MC00MDM0LTgwNDEtNDJhODI3OTgwM2I2IiwiZW1haWwiOiJzdXBlcmFkbWluQG1pa21vbmdvLmxvY2FsIiwicm9sZSI6InN1cGVyYWRtaW4iLCJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc3NTE4NTQ0MywibmJmIjoxNzc0NTgwNjQzLCJpYXQiOjE3NzQ1ODA2NDMsImp0aSI6ImJmYTY4Yzc4LWNkMGQtNGQ0MS04NzFlLTNkY2M1Yjg2OTI1MCJ9.g3TFSrC-IBAzySvl0phqIJ5Ts4LngCRXR_b82-7Bap0", "secret": true },
-    { "key": "portalToken", "initialValue": "", "currentValue": "", "secret": true },
-    { "key": "agentToken", "initialValue": "", "currentValue": "", "secret": true },
-    { "key": "routerId", "initialValue": "f725d388-ab3d-4469-b91c-aa520cc21779", "currentValue": "f725d388-ab3d-4469-b91c-aa520cc21779", "secret": false },
-    { "key": "customerId", "initialValue": "1a3e5a1b-83b5-4ba4-9909-23574926c049", "currentValue": "1a3e5a1b-83b5-4ba4-9909-23574926c049", "secret": false },
-    { "key": "userId", "initialValue": "b4d32707-dec7-40e8-81eb-8e43ec2d955e", "currentValue": "b4d32707-dec7-40e8-81eb-8e43ec2d955e", "secret": false },
-    { "key": "subscriptionId", "initialValue": "efb1faa1-6c1e-40d4-ac91-51da28431897", "currentValue": "efb1faa1-6c1e-40d4-ac91-51da28431897", "secret": false },
-    { "key": "invoiceId", "initialValue": "", "currentValue": "", "secret": false },
-    { "key": "paymentId", "initialValue": "a9866900-001e-4fc9-8705-7921c6bcb2e9", "currentValue": "a9866900-001e-4fc9-8705-7921c6bcb2e9", "secret": false },
-    { "key": "profileId", "initialValue": "5b3689f3-b1db-481b-bd73-336007cc6ea2", "currentValue": "5b3689f3-b1db-481b-bd73-336007cc6ea2", "secret": false },
-    { "key": "agentId", "initialValue": "", "currentValue": "", "secret": false },
-    { "key": "registrationId", "initialValue": "4caa1d31-2b3d-44bd-8d34-54f7b0b0b361", "currentValue": "4caa1d31-2b3d-44bd-8d34-54f7b0b0b361", "secret": false },
-    { "key": "entryId", "initialValue": "", "currentValue": "", "secret": false },
-    { "key": "fundId", "initialValue": "", "currentValue": "", "secret": false },
-    { "key": "agentInvoiceId", "initialValue": "", "currentValue": "", "secret": false }
+    {
+      "key": "baseUrl",
+      "initialValue": "http://localhost:8080",
+      "currentValue": "http://localhost:8080",
+      "secret": false
+    },
+    {
+      "key": "token",
+      "initialValue": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiN2ZhMTI4YTAtZjM3Ny00YWEwLWI1NzItNDUwZTE4ZjJmNWU0IiwiZW1haWwiOiJzdXBlcmFkbWluQG1pa21vbmdvLmxvY2FsIiwicm9sZSI6InN1cGVyYWRtaW4iLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc0Nzk2ODA1LCJuYmYiOjE3NzQ3OTMyMDUsImlhdCI6MTc3NDc5MzIwNSwianRpIjoiOWNiMThlMjYtMjIwOS00NjhjLWFiMjYtZGMwNDMzNWJlZDU5In0.dA0zQxuuM5SHERUAttZKJoL7XGIz4mY0k_0xqlavYeY",
+      "currentValue": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiN2ZhMTI4YTAtZjM3Ny00YWEwLWI1NzItNDUwZTE4ZjJmNWU0IiwiZW1haWwiOiJzdXBlcmFkbWluQG1pa21vbmdvLmxvY2FsIiwicm9sZSI6InN1cGVyYWRtaW4iLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc0Nzk2ODA1LCJuYmYiOjE3NzQ3OTMyMDUsImlhdCI6MTc3NDc5MzIwNSwianRpIjoiOWNiMThlMjYtMjIwOS00NjhjLWFiMjYtZGMwNDMzNWJlZDU5In0.dA0zQxuuM5SHERUAttZKJoL7XGIz4mY0k_0xqlavYeY",
+      "secret": true
+    },
+    {
+      "key": "refreshToken",
+      "initialValue": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiN2ZhMTI4YTAtZjM3Ny00YWEwLWI1NzItNDUwZTE4ZjJmNWU0IiwiZW1haWwiOiJzdXBlcmFkbWluQG1pa21vbmdvLmxvY2FsIiwicm9sZSI6InN1cGVyYWRtaW4iLCJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc3NTM5NjkzOCwibmJmIjoxNzc0NzkyMTM4LCJpYXQiOjE3NzQ3OTIxMzgsImp0aSI6IjFiNzUxMzlhLTFmNmQtNGZkNi1iMjcwLTNlYjNmNzY5ZGI1OSJ9.dBKrPdAKRRYoXmb9b6Zjua4lJsgKHH-t6Uu0e6ZxEsY",
+      "currentValue": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiN2ZhMTI4YTAtZjM3Ny00YWEwLWI1NzItNDUwZTE4ZjJmNWU0IiwiZW1haWwiOiJzdXBlcmFkbWluQG1pa21vbmdvLmxvY2FsIiwicm9sZSI6InN1cGVyYWRtaW4iLCJ0b2tlbl90eXBlIjoicmVmcmVzaCIsImV4cCI6MTc3NTM5NjkzOCwibmJmIjoxNzc0NzkyMTM4LCJpYXQiOjE3NzQ3OTIxMzgsImp0aSI6IjFiNzUxMzlhLTFmNmQtNGZkNi1iMjcwLTNlYjNmNzY5ZGI1OSJ9.dBKrPdAKRRYoXmb9b6Zjua4lJsgKHH-t6Uu0e6ZxEsY",
+      "secret": true
+    },
+    {
+      "key": "portalToken",
+      "initialValue": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiY2M3Y2VhZDMtMTdlNC00YmNlLWI2MzUtYTE2ZmZiNGUwNTNlIiwiZW1haWwiOiJDU1QtMDAwMDEiLCJyb2xlIjoicG9ydGFsIiwidG9rZW5fdHlwZSI6ImFjY2VzcyIsImV4cCI6MTc3NDc5NTk5MywibmJmIjoxNzc0NzkyMzkzLCJpYXQiOjE3NzQ3OTIzOTMsImp0aSI6IjI3MzVlNDVmLTI5ZDYtNDE4My05ZmY1LTY0MWJiZDAyZDU0OCJ9.Zg9VREZYA0nLQTBq526pDtptL7-uOXQfqFxwU6FtQbc",
+      "currentValue": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiY2M3Y2VhZDMtMTdlNC00YmNlLWI2MzUtYTE2ZmZiNGUwNTNlIiwiZW1haWwiOiJDU1QtMDAwMDEiLCJyb2xlIjoicG9ydGFsIiwidG9rZW5fdHlwZSI6ImFjY2VzcyIsImV4cCI6MTc3NDc5NTk5MywibmJmIjoxNzc0NzkyMzkzLCJpYXQiOjE3NzQ3OTIzOTMsImp0aSI6IjI3MzVlNDVmLTI5ZDYtNDE4My05ZmY1LTY0MWJiZDAyZDU0OCJ9.Zg9VREZYA0nLQTBq526pDtptL7-uOXQfqFxwU6FtQbc",
+      "secret": true
+    },
+    {
+      "key": "agentToken",
+      "initialValue": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZTFiNWRjZDgtMmNiNS00MTk4LTgxNWItZjRmZWEzYjFjOWUwIiwiZW1haWwiOiJhZ2VuYnVkaSIsInJvbGUiOiJhZ2VudF9wb3J0YWwiLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc0Nzk1OTkzLCJuYmYiOjE3NzQ3OTIzOTMsImlhdCI6MTc3NDc5MjM5MywianRpIjoiZjU0OWYwYmItYzY4Yy00YmU3LThjNjQtMWU3NjQ5ZTI3MzE2In0.9kod4qPWG8MLTkhF09OiTqD_L4hhB_4VhzSCcJ_KlNM",
+      "currentValue": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiZTFiNWRjZDgtMmNiNS00MTk4LTgxNWItZjRmZWEzYjFjOWUwIiwiZW1haWwiOiJhZ2VuYnVkaSIsInJvbGUiOiJhZ2VudF9wb3J0YWwiLCJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzc0Nzk1OTkzLCJuYmYiOjE3NzQ3OTIzOTMsImlhdCI6MTc3NDc5MjM5MywianRpIjoiZjU0OWYwYmItYzY4Yy00YmU3LThjNjQtMWU3NjQ5ZTI3MzE2In0.9kod4qPWG8MLTkhF09OiTqD_L4hhB_4VhzSCcJ_KlNM",
+      "secret": true
+    },
+    {
+      "key": "routerId",
+      "initialValue": "9eab7675-3abd-41df-97fc-1c8137367f5a",
+      "currentValue": "9eab7675-3abd-41df-97fc-1c8137367f5a",
+      "secret": false
+    },
+    {
+      "key": "customerId",
+      "initialValue": "cc7cead3-17e4-4bce-b635-a16ffb4e053e",
+      "currentValue": "cc7cead3-17e4-4bce-b635-a16ffb4e053e",
+      "secret": false
+    },
+    {
+      "key": "userId",
+      "initialValue": "5763b510-6053-41e2-a953-17496c57b4f1",
+      "currentValue": "5763b510-6053-41e2-a953-17496c57b4f1",
+      "secret": false
+    },
+    {
+      "key": "subscriptionId",
+      "initialValue": "65e6a6aa-c5b8-4eac-bc39-e5bae7ae2aeb",
+      "currentValue": "65e6a6aa-c5b8-4eac-bc39-e5bae7ae2aeb",
+      "secret": false
+    },
+    {
+      "key": "invoiceId",
+      "initialValue": "e8f1a2b3-c4d5-4e6f-8a7b-12345678abcd",
+      "currentValue": "e8f1a2b3-c4d5-4e6f-8a7b-12345678abcd",
+      "secret": false
+    },
+    {
+      "key": "paymentId",
+      "initialValue": "a1f4b4b7-28ca-4bfe-a102-100076ba26df",
+      "currentValue": "a1f4b4b7-28ca-4bfe-a102-100076ba26df",
+      "secret": false
+    },
+    {
+      "key": "profileId",
+      "initialValue": "8f42e08a-98da-4518-902d-f68281853023",
+      "currentValue": "8f42e08a-98da-4518-902d-f68281853023",
+      "secret": false
+    },
+    {
+      "key": "agentId",
+      "initialValue": "e1b5dcd8-2cb5-4198-815b-f4fea3b1c9e0",
+      "currentValue": "e1b5dcd8-2cb5-4198-815b-f4fea3b1c9e0",
+      "secret": false
+    },
+    {
+      "key": "registrationId",
+      "initialValue": "dc094d77-afdb-4c6f-96ac-f8db24f5df5f",
+      "currentValue": "dc094d77-afdb-4c6f-96ac-f8db24f5df5f",
+      "secret": false
+    },
+    {
+      "key": "entryId",
+      "initialValue": "0b81120c-b261-4aa8-a5f7-cdf5593d638e",
+      "currentValue": "0b81120c-b261-4aa8-a5f7-cdf5593d638e",
+      "secret": false
+    },
+    {
+      "key": "fundId",
+      "initialValue": "3acdf549-df5d-4d18-a2aa-1788b10df8b7",
+      "currentValue": "3acdf549-df5d-4d18-a2aa-1788b10df8b7",
+      "secret": false
+    },
+    {
+      "key": "agentInvoiceId",
+      "initialValue": "453cbef7-14d4-4d74-8c75-ddbf49fbaa15",
+      "currentValue": "453cbef7-14d4-4d74-8c75-ddbf49fbaa15",
+      "secret": false
+    }
   ]
 }

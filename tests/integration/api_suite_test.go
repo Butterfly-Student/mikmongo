@@ -174,7 +174,7 @@ func createAPIUser(t *testing.T, suite *TestSuite, role string) (email, password
 		FullName:     "API Test User",
 		Email:        email,
 		PasswordHash: string(hash),
-		BearerKey:    uuid.New().String(), // must be unique per user
+		BearerKey:    func() *string { s := uuid.New().String(); return &s }(), // must be unique per user
 		Role:         role,
 		IsActive:     true,
 		CreatedAt:    time.Now(),
@@ -260,7 +260,7 @@ func createAPIUserRoot(t *testing.T, suite *TestSuite, role string) (email, pass
 		FullName:     "Load Test User",
 		Email:        email,
 		PasswordHash: string(hash),
-		BearerKey:    uuid.New().String(),
+		BearerKey:    func() *string { s := uuid.New().String(); return &s }(),
 		Role:         role,
 		IsActive:     true,
 		CreatedAt:    time.Now(),

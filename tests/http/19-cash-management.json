@@ -45,7 +45,7 @@
             "auth": { "authType": "inherit", "authActive": true },
             "body": {
               "contentType": "application/json",
-              "body": "{\n  \"type\": \"income\",\n  \"source\": \"subscription_payment\",\n  \"amount\": 150000,\n  \"description\": \"Pembayaran langganan Budi\",\n  \"payment_method\": \"bank_transfer\",\n  \"bank_name\": \"BCA\",\n  \"account_number\": \"1234567890\",\n  \"petty_cash_fund_id\": \"<<fundId>>\"\n}"
+              "body": "{\n  \"type\": \"income\",\n  \"source\": \"invoice\",\n  \"amount\": 150000,\n  \"description\": \"Pembayaran langganan Budi\",\n  \"payment_method\": \"bank_transfer\",\n  \"bank_name\": \"BCA\",\n  \"account_number\": \"1234567890\",\n  \"entry_date\": \"2026-03-28\"\n}"
             },
             "preRequestScript": "",
             "testScript": "",

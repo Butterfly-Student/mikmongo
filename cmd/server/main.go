@@ -145,6 +145,7 @@ func main() {
 		SequenceCounterRepo:      pgRepo.SequenceCounterRepo,
 		MessageTemplateRepo:      pgRepo.MessageTemplateRepo,
 		AuditLogRepo:             pgRepo.AuditLogRepo,
+		Transactor:               pgRepo.Transactor,
 		HotspotSaleRepo:          pgRepo.HotspotSaleRepo,
 		SalesAgentRepo:           pgRepo.SalesAgentRepo,
 		AgentInvoiceRepo:         pgRepo.AgentInvoiceRepo,

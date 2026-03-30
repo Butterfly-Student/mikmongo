@@ -272,3 +272,45 @@ func TestRefreshToken_BlacklistsOldTokenJTI(t *testing.T) {
 
 	redisClient.AssertCalled(t, "BlacklistToken", ctx, oldJTI, mock.AnythingOfType("time.Duration"))
 }
+
+func TestCreateUser_NilBearerKey(t *testing.T) {
+	ctx := context.Background()
+	svc, userRepo, _ := newAuthServiceWithMocks()
+
+	user := &model.User{
+		FullName: "Test User",
+		Email:    "test@example.com",
+		Role:     "cs",
+		IsActive: true,
+	}
+
+	userRepo.On("Create", ctx, mock.AnythingOfType("*model.User")).Return(nil)
+
+	err := svc.CreateUser(ctx, user, "password123")
+	require.NoError(t, err)
+	// BearerKey should be nil (zero value for *string), not an empty string
+	assert.Nil(t, user.BearerKey, "BearerKey must be nil to avoid unique constraint violation on empty string")
+}
+
+func TestGetUser_ClearsSensitiveFields(t *testing.T) {
+	ctx := context.Background()
+	svc, userRepo, _ := newAuthServiceWithMocks()
+
+	userID := uuid.New()
+	bearerKey := "some-bearer-key"
+	user := &model.User{
+		ID:           userID.String(),
+		Email:        "admin@test.com",
+		PasswordHash: hashPassword("password123"),
+		BearerKey:    &bearerKey,
+		Role:         "admin",
+		IsActive:     true,
+	}
+
+	userRepo.On("GetByID", ctx, userID).Return(user, nil)
+
+	result, err := svc.GetUser(ctx, userID)
+	require.NoError(t, err)
+	assert.Empty(t, result.PasswordHash, "PasswordHash should be cleared")
+	assert.Nil(t, result.BearerKey, "BearerKey should be nil after GetUser")
+}

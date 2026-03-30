@@ -20,7 +20,7 @@
             "auth": { "authType": "none", "authActive": true },
             "body": {
               "contentType": "application/json",
-              "body": "{\n  \"email\": \"superadmin@mikmongo.local\",\n  \"password\": \"NewPassword123!\"\n}"
+              "body": "{\n  \"email\": \"superadmin@mikmongo.local\",\n  \"password\": \"SuperAdmin123!\"\n}"
             },
             "preRequestScript": "",
             "testScript": "",

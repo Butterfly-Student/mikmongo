@@ -48,7 +48,7 @@ func (h *RouterHandler) Create(c *gin.Context) {
 
 // GetDevice handles getting a router by ID
 func (h *RouterHandler) GetDevice(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("id"))
+	id, err := uuid.Parse(c.Param("router_id"))
 	if err != nil {
 		response.BadRequest(c, "invalid id")
 		return
@@ -63,7 +63,7 @@ func (h *RouterHandler) GetDevice(c *gin.Context) {
 
 // Update handles updating a router
 func (h *RouterHandler) Update(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("id"))
+	id, err := uuid.Parse(c.Param("router_id"))
 	if err != nil {
 		response.BadRequest(c, "invalid id")
 		return
@@ -96,7 +96,7 @@ func (h *RouterHandler) Update(c *gin.Context) {
 
 // Delete handles deleting a router
 func (h *RouterHandler) Delete(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("id"))
+	id, err := uuid.Parse(c.Param("router_id"))
 	if err != nil {
 		response.BadRequest(c, "invalid id")
 		return
@@ -110,7 +110,7 @@ func (h *RouterHandler) Delete(c *gin.Context) {
 
 // SyncDevice handles syncing a router device
 func (h *RouterHandler) SyncDevice(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("id"))
+	id, err := uuid.Parse(c.Param("router_id"))
 	if err != nil {
 		response.BadRequest(c, "invalid id")
 		return
@@ -124,7 +124,7 @@ func (h *RouterHandler) SyncDevice(c *gin.Context) {
 
 // TestConnection handles testing a router connection
 func (h *RouterHandler) TestConnection(c *gin.Context) {
-	id, err := uuid.Parse(c.Param("id"))
+	id, err := uuid.Parse(c.Param("router_id"))
 	if err != nil {
 		response.BadRequest(c, "invalid id")
 		return

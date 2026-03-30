@@ -14,12 +14,28 @@
             "method": "GET",
             "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/subscriptions",
             "params": [
-              { "key": "limit", "value": "20", "active": true, "description": "" },
-              { "key": "offset", "value": "0", "active": true, "description": "" }
+              {
+                "key": "limit",
+                "value": "20",
+                "active": true,
+                "description": ""
+              },
+              {
+                "key": "offset",
+                "value": "0",
+                "active": true,
+                "description": ""
+              }
             ],
             "headers": [],
-            "auth": { "authType": "inherit", "authActive": true },
-            "body": { "contentType": null, "body": null },
+            "auth": {
+              "authType": "inherit",
+              "authActive": true
+            },
+            "body": {
+              "contentType": null,
+              "body": null
+            },
             "preRequestScript": "",
             "testScript": "",
             "requestVariables": [],
@@ -33,12 +49,20 @@
             "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/subscriptions",
             "params": [],
             "headers": [
-              { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "active": true,
+                "description": ""
+              }
             ],
-            "auth": { "authType": "inherit", "authActive": true },
+            "auth": {
+              "authType": "inherit",
+              "authActive": true
+            },
             "body": {
               "contentType": "application/json",
-              "body": "{\n  \"customer_id\": \"<<customerId>>\",\n  \"plan_id\": \"<<profileId>>\",\n  \"username\": \"testsub_002\",\n  \"password\": \"secret123\",\n  \"billing_day\": 1,\n  \"auto_isolate\": true,\n  \"notes\": \"Test subscription\"\n}"
+              "body": "{\n  \"customer_id\": \"<<customerId>>\",\n  \"plan_id\": \"<<profileId>>\",\n  \"username\": \"testsub2026v1\",\n  \"password\": \"secret123\",\n  \"billing_day\": 1,\n  \"auto_isolate\": true,\n  \"notes\": \"Test subscription\"\n}"
             },
             "preRequestScript": "",
             "testScript": "",
@@ -53,8 +77,14 @@
             "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/subscriptions/<<subscriptionId>>",
             "params": [],
             "headers": [],
-            "auth": { "authType": "inherit", "authActive": true },
-            "body": { "contentType": null, "body": null },
+            "auth": {
+              "authType": "inherit",
+              "authActive": true
+            },
+            "body": {
+              "contentType": null,
+              "body": null
+            },
             "preRequestScript": "",
             "testScript": "",
             "requestVariables": [],
@@ -68,9 +98,17 @@
             "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/subscriptions/<<subscriptionId>>",
             "params": [],
             "headers": [
-              { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "active": true,
+                "description": ""
+              }
             ],
-            "auth": { "authType": "inherit", "authActive": true },
+            "auth": {
+              "authType": "inherit",
+              "authActive": true
+            },
             "body": {
               "contentType": "application/json",
               "body": "{\n  \"plan_id\": \"<<profileId>>\",\n  \"notes\": \"Updated subscription\"\n}"
@@ -85,11 +123,17 @@
             "v": "17",
             "name": "Delete Subscription",
             "method": "DELETE",
-            "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/subscriptions/<<subscriptionId>>",
+            "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/subscriptions/71fe8b8e-dad1-481a-9c31-192071d28ab5",
             "params": [],
             "headers": [],
-            "auth": { "authType": "inherit", "authActive": true },
-            "body": { "contentType": null, "body": null },
+            "auth": {
+              "authType": "inherit",
+              "authActive": true
+            },
+            "body": {
+              "contentType": null,
+              "body": null
+            },
             "preRequestScript": "",
             "testScript": "",
             "requestVariables": [],
@@ -97,7 +141,10 @@
             "description": "Delete subscription"
           }
         ],
-        "auth": { "authType": "inherit", "authActive": true },
+        "auth": {
+          "authType": "inherit",
+          "authActive": true
+        },
         "headers": [],
         "variables": [],
         "description": null
@@ -114,8 +161,14 @@
             "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/subscriptions/<<subscriptionId>>/activate",
             "params": [],
             "headers": [],
-            "auth": { "authType": "inherit", "authActive": true },
-            "body": { "contentType": null, "body": null },
+            "auth": {
+              "authType": "inherit",
+              "authActive": true
+            },
+            "body": {
+              "contentType": null,
+              "body": null
+            },
             "preRequestScript": "",
             "testScript": "",
             "requestVariables": [],
@@ -129,9 +182,17 @@
             "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/subscriptions/<<subscriptionId>>/isolate",
             "params": [],
             "headers": [
-              { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "active": true,
+                "description": ""
+              }
             ],
-            "auth": { "authType": "inherit", "authActive": true },
+            "auth": {
+              "authType": "inherit",
+              "authActive": true
+            },
             "body": {
               "contentType": "application/json",
               "body": "{\n  \"reason\": \"Belum bayar\"\n}"
@@ -149,8 +210,14 @@
             "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/subscriptions/<<subscriptionId>>/restore",
             "params": [],
             "headers": [],
-            "auth": { "authType": "inherit", "authActive": true },
-            "body": { "contentType": null, "body": null },
+            "auth": {
+              "authType": "inherit",
+              "authActive": true
+            },
+            "body": {
+              "contentType": null,
+              "body": null
+            },
             "preRequestScript": "",
             "testScript": "",
             "requestVariables": [],
@@ -164,9 +231,17 @@
             "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/subscriptions/<<subscriptionId>>/suspend",
             "params": [],
             "headers": [
-              { "key": "Content-Type", "value": "application/json", "active": true, "description": "" }
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "active": true,
+                "description": ""
+              }
             ],
-            "auth": { "authType": "inherit", "authActive": true },
+            "auth": {
+              "authType": "inherit",
+              "authActive": true
+            },
             "body": {
               "contentType": "application/json",
               "body": "{\n  \"reason\": \"Customer request\"\n}"
@@ -184,8 +259,14 @@
             "endpoint": "<<baseUrl>>/api/v1/routers/<<routerId>>/subscriptions/<<subscriptionId>>/terminate",
             "params": [],
             "headers": [],
-            "auth": { "authType": "inherit", "authActive": true },
-            "body": { "contentType": null, "body": null },
+            "auth": {
+              "authType": "inherit",
+              "authActive": true
+            },
+            "body": {
+              "contentType": null,
+              "body": null
+            },
             "preRequestScript": "",
             "testScript": "",
             "requestVariables": [],
@@ -193,14 +274,21 @@
             "description": "Terminate subscription permanently"
           }
         ],
-        "auth": { "authType": "inherit", "authActive": true },
+        "auth": {
+          "authType": "inherit",
+          "authActive": true
+        },
         "headers": [],
         "variables": [],
         "description": null
       }
     ],
     "requests": [],
-    "auth": { "authType": "bearer", "authActive": true, "token": "<<token>>" },
+    "auth": {
+      "authType": "bearer",
+      "authActive": true,
+      "token": "<<token>>"
+    },
     "headers": [],
     "variables": [],
     "description": null
