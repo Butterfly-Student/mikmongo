@@ -1,0 +1,6507 @@
+openapi: 3.0.3
+info:
+  title: MikMongo ISP Management API
+  description: |
+    Comprehensive ISP management platform for MikroTik router integration,
+    customer management, billing, payments, hotspot voucher sales, and agent management.
+
+    ## Authentication
+    - **Admin API**: Bearer JWT token via `Authorization: Bearer <token>`
+    - **Customer Portal**: Portal JWT token via `Authorization: Bearer <token>`
+    - **Agent Portal**: Agent Portal JWT token via `Authorization: Bearer <token>`
+
+    ## Response Envelope
+    All responses use a standard envelope:
+    ```json
+    {
+      "success": true,
+      "data": { ... },
+      "error": "error message (on failure)",
+      "meta": { "total": 100, "limit": 50, "offset": 0 }
+    }
+    ```
+  version: 1.0.0
+  contact:
+    name: MikMongo Team
+
+servers:
+  - url: http://localhost:8080
+    description: Local development
+
+tags:
+  - name: Health
+    description: Health check
+  - name: Auth
+    description: Authentication (public + admin)
+  - name: Users
+    description: Admin user management
+  - name: Customers
+    description: Customer management
+  - name: Registrations
+    description: Customer registration management
+  - name: Routers
+    description: MikroTik router management
+  - name: Bandwidth Profiles
+    description: Bandwidth profile (plan) management
+  - name: Subscriptions
+    description: Customer subscription management
+  - name: Invoices
+    description: Invoice / billing management
+  - name: Payments
+    description: Payment management
+  - name: Webhooks
+    description: Payment gateway webhooks
+  - name: Customer Portal
+    description: Customer self-service portal
+  - name: Agent Portal
+    description: Sales agent self-service portal
+  - name: Sales Agents
+    description: Sales agent management
+  - name: Agent Invoices
+    description: Agent invoice management
+  - name: Hotspot Sales
+    description: Hotspot voucher sales
+  - name: Cash Management
+    description: Cash entry and petty cash fund management
+  - name: Reports
+    description: Business reports
+  - name: System Settings
+    description: System settings management
+  - name: MikroTik PPP
+    description: MikroTik PPP profiles, secrets, and active connections
+  - name: MikroTik Hotspot
+    description: MikroTik hotspot profiles, users, active sessions, hosts, servers
+  - name: MikroTik Network
+    description: MikroTik queues, firewall, IP pools and addresses
+  - name: MikroTik Monitor
+    description: MikroTik system resource and interface monitoring
+  - name: MikroTik Raw
+    description: Raw RouterOS command execution
+  - name: Mikhmon Vouchers
+    description: Mikhmon hotspot voucher generation and management
+  - name: Mikhmon Profiles
+    description: Mikhmon hotspot profile management
+  - name: Mikhmon Reports
+    description: Mikhmon sales reports
+  - name: Mikhmon Expire
+    description: Mikhmon user expiration monitoring
+
+# ─── Security Schemes ───────────────────────────────────────────────
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Admin JWT token
+    PortalAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Customer portal JWT token
+    AgentPortalAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: Agent portal JWT token
+
+  # ─── Reusable Parameters ──────────────────────────────────────────
+  parameters:
+    RouterIdPath:
+      name: router_id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: MikroTik router ID
+    IdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+      description: Resource ID
+    NamePath:
+      name: name
+      in: path
+      required: true
+      schema:
+        type: string
+      description: Resource name
+    MikrotikIdPath:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+      description: MikroTik internal ID (e.g. *1)
+    LimitQuery:
+      name: limit
+      in: query
+      schema:
+        type: integer
+        default: 50
+        minimum: 1
+        maximum: 500
+      description: Number of items to return
+    OffsetQuery:
+      name: offset
+      in: query
+      schema:
+        type: integer
+        default: 0
+        minimum: 0
+      description: Number of items to skip
+
+  # ─── Reusable Schemas ─────────────────────────────────────────────
+  schemas:
+    # ── Response Envelope ──
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+        meta:
+          $ref: '#/components/schemas/Meta'
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+
+    Meta:
+      type: object
+      properties:
+        total:
+          type: integer
+          format: int64
+        limit:
+          type: integer
+        offset:
+          type: integer
+
+    MessageResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          type: object
+          properties:
+            message:
+              type: string
+
+    # ── Auth ──
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    LoginResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        user:
+          $ref: '#/components/schemas/UserResponse'
+
+    RefreshTokenRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+
+    ChangePasswordRequest:
+      type: object
+      required: [old_password, new_password]
+      properties:
+        old_password:
+          type: string
+        new_password:
+          type: string
+          minLength: 8
+
+    # ── User ──
+    CreateUserRequest:
+      type: object
+      required: [full_name, email, role, password]
+      properties:
+        full_name:
+          type: string
+        email:
+          type: string
+          format: email
+        phone:
+          type: string
+        role:
+          type: string
+          enum: [superadmin, admin, cs, billing, technician, readonly]
+        password:
+          type: string
+
+    UserResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        full_name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        role:
+          type: string
+          enum: [superadmin, admin, cs, billing, technician, readonly]
+        is_active:
+          type: boolean
+        last_login:
+          type: string
+          format: date-time
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    # ── Customer ──
+    CreateCustomerRequest:
+      type: object
+      required: [full_name, phone]
+      properties:
+        full_name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        address:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        plan_id:
+          type: string
+          format: uuid
+          description: Optional bandwidth profile ID to auto-create subscription
+        router_id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        password:
+          type: string
+        static_ip:
+          type: string
+
+    UpdateCustomerRequest:
+      type: object
+      properties:
+        full_name:
+          type: string
+        username:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+        address:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        id_card_number:
+          type: string
+        notes:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        is_active:
+          type: boolean
+
+    CustomerResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        customer_code:
+          type: string
+        full_name:
+          type: string
+        username:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        id_card_number:
+          type: string
+        address:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        is_active:
+          type: boolean
+        notes:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    # ── Registration ──
+    CreateRegistrationRequest:
+      type: object
+      required: [full_name, phone]
+      properties:
+        full_name:
+          type: string
+        phone:
+          type: string
+        email:
+          type: string
+          format: email
+        address:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        notes:
+          type: string
+        bandwidth_profile_id:
+          type: string
+          format: uuid
+
+    ApproveRegistrationRequest:
+      type: object
+      required: [router_id]
+      properties:
+        router_id:
+          type: string
+          format: uuid
+        profile_id:
+          type: string
+          format: uuid
+
+    RejectRegistrationRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+
+    RegistrationResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        full_name:
+          type: string
+        email:
+          type: string
+        phone:
+          type: string
+        address:
+          type: string
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        notes:
+          type: string
+        bandwidth_profile_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+        rejection_reason:
+          type: string
+        approved_by:
+          type: string
+          format: uuid
+        approved_at:
+          type: string
+          format: date-time
+        customer_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    # ── Router ──
+    CreateRouterRequest:
+      type: object
+      required: [name, address, username, password]
+      properties:
+        name:
+          type: string
+        address:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+        area:
+          type: string
+        api_port:
+          type: integer
+          default: 8728
+        rest_port:
+          type: integer
+          default: 80
+        use_ssl:
+          type: boolean
+          default: false
+        is_master:
+          type: boolean
+          default: false
+        notes:
+          type: string
+
+    UpdateRouterRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        address:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+        area:
+          type: string
+        api_port:
+          type: integer
+        rest_port:
+          type: integer
+        use_ssl:
+          type: boolean
+        is_master:
+          type: boolean
+        notes:
+          type: string
+
+    RouterResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        address:
+          type: string
+        area:
+          type: string
+        api_port:
+          type: integer
+        rest_port:
+          type: integer
+        username:
+          type: string
+        use_ssl:
+          type: boolean
+        is_master:
+          type: boolean
+        is_active:
+          type: boolean
+        status:
+          type: string
+          enum: [online, offline, unknown]
+        last_seen_at:
+          type: string
+          format: date-time
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    # ── Bandwidth Profile ──
+    CreateBandwidthProfileRequest:
+      type: object
+      required: [profile_code, name, download_speed, upload_speed, price_monthly]
+      properties:
+        profile_code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        download_speed:
+          type: integer
+          format: int64
+          minimum: 1
+        upload_speed:
+          type: integer
+          format: int64
+          minimum: 1
+        price_monthly:
+          type: number
+          format: double
+          minimum: 0.01
+        tax_rate:
+          type: number
+          format: double
+        billing_cycle:
+          type: string
+          enum: [daily, weekly, monthly, yearly]
+        billing_day:
+          type: integer
+        grace_period_days:
+          type: integer
+        isolate_profile_name:
+          type: string
+        sort_order:
+          type: integer
+        is_visible:
+          type: boolean
+        mt_local_address:
+          type: string
+        mt_remote_address:
+          type: string
+        mt_parent_queue:
+          type: string
+        mt_queue_type:
+          type: string
+        mt_dns_server:
+          type: string
+        mt_session_timeout:
+          type: string
+        mt_idle_timeout:
+          type: string
+
+    UpdateBandwidthProfileRequest:
+      type: object
+      properties:
+        profile_code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        download_speed:
+          type: integer
+          format: int64
+        upload_speed:
+          type: integer
+          format: int64
+        price_monthly:
+          type: number
+          format: double
+        tax_rate:
+          type: number
+          format: double
+        billing_cycle:
+          type: string
+          enum: [daily, weekly, monthly, yearly]
+        billing_day:
+          type: integer
+        grace_period_days:
+          type: integer
+        isolate_profile_name:
+          type: string
+        sort_order:
+          type: integer
+        is_visible:
+          type: boolean
+        is_active:
+          type: boolean
+        mt_local_address:
+          type: string
+        mt_remote_address:
+          type: string
+        mt_parent_queue:
+          type: string
+        mt_queue_type:
+          type: string
+        mt_dns_server:
+          type: string
+        mt_session_timeout:
+          type: string
+        mt_idle_timeout:
+          type: string
+
+    PPPProfileInfo:
+      type: object
+      properties:
+        rate_limit:
+          type: string
+        local_address:
+          type: string
+        remote_address:
+          type: string
+        parent_queue:
+          type: string
+        queue_type:
+          type: string
+        dns_server:
+          type: string
+        session_timeout:
+          type: string
+        idle_timeout:
+          type: string
+
+    BandwidthProfileResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        router_id:
+          type: string
+          format: uuid
+        profile_code:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        download_speed:
+          type: integer
+          format: int64
+        upload_speed:
+          type: integer
+          format: int64
+        price_monthly:
+          type: number
+          format: double
+        tax_rate:
+          type: number
+          format: double
+        billing_cycle:
+          type: string
+          enum: [daily, weekly, monthly, yearly]
+        billing_day:
+          type: integer
+        is_active:
+          type: boolean
+        is_visible:
+          type: boolean
+        sort_order:
+          type: integer
+        grace_period_days:
+          type: integer
+        isolate_profile_name:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        mikrotik:
+          $ref: '#/components/schemas/PPPProfileInfo'
+
+    # ── Subscription ──
+    CreateSubscriptionRequest:
+      type: object
+      required: [customer_id, plan_id, username]
+      properties:
+        customer_id:
+          type: string
+          format: uuid
+        plan_id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        password:
+          type: string
+        static_ip:
+          type: string
+        gateway:
+          type: string
+        billing_day:
+          type: integer
+        auto_isolate:
+          type: boolean
+          default: true
+        grace_period_days:
+          type: integer
+        notes:
+          type: string
+        mt_service:
+          type: string
+        mt_local_address:
+          type: string
+        mt_routes:
+          type: string
+        mt_limit_bytes_in:
+          type: integer
+          format: int64
+        mt_limit_bytes_out:
+          type: integer
+          format: int64
+
+    UpdateSubscriptionRequest:
+      type: object
+      properties:
+        plan_id:
+          type: string
+          format: uuid
+        password:
+          type: string
+        static_ip:
+          type: string
+        gateway:
+          type: string
+        billing_day:
+          type: integer
+        auto_isolate:
+          type: boolean
+        grace_period_days:
+          type: integer
+        notes:
+          type: string
+        mt_service:
+          type: string
+        mt_local_address:
+          type: string
+        mt_routes:
+          type: string
+        mt_limit_bytes_in:
+          type: integer
+          format: int64
+        mt_limit_bytes_out:
+          type: integer
+          format: int64
+
+    PPPSecretInfo:
+      type: object
+      properties:
+        service:
+          type: string
+        profile:
+          type: string
+        local_address:
+          type: string
+        remote_address:
+          type: string
+        routes:
+          type: string
+        limit_bytes_in:
+          type: integer
+          format: int64
+        limit_bytes_out:
+          type: integer
+          format: int64
+        disabled:
+          type: boolean
+
+    SubscriptionResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        customer_id:
+          type: string
+          format: uuid
+        plan_id:
+          type: string
+          format: uuid
+        router_id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        static_ip:
+          type: string
+        gateway:
+          type: string
+        status:
+          type: string
+          enum: [pending, active, suspended, isolated, expired, terminated]
+        activated_at:
+          type: string
+          format: date-time
+        expiry_date:
+          type: string
+          format: date
+        billing_day:
+          type: integer
+        auto_isolate:
+          type: boolean
+        grace_period_days:
+          type: integer
+        suspend_reason:
+          type: string
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        mikrotik:
+          $ref: '#/components/schemas/PPPSecretInfo'
+
+    # ── Invoice ──
+    InvoiceResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        invoice_number:
+          type: string
+        customer_id:
+          type: string
+          format: uuid
+        subscription_id:
+          type: string
+          format: uuid
+        billing_period_start:
+          type: string
+          format: date
+        billing_period_end:
+          type: string
+          format: date
+        billing_month:
+          type: integer
+        billing_year:
+          type: integer
+        issue_date:
+          type: string
+          format: date
+        due_date:
+          type: string
+          format: date
+        payment_deadline:
+          type: string
+          format: date
+        subtotal:
+          type: number
+          format: double
+        tax_amount:
+          type: number
+          format: double
+        discount_amount:
+          type: number
+          format: double
+        late_fee:
+          type: number
+          format: double
+        total_amount:
+          type: number
+          format: double
+        paid_amount:
+          type: number
+          format: double
+        balance:
+          type: number
+          format: double
+        status:
+          type: string
+          enum: [draft, sent, unpaid, partial, paid, overpaid, overdue, cancelled, refunded]
+        payment_date:
+          type: string
+          format: date
+        payment_method:
+          type: string
+        invoice_type:
+          type: string
+          enum: [recurring, installation, additional, refund]
+        is_auto_generated:
+          type: boolean
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    # ── Payment ──
+    CreatePaymentRequest:
+      type: object
+      required: [customer_id, amount, payment_method, payment_date]
+      properties:
+        customer_id:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+        payment_method:
+          type: string
+          enum: [cash, bank_transfer, e-wallet, credit_card, debit_card, check, qris, gateway]
+        payment_date:
+          type: string
+          format: date
+        bank_name:
+          type: string
+        bank_account_number:
+          type: string
+        bank_account_name:
+          type: string
+        transaction_reference:
+          type: string
+        ewallet_provider:
+          type: string
+        ewallet_number:
+          type: string
+        proof_image:
+          type: string
+        notes:
+          type: string
+
+    RejectPaymentRequest:
+      type: object
+      required: [reason]
+      properties:
+        reason:
+          type: string
+
+    RefundPaymentRequest:
+      type: object
+      required: [amount, reason]
+      properties:
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+        reason:
+          type: string
+
+    PaymentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        payment_number:
+          type: string
+        customer_id:
+          type: string
+          format: uuid
+        amount:
+          type: number
+          format: double
+        allocated_amount:
+          type: number
+          format: double
+        remaining_amount:
+          type: number
+          format: double
+        payment_method:
+          type: string
+          enum: [cash, bank_transfer, e-wallet, credit_card, debit_card, check, qris, gateway]
+        payment_date:
+          type: string
+          format: date
+        bank_name:
+          type: string
+        bank_account_number:
+          type: string
+        bank_account_name:
+          type: string
+        transaction_reference:
+          type: string
+        ewallet_provider:
+          type: string
+        ewallet_number:
+          type: string
+        gateway_name:
+          type: string
+        gateway_trx_id:
+          type: string
+        proof_image:
+          type: string
+        receipt_number:
+          type: string
+        status:
+          type: string
+          enum: [pending, confirmed, rejected, refunded]
+        processed_at:
+          type: string
+          format: date-time
+        rejection_reason:
+          type: string
+        refund_amount:
+          type: number
+          format: double
+        refund_date:
+          type: string
+          format: date
+        refund_reason:
+          type: string
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    # ── Sales Agent ──
+    CreateSalesAgentRequest:
+      type: object
+      required: [router_id, name, username, password]
+      properties:
+        router_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        phone:
+          type: string
+        username:
+          type: string
+        password:
+          type: string
+          minLength: 6
+        status:
+          type: string
+          enum: [active, inactive]
+        voucher_mode:
+          type: string
+          enum: [mix, num, alp]
+        voucher_length:
+          type: integer
+        voucher_type:
+          type: string
+          enum: [upp, up]
+        bill_discount:
+          type: number
+          format: double
+        billing_cycle:
+          type: string
+          enum: [weekly, monthly]
+        billing_day:
+          type: integer
+          minimum: 1
+          maximum: 31
+
+    UpdateSalesAgentRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        phone:
+          type: string
+        password:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+        voucher_mode:
+          type: string
+          enum: [mix, num, alp]
+        voucher_length:
+          type: integer
+        voucher_type:
+          type: string
+          enum: [upp, up]
+        bill_discount:
+          type: number
+          format: double
+        billing_cycle:
+          type: string
+          enum: [weekly, monthly]
+        billing_day:
+          type: integer
+          minimum: 1
+          maximum: 31
+
+    SalesAgentResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        router_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        phone:
+          type: string
+        username:
+          type: string
+        status:
+          type: string
+          enum: [active, inactive]
+        voucher_mode:
+          type: string
+          enum: [mix, num, alp]
+        voucher_length:
+          type: integer
+        voucher_type:
+          type: string
+          enum: [upp, up]
+        bill_discount:
+          type: number
+          format: double
+        billing_cycle:
+          type: string
+          enum: [weekly, monthly]
+        billing_day:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    UpsertProfilePriceRequest:
+      type: object
+      properties:
+        base_price:
+          type: number
+          format: double
+        selling_price:
+          type: number
+          format: double
+        voucher_length:
+          type: integer
+        is_active:
+          type: boolean
+
+    SalesProfilePriceResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        sales_agent_id:
+          type: string
+          format: uuid
+        profile_name:
+          type: string
+        base_price:
+          type: number
+          format: double
+        selling_price:
+          type: number
+          format: double
+        voucher_length:
+          type: integer
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    # ── Agent Invoice ──
+    GenerateAgentInvoiceRequest:
+      type: object
+      required: [period_start, period_end]
+      properties:
+        period_start:
+          type: string
+          format: date
+          description: YYYY-MM-DD
+        period_end:
+          type: string
+          format: date
+          description: YYYY-MM-DD
+
+    MarkPaidRequest:
+      type: object
+      required: [paid_amount]
+      properties:
+        paid_amount:
+          type: number
+          format: double
+          minimum: 0
+
+    AgentInvoiceResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        agent_id:
+          type: string
+          format: uuid
+        router_id:
+          type: string
+          format: uuid
+        invoice_number:
+          type: string
+        billing_cycle:
+          type: string
+          enum: [weekly, monthly]
+        period_start:
+          type: string
+          format: date
+        period_end:
+          type: string
+          format: date
+        billing_month:
+          type: integer
+        billing_week:
+          type: integer
+        billing_year:
+          type: integer
+        voucher_count:
+          type: integer
+        subtotal:
+          type: number
+          format: double
+        selling_total:
+          type: number
+          format: double
+        profit:
+          type: number
+          format: double
+        discount_amount:
+          type: number
+          format: double
+        total_amount:
+          type: number
+          format: double
+        paid_amount:
+          type: number
+          format: double
+        balance:
+          type: number
+          format: double
+        status:
+          type: string
+          enum: [draft, unpaid, paid, cancelled]
+        notes:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    # ── Hotspot Sale ──
+    HotspotSaleResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        router_id:
+          type: string
+          format: uuid
+        username:
+          type: string
+        profile:
+          type: string
+        price:
+          type: number
+          format: double
+        selling_price:
+          type: number
+          format: double
+        prefix:
+          type: string
+        batch_code:
+          type: string
+        sales_agent_id:
+          type: string
+          format: uuid
+        created_at:
+          type: string
+          format: date-time
+
+    # ── Cash Management ──
+    CreateCashEntryRequest:
+      type: object
+      required: [type, source, amount, description, payment_method]
+      properties:
+        type:
+          type: string
+          enum: [income, expense]
+        source:
+          type: string
+          enum: [invoice, agent_invoice, installation, penalty, other, operational, upstream, purchase, salary]
+        amount:
+          type: number
+          format: double
+          minimum: 0.01
+        description:
+          type: string
+        payment_method:
+          type: string
+        bank_name:
+          type: string
+        account_number:
+          type: string
+        petty_cash_fund_id:
+          type: string
+          format: uuid
+        entry_date:
+          type: string
+          format: date
+          description: YYYY-MM-DD, defaults to today
+        notes:
+          type: string
+
+    CashEntryResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        entry_number:
+          type: string
+        type:
+          type: string
+          enum: [income, expense]
+        source:
+          type: string
+        amount:
+          type: number
+          format: double
+        description:
+          type: string
+        reference_type:
+          type: string
+        reference_id:
+          type: string
+        payment_method:
+          type: string
+        bank_name:
+          type: string
+        account_number:
+          type: string
+        petty_cash_fund_id:
+          type: string
+          format: uuid
+        entry_date:
+          type: string
+          format: date
+        status:
+          type: string
+        created_by:
+          type: string
+          format: uuid
+        approved_by:
+          type: string
+          format: uuid
+        approved_at:
+          type: string
+          format: date-time
+        notes:
+          type: string
+        receipt_image:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateFundRequest:
+      type: object
+      required: [fund_name, initial_balance, custodian_id]
+      properties:
+        fund_name:
+          type: string
+        initial_balance:
+          type: number
+          format: double
+        custodian_id:
+          type: string
+          format: uuid
+
+    UpdateFundRequest:
+      type: object
+      properties:
+        fund_name:
+          type: string
+        status:
+          type: string
+
+    TopUpFundRequest:
+      type: object
+      required: [amount]
+      properties:
+        amount:
+          type: number
+          format: double
+
+    PettyCashFundResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        fund_name:
+          type: string
+        initial_balance:
+          type: number
+          format: double
+        current_balance:
+          type: number
+          format: double
+        custodian_id:
+          type: string
+          format: uuid
+        status:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    # ── Reports ──
+    ReportSummary:
+      type: object
+      properties:
+        period_start:
+          type: string
+          format: date-time
+        period_end:
+          type: string
+          format: date-time
+        total_revenue:
+          type: number
+          format: double
+        total_invoiced:
+          type: number
+          format: double
+        total_invoices:
+          type: integer
+          format: int64
+        paid_invoices:
+          type: integer
+          format: int64
+        unpaid_invoices:
+          type: integer
+          format: int64
+        overdue_invoices:
+          type: integer
+          format: int64
+        total_payments:
+          type: integer
+          format: int64
+        total_customers:
+          type: integer
+          format: int64
+        active_customers:
+          type: integer
+          format: int64
+        new_customers:
+          type: integer
+          format: int64
+        active_subscriptions:
+          type: integer
+          format: int64
+        isolated_subscriptions:
+          type: integer
+          format: int64
+        suspended_subscriptions:
+          type: integer
+          format: int64
+
+    # ── System Settings ──
+    SystemSettingResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        group_name:
+          type: string
+        key_name:
+          type: string
+        value:
+          type: string
+        type:
+          type: string
+          enum: [string, integer, boolean, json, password]
+        label:
+          type: string
+        description:
+          type: string
+        is_encrypted:
+          type: boolean
+        is_public:
+          type: boolean
+        updated_at:
+          type: string
+          format: date-time
+
+    UpsertSystemSettingRequest:
+      type: object
+      properties:
+        group_name:
+          type: string
+        key_name:
+          type: string
+        value:
+          type: string
+        type:
+          type: string
+          enum: [string, integer, boolean, json, password]
+        label:
+          type: string
+        description:
+          type: string
+        is_encrypted:
+          type: boolean
+        is_public:
+          type: boolean
+
+    # ── MikroTik PPP ──
+    PPPProfile:
+      type: object
+      properties:
+        .id:
+          type: string
+        name:
+          type: string
+        localAddress:
+          type: string
+        remoteAddress:
+          type: string
+        rateLimit:
+          type: string
+        dnsServer:
+          type: string
+        sessionTimeout:
+          type: string
+        idleTimeout:
+          type: string
+        parentQueue:
+          type: string
+        queueType:
+          type: string
+        onlyOne:
+          type: boolean
+        useCompression:
+          type: boolean
+        useEncryption:
+          type: boolean
+        changeTCPMSS:
+          type: boolean
+        bridge:
+          type: string
+        addressList:
+          type: string
+        comment:
+          type: string
+
+    AddPPPProfileRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        local_address:
+          type: string
+        remote_address:
+          type: string
+        rate_limit:
+          type: string
+        only_one:
+          type: string
+        comment:
+          type: string
+
+    PPPSecret:
+      type: object
+      properties:
+        .id:
+          type: string
+        name:
+          type: string
+        service:
+          type: string
+        callerID:
+          type: string
+        password:
+          type: string
+        profile:
+          type: string
+        routes:
+          type: string
+        localAddress:
+          type: string
+        remoteAddress:
+          type: string
+        limitBytesIn:
+          type: integer
+          format: int64
+        limitBytesOut:
+          type: integer
+          format: int64
+        lastLoggedOut:
+          type: string
+        comment:
+          type: string
+        lastCallerID:
+          type: string
+        lastDisconnectReason:
+          type: string
+        disabled:
+          type: boolean
+
+    AddPPPSecretRequest:
+      type: object
+      required: [name, password]
+      properties:
+        name:
+          type: string
+        password:
+          type: string
+        profile:
+          type: string
+        service:
+          type: string
+        caller_id:
+          type: string
+        local_address:
+          type: string
+        remote_address:
+          type: string
+        routes:
+          type: string
+        comment:
+          type: string
+        disabled:
+          type: boolean
+
+    PPPActive:
+      type: object
+      properties:
+        name:
+          type: string
+        service:
+          type: string
+        callerID:
+          type: string
+        encoding:
+          type: string
+        address:
+          type: string
+        uptime:
+          type: string
+
+    # ── MikroTik Hotspot ──
+    HotspotUserProfile:
+      type: object
+      properties:
+        .id:
+          type: string
+        name:
+          type: string
+        addressPool:
+          type: string
+        sharedUsers:
+          type: integer
+        rateLimit:
+          type: string
+        parentQueue:
+          type: string
+        sessionTimeout:
+          type: string
+        idleTimeout:
+          type: string
+        keepaliveTimeout:
+          type: string
+        statusAutorefresh:
+          type: string
+        onLogin:
+          type: string
+        onLogout:
+          type: string
+        transparentProxy:
+          type: boolean
+        advertise:
+          type: boolean
+
+    AddHotspotProfileRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        shared_users:
+          type: string
+        rate_limit:
+          type: string
+        expired_mode:
+          type: string
+        validity_time:
+          type: string
+        keepalive_timeout:
+          type: string
+        status_autorefresh:
+          type: string
+        on_login:
+          type: string
+        on_logout:
+          type: string
+
+    HotspotUser:
+      type: object
+      properties:
+        .id:
+          type: string
+        name:
+          type: string
+        password:
+          type: string
+        profile:
+          type: string
+        server:
+          type: string
+        address:
+          type: string
+        macAddress:
+          type: string
+        limitUptime:
+          type: string
+        limitBytesTotal:
+          type: integer
+          format: int64
+        comment:
+          type: string
+        disabled:
+          type: boolean
+        uptime:
+          type: string
+        bytesIn:
+          type: integer
+          format: int64
+        bytesOut:
+          type: integer
+          format: int64
+
+    AddHotspotUserRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        password:
+          type: string
+        profile:
+          type: string
+        server:
+          type: string
+        limit_uptime:
+          type: string
+        limit_bytes_total:
+          type: string
+        comment:
+          type: string
+        disabled:
+          type: boolean
+
+    HotspotActive:
+      type: object
+      properties:
+        server:
+          type: string
+        user:
+          type: string
+        domain:
+          type: string
+        address:
+          type: string
+        macAddress:
+          type: string
+        loginBy:
+          type: string
+        uptime:
+          type: string
+        idleTime:
+          type: string
+        sessionTimeLeft:
+          type: string
+        bytesIn:
+          type: integer
+          format: int64
+        bytesOut:
+          type: integer
+          format: int64
+
+    HotspotHost:
+      type: object
+      properties:
+        .id:
+          type: string
+        macAddress:
+          type: string
+        address:
+          type: string
+        toAddress:
+          type: string
+        server:
+          type: string
+        uptime:
+          type: string
+        bytesIn:
+          type: integer
+          format: int64
+        bytesOut:
+          type: integer
+          format: int64
+
+    HotspotServer:
+      type: object
+      properties:
+        .id:
+          type: string
+        name:
+          type: string
+        interface:
+          type: string
+        addressPool:
+          type: string
+        profile:
+          type: string
+        disabled:
+          type: boolean
+
+    # ── MikroTik Network ──
+    SimpleQueue:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        target:
+          type: string
+        dst:
+          type: string
+        maxLimit:
+          type: string
+        limitAt:
+          type: string
+        burstLimit:
+          type: string
+        burstThreshold:
+          type: string
+        burstTime:
+          type: string
+        priority:
+          type: string
+        parent:
+          type: string
+        comment:
+          type: string
+        disabled:
+          type: boolean
+        dynamic:
+          type: boolean
+
+    FirewallRule:
+      type: object
+      properties:
+        id:
+          type: string
+        chain:
+          type: string
+        action:
+          type: string
+        protocol:
+          type: string
+        srcAddress:
+          type: string
+        dstAddress:
+          type: string
+        srcPort:
+          type: string
+        dstPort:
+          type: string
+        inInterface:
+          type: string
+        outInterface:
+          type: string
+        comment:
+          type: string
+        disabled:
+          type: boolean
+
+    NATRule:
+      type: object
+      properties:
+        id:
+          type: string
+        chain:
+          type: string
+        action:
+          type: string
+        protocol:
+          type: string
+        srcAddress:
+          type: string
+        dstAddress:
+          type: string
+        srcPort:
+          type: string
+        dstPort:
+          type: string
+        toAddresses:
+          type: string
+        toPorts:
+          type: string
+        comment:
+          type: string
+        disabled:
+          type: boolean
+        bytes:
+          type: integer
+          format: int64
+        packets:
+          type: integer
+          format: int64
+
+    AddressList:
+      type: object
+      properties:
+        id:
+          type: string
+        list:
+          type: string
+        address:
+          type: string
+        timeout:
+          type: string
+        comment:
+          type: string
+        disabled:
+          type: boolean
+
+    IPPool:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        ranges:
+          type: string
+        nextPool:
+          type: string
+        comment:
+          type: string
+
+    AddIPPoolRequest:
+      type: object
+      required: [name, ranges]
+      properties:
+        name:
+          type: string
+        ranges:
+          type: string
+        comment:
+          type: string
+
+    IPAddress:
+      type: object
+      properties:
+        id:
+          type: string
+        address:
+          type: string
+        network:
+          type: string
+        interface:
+          type: string
+        disabled:
+          type: boolean
+        comment:
+          type: string
+
+    # ── MikroTik Monitor ──
+    SystemResource:
+      type: object
+      properties:
+        uptime:
+          type: string
+        version:
+          type: string
+        buildTime:
+          type: string
+        freeMemory:
+          type: integer
+          format: int64
+        totalMemory:
+          type: integer
+          format: int64
+        freeHddSpace:
+          type: integer
+          format: int64
+        totalHddSpace:
+          type: integer
+          format: int64
+        architectureName:
+          type: string
+        boardName:
+          type: string
+        platform:
+          type: string
+        cpu:
+          type: string
+        cpuCount:
+          type: integer
+        cpuFrequency:
+          type: integer
+        cpuLoad:
+          type: integer
+
+    Interface:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        mtu:
+          type: integer
+        macAddress:
+          type: string
+        running:
+          type: boolean
+        disabled:
+          type: boolean
+        comment:
+          type: string
+
+    # ── MikroTik Raw ──
+    RawCommandRequest:
+      type: object
+      required: [args]
+      properties:
+        args:
+          type: array
+          items:
+            type: string
+          minItems: 1
+          maxItems: 20
+
+    # ── Mikhmon ──
+    GenerateVoucherRequest:
+      type: object
+      required: [quantity, profile, mode, char_set]
+      properties:
+        quantity:
+          type: integer
+          minimum: 1
+          maximum: 1000
+        server:
+          type: string
+        profile:
+          type: string
+        mode:
+          type: string
+          enum: [vc, up]
+        name_length:
+          type: integer
+          minimum: 3
+          maximum: 12
+        prefix:
+          type: string
+        char_set:
+          type: string
+        time_limit:
+          type: string
+        data_limit:
+          type: string
+        comment:
+          type: string
+
+    VoucherBatchResponse:
+      type: object
+      properties:
+        code:
+          type: string
+        quantity:
+          type: integer
+        profile:
+          type: string
+        server:
+          type: string
+        time_limit:
+          type: string
+        data_limit:
+          type: string
+        vouchers:
+          type: array
+          items:
+            $ref: '#/components/schemas/VoucherResponse'
+
+    VoucherResponse:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        password:
+          type: string
+        profile:
+          type: string
+        server:
+          type: string
+        comment:
+          type: string
+        code:
+          type: string
+        mode:
+          type: string
+        date:
+          type: string
+
+    CreateMikhmonProfileRequest:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        address_pool:
+          type: string
+        rate_limit:
+          type: string
+        shared_users:
+          type: integer
+        parent_queue:
+          type: string
+        config:
+          type: object
+          properties:
+            name:
+              type: string
+            address_pool:
+              type: string
+            rate_limit:
+              type: string
+            shared_users:
+              type: integer
+            parent_queue:
+              type: string
+            price:
+              type: integer
+              format: int64
+            selling_price:
+              type: integer
+              format: int64
+            validity:
+              type: string
+            expire_mode:
+              type: string
+            lock_user:
+              type: boolean
+            lock_server:
+              type: boolean
+            on_login_script:
+              type: string
+
+    UpdateMikhmonProfileRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        address_pool:
+          type: string
+        rate_limit:
+          type: string
+        shared_users:
+          type: integer
+        parent_queue:
+          type: string
+        price:
+          type: integer
+          format: int64
+        selling_price:
+          type: integer
+          format: int64
+        validity:
+          type: string
+        expire_mode:
+          type: string
+        lock_user:
+          type: boolean
+        lock_server:
+          type: boolean
+
+    GenerateScriptRequest:
+      type: object
+      required: [mode, profile_name]
+      properties:
+        mode:
+          type: string
+        price:
+          type: integer
+          format: int64
+        validity:
+          type: string
+        selling_price:
+          type: integer
+          format: int64
+        no_exp:
+          type: boolean
+        lock_user:
+          type: string
+        lock_server:
+          type: string
+        profile_name:
+          type: string
+
+    CreateReportRequest:
+      type: object
+      required: [user]
+      properties:
+        user:
+          type: string
+        price:
+          type: integer
+          format: int64
+        ip:
+          type: string
+        mac:
+          type: string
+        validity:
+          type: string
+        profile:
+          type: string
+        comment:
+          type: string
+
+    MikhmonReportSummary:
+      type: object
+      properties:
+        total_count:
+          type: integer
+        total_sales:
+          type: integer
+          format: int64
+        total_revenue:
+          type: integer
+          format: int64
+
+    ExpireStatusResponse:
+      type: object
+      properties:
+        enabled:
+          type: boolean
+        last_run:
+          type: string
+        next_run:
+          type: string
+        user_count:
+          type: integer
+
+    ScriptResponse:
+      type: object
+      properties:
+        name:
+          type: string
+        content:
+          type: string
+
+    # ── Customer Portal ──
+    PortalLoginRequest:
+      type: object
+      required: [identifier, password]
+      properties:
+        identifier:
+          type: string
+          description: Email, phone, or username
+        password:
+          type: string
+
+    PortalLoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        customer:
+          $ref: '#/components/schemas/CustomerResponse'
+
+    PortalChangePasswordRequest:
+      type: object
+      required: [password]
+      properties:
+        password:
+          type: string
+
+    PortalCreatePaymentRequest:
+      type: object
+      required: [amount, payment_method]
+      properties:
+        amount:
+          type: number
+          format: double
+        payment_method:
+          type: string
+        notes:
+          type: string
+
+    # ── Agent Portal ──
+    AgentPortalLoginRequest:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+
+    AgentPortalLoginResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        agent:
+          $ref: '#/components/schemas/SalesAgentResponse'
+
+    AgentRequestPaymentRequest:
+      type: object
+      properties:
+        paid_amount:
+          type: number
+          format: double
+        notes:
+          type: string
+
+    GatewayPaymentResponse:
+      type: object
+      properties:
+        payment_url:
+          type: string
+        expires_at:
+          type: string
+          format: date-time
+        gateway_id:
+          type: string
+
+# ═══════════════════════════════════════════════════════════════════
+# PATHS
+# ═══════════════════════════════════════════════════════════════════
+paths:
+  # ── Health ──────────────────────────────────────────────────────
+  /health:
+    get:
+      tags: [Health]
+      summary: Health check
+      operationId: healthCheck
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+
+  # ── Public Auth ─────────────────────────────────────────────────
+  /api/v1/auth/login:
+    post:
+      tags: [Auth]
+      summary: Admin login
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/LoginResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      operationId: refreshToken
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshTokenRequest'
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          token:
+                            type: string
+                          refresh_token:
+                            type: string
+        '401':
+          description: Invalid refresh token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/auth/change-password:
+    post:
+      tags: [Auth]
+      summary: Change password
+      operationId: changePassword
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChangePasswordRequest'
+      responses:
+        '200':
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout (blacklist token)
+      operationId: logout
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logged out
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current user profile
+      operationId: getMe
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Current user
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ── Users ───────────────────────────────────────────────────────
+  /api/v1/users:
+    get:
+      tags: [Users]
+      summary: List users
+      operationId: listUsers
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: User list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/UserResponse'
+    post:
+      tags: [Users]
+      summary: Create user
+      operationId: createUser
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUserRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/users/{id}:
+    get:
+      tags: [Users]
+      summary: Get user by ID
+      operationId: getUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/UserResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    delete:
+      tags: [Users]
+      summary: Delete user
+      operationId: deleteUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  # ── Customers ───────────────────────────────────────────────────
+  /api/v1/customers:
+    get:
+      tags: [Customers]
+      summary: List customers
+      operationId: listCustomers
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: Customer list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CustomerResponse'
+    post:
+      tags: [Customers]
+      summary: Create customer (optionally with subscription)
+      operationId: createCustomer
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCustomerRequest'
+      responses:
+        '201':
+          description: Customer created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          customer:
+                            $ref: '#/components/schemas/CustomerResponse'
+                          subscription:
+                            $ref: '#/components/schemas/SubscriptionResponse'
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/customers/{id}:
+    get:
+      tags: [Customers]
+      summary: Get customer
+      operationId: getCustomer
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Customer details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CustomerResponse'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+    put:
+      tags: [Customers]
+      summary: Update customer
+      operationId: updateCustomer
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateCustomerRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CustomerResponse'
+    delete:
+      tags: [Customers]
+      summary: Delete customer
+      operationId: deleteCustomer
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/customers/{id}/activate-account:
+    post:
+      tags: [Customers]
+      summary: Activate customer account
+      operationId: activateCustomerAccount
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/customers/{id}/deactivate-account:
+    post:
+      tags: [Customers]
+      summary: Deactivate customer account
+      operationId: deactivateCustomerAccount
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Deactivated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  # ── Registrations ───────────────────────────────────────────────
+  /api/v1/register:
+    post:
+      tags: [Registrations]
+      summary: Public customer registration
+      operationId: createRegistration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRegistrationRequest'
+      responses:
+        '201':
+          description: Registration created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/RegistrationResponse'
+
+  /api/v1/registrations:
+    get:
+      tags: [Registrations]
+      summary: List registrations
+      operationId: listRegistrations
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: Registration list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/RegistrationResponse'
+
+  /api/v1/registrations/{id}:
+    get:
+      tags: [Registrations]
+      summary: Get registration
+      operationId: getRegistration
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Registration details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/RegistrationResponse'
+
+  /api/v1/registrations/{id}/approve:
+    post:
+      tags: [Registrations]
+      summary: Approve registration
+      operationId: approveRegistration
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ApproveRegistrationRequest'
+      responses:
+        '200':
+          description: Approved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/registrations/{id}/reject:
+    post:
+      tags: [Registrations]
+      summary: Reject registration
+      operationId: rejectRegistration
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RejectRegistrationRequest'
+      responses:
+        '200':
+          description: Rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  # ── Routers ─────────────────────────────────────────────────────
+  /api/v1/routers:
+    get:
+      tags: [Routers]
+      summary: List routers
+      operationId: listRouters
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: Router list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/RouterResponse'
+    post:
+      tags: [Routers]
+      summary: Create router
+      operationId: createRouter
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRouterRequest'
+      responses:
+        '201':
+          description: Router created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/RouterResponse'
+
+  /api/v1/routers/selected:
+    get:
+      tags: [Routers]
+      summary: Get currently selected router
+      operationId: getSelectedRouter
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Selected router or null
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/RouterResponse'
+
+  /api/v1/routers/select/{id}:
+    post:
+      tags: [Routers]
+      summary: Select a router as active
+      operationId: selectRouter
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Router selected
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/RouterResponse'
+
+  /api/v1/routers/sync-all:
+    post:
+      tags: [Routers]
+      summary: Sync all routers
+      operationId: syncAllRouters
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Sync triggered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/routers/{router_id}:
+    get:
+      tags: [Routers]
+      summary: Get router details
+      operationId: getRouter
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '200':
+          description: Router details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/RouterResponse'
+    put:
+      tags: [Routers]
+      summary: Update router
+      operationId: updateRouter
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateRouterRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/RouterResponse'
+    delete:
+      tags: [Routers]
+      summary: Delete router
+      operationId: deleteRouter
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/routers/{router_id}/sync:
+    post:
+      tags: [Routers]
+      summary: Sync single router
+      operationId: syncRouter
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '200':
+          description: Synced
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/routers/{router_id}/test-connection:
+    post:
+      tags: [Routers]
+      summary: Test router connection
+      operationId: testRouterConnection
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '200':
+          description: Connection OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  # ── Bandwidth Profiles ──────────────────────────────────────────
+  /api/v1/routers/{router_id}/bandwidth-profiles:
+    get:
+      tags: [Bandwidth Profiles]
+      summary: List bandwidth profiles for router
+      operationId: listBandwidthProfiles
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: Profile list with live MikroTik data
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/BandwidthProfileResponse'
+    post:
+      tags: [Bandwidth Profiles]
+      summary: Create bandwidth profile
+      operationId: createBandwidthProfile
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateBandwidthProfileRequest'
+      responses:
+        '201':
+          description: Profile created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/BandwidthProfileResponse'
+
+  /api/v1/routers/{router_id}/bandwidth-profiles/{id}:
+    get:
+      tags: [Bandwidth Profiles]
+      summary: Get bandwidth profile with live MikroTik data
+      operationId: getBandwidthProfile
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Profile details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/BandwidthProfileResponse'
+    put:
+      tags: [Bandwidth Profiles]
+      summary: Update bandwidth profile
+      operationId: updateBandwidthProfile
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateBandwidthProfileRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/BandwidthProfileResponse'
+    delete:
+      tags: [Bandwidth Profiles]
+      summary: Delete bandwidth profile
+      operationId: deleteBandwidthProfile
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  # ── Subscriptions ───────────────────────────────────────────────
+  /api/v1/routers/{router_id}/subscriptions:
+    get:
+      tags: [Subscriptions]
+      summary: List subscriptions for router
+      operationId: listSubscriptions
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: Subscription list with live MikroTik data
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SubscriptionResponse'
+    post:
+      tags: [Subscriptions]
+      summary: Create subscription
+      operationId: createSubscription
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSubscriptionRequest'
+      responses:
+        '201':
+          description: Subscription created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SubscriptionResponse'
+
+  /api/v1/routers/{router_id}/subscriptions/{id}:
+    get:
+      tags: [Subscriptions]
+      summary: Get subscription with live MikroTik data
+      operationId: getSubscription
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Subscription details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SubscriptionResponse'
+    put:
+      tags: [Subscriptions]
+      summary: Update subscription
+      operationId: updateSubscription
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSubscriptionRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SubscriptionResponse'
+    delete:
+      tags: [Subscriptions]
+      summary: Delete subscription
+      operationId: deleteSubscription
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/routers/{router_id}/subscriptions/{id}/activate:
+    post:
+      tags: [Subscriptions]
+      summary: Activate subscription
+      operationId: activateSubscription
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/routers/{router_id}/subscriptions/{id}/isolate:
+    post:
+      tags: [Subscriptions]
+      summary: Isolate subscription (limit bandwidth)
+      operationId: isolateSubscription
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Isolated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/routers/{router_id}/subscriptions/{id}/restore:
+    post:
+      tags: [Subscriptions]
+      summary: Restore isolated subscription
+      operationId: restoreSubscription
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Restored
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/routers/{router_id}/subscriptions/{id}/suspend:
+    post:
+      tags: [Subscriptions]
+      summary: Suspend subscription
+      operationId: suspendSubscription
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Suspended
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/routers/{router_id}/subscriptions/{id}/terminate:
+    post:
+      tags: [Subscriptions]
+      summary: Terminate subscription
+      operationId: terminateSubscription
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Terminated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  # ── Invoices / Billing ──────────────────────────────────────────
+  /api/v1/invoices:
+    get:
+      tags: [Invoices]
+      summary: List invoices
+      operationId: listInvoices
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: Invoice list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/InvoiceResponse'
+
+  /api/v1/invoices/overdue:
+    get:
+      tags: [Invoices]
+      summary: List overdue invoices
+      operationId: listOverdueInvoices
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Overdue invoices
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/InvoiceResponse'
+
+  /api/v1/invoices/{id}:
+    get:
+      tags: [Invoices]
+      summary: Get invoice
+      operationId: getInvoice
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Invoice details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/InvoiceResponse'
+    delete:
+      tags: [Invoices]
+      summary: Cancel invoice
+      operationId: cancelInvoice
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/invoices/trigger-monthly:
+    post:
+      tags: [Invoices]
+      summary: Trigger monthly billing cycle
+      operationId: triggerMonthlyBilling
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Billing triggered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  # ── Payments ────────────────────────────────────────────────────
+  /api/v1/payments:
+    get:
+      tags: [Payments]
+      summary: List payments
+      operationId: listPayments
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: Payment list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PaymentResponse'
+    post:
+      tags: [Payments]
+      summary: Create payment
+      operationId: createPayment
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePaymentRequest'
+      responses:
+        '201':
+          description: Payment created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PaymentResponse'
+
+  /api/v1/payments/{id}:
+    get:
+      tags: [Payments]
+      summary: Get payment
+      operationId: getPayment
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Payment details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PaymentResponse'
+
+  /api/v1/payments/{id}/confirm:
+    post:
+      tags: [Payments]
+      summary: Confirm payment
+      operationId: confirmPayment
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Confirmed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/payments/{id}/reject:
+    post:
+      tags: [Payments]
+      summary: Reject payment
+      operationId: rejectPayment
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RejectPaymentRequest'
+      responses:
+        '200':
+          description: Rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/payments/{id}/refund:
+    post:
+      tags: [Payments]
+      summary: Refund payment
+      operationId: refundPayment
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefundPaymentRequest'
+      responses:
+        '200':
+          description: Refunded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/payments/{id}/initiate-gateway:
+    post:
+      tags: [Payments]
+      summary: Initiate payment gateway (e.g. Xendit)
+      operationId: initiateGatewayPayment
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - name: gateway
+          in: query
+          schema:
+            type: string
+            example: xendit
+          description: Gateway provider name
+      responses:
+        '200':
+          description: Gateway payment initiated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/GatewayPaymentResponse'
+        '502':
+          description: Gateway error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ── Webhooks ────────────────────────────────────────────────────
+  /api/v1/webhooks/midtrans:
+    post:
+      tags: [Webhooks]
+      summary: Midtrans payment webhook
+      operationId: midtransWebhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                transaction_id:
+                  type: string
+                transaction_status:
+                  type: string
+      responses:
+        '200':
+          description: Processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/webhooks/xendit:
+    post:
+      tags: [Webhooks]
+      summary: Xendit payment webhook
+      operationId: xenditWebhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: Processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+        '401':
+          description: Invalid callback token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  # ── Customer Portal ─────────────────────────────────────────────
+  /portal/v1/login:
+    post:
+      tags: [Customer Portal]
+      summary: Customer portal login
+      operationId: portalLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PortalLoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PortalLoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /portal/v1/profile:
+    get:
+      tags: [Customer Portal]
+      summary: Get customer profile
+      operationId: portalGetProfile
+      security:
+        - PortalAuth: []
+      responses:
+        '200':
+          description: Customer profile
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CustomerResponse'
+
+  /portal/v1/profile/password:
+    put:
+      tags: [Customer Portal]
+      summary: Change portal password
+      operationId: portalChangePassword
+      security:
+        - PortalAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PortalChangePasswordRequest'
+      responses:
+        '200':
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /portal/v1/subscriptions:
+    get:
+      tags: [Customer Portal]
+      summary: Get customer subscriptions
+      operationId: portalGetSubscriptions
+      security:
+        - PortalAuth: []
+      responses:
+        '200':
+          description: Subscriptions
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SubscriptionResponse'
+
+  /portal/v1/invoices:
+    get:
+      tags: [Customer Portal]
+      summary: Get customer invoices
+      operationId: portalGetInvoices
+      security:
+        - PortalAuth: []
+      responses:
+        '200':
+          description: Invoices
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/InvoiceResponse'
+
+  /portal/v1/invoices/{id}:
+    get:
+      tags: [Customer Portal]
+      summary: Get customer invoice (ownership verified)
+      operationId: portalGetInvoice
+      security:
+        - PortalAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Invoice details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/InvoiceResponse'
+        '403':
+          description: Not your invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /portal/v1/payments:
+    get:
+      tags: [Customer Portal]
+      summary: Get customer payments
+      operationId: portalGetPayments
+      security:
+        - PortalAuth: []
+      responses:
+        '200':
+          description: Payments
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PaymentResponse'
+    post:
+      tags: [Customer Portal]
+      summary: Create payment from portal
+      operationId: portalCreatePayment
+      security:
+        - PortalAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PortalCreatePaymentRequest'
+      responses:
+        '201':
+          description: Payment created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PaymentResponse'
+
+  /portal/v1/payments/{id}:
+    get:
+      tags: [Customer Portal]
+      summary: Get payment (ownership verified)
+      operationId: portalGetPayment
+      security:
+        - PortalAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Payment details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PaymentResponse'
+        '403':
+          description: Not your payment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /portal/v1/payments/{id}/pay:
+    post:
+      tags: [Customer Portal]
+      summary: Pay via gateway from portal
+      operationId: portalPayWithGateway
+      security:
+        - PortalAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - name: gateway
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Gateway payment initiated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/GatewayPaymentResponse'
+
+  # ── Agent Portal ────────────────────────────────────────────────
+  /agent-portal/v1/login:
+    post:
+      tags: [Agent Portal]
+      summary: Agent portal login
+      operationId: agentPortalLogin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentPortalLoginRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AgentPortalLoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /agent-portal/v1/profile:
+    get:
+      tags: [Agent Portal]
+      summary: Get agent profile
+      operationId: agentPortalGetProfile
+      security:
+        - AgentPortalAuth: []
+      responses:
+        '200':
+          description: Agent profile
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SalesAgentResponse'
+
+  /agent-portal/v1/profile/password:
+    put:
+      tags: [Agent Portal]
+      summary: Change agent portal password
+      operationId: agentPortalChangePassword
+      security:
+        - AgentPortalAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [password]
+              properties:
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Password changed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /agent-portal/v1/invoices:
+    get:
+      tags: [Agent Portal]
+      summary: Get agent invoices
+      operationId: agentPortalGetInvoices
+      security:
+        - AgentPortalAuth: []
+      parameters:
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: Invoices
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/AgentInvoiceResponse'
+
+  /agent-portal/v1/invoices/{id}:
+    get:
+      tags: [Agent Portal]
+      summary: Get agent invoice (ownership verified)
+      operationId: agentPortalGetInvoice
+      security:
+        - AgentPortalAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Invoice details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AgentInvoiceResponse'
+        '403':
+          description: Not your invoice
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /agent-portal/v1/invoices/{id}/request-payment:
+    post:
+      tags: [Agent Portal]
+      summary: Request payment for agent invoice
+      operationId: agentPortalRequestPayment
+      security:
+        - AgentPortalAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentRequestPaymentRequest'
+      responses:
+        '200':
+          description: Payment requested
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AgentInvoiceResponse'
+
+  /agent-portal/v1/sales:
+    get:
+      tags: [Agent Portal]
+      summary: Get agent sales history
+      operationId: agentPortalGetSales
+      security:
+        - AgentPortalAuth: []
+      parameters:
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: Sales list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/HotspotSaleResponse'
+
+  # ── Sales Agents ────────────────────────────────────────────────
+  /api/v1/sales-agents:
+    get:
+      tags: [Sales Agents]
+      summary: List sales agents
+      operationId: listSalesAgents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: router_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: Agent list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SalesAgentResponse'
+    post:
+      tags: [Sales Agents]
+      summary: Create sales agent
+      operationId: createSalesAgent
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSalesAgentRequest'
+      responses:
+        '201':
+          description: Agent created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SalesAgentResponse'
+
+  /api/v1/sales-agents/{id}:
+    get:
+      tags: [Sales Agents]
+      summary: Get sales agent
+      operationId: getSalesAgent
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Agent details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SalesAgentResponse'
+    put:
+      tags: [Sales Agents]
+      summary: Update sales agent
+      operationId: updateSalesAgent
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateSalesAgentRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SalesAgentResponse'
+    delete:
+      tags: [Sales Agents]
+      summary: Delete sales agent
+      operationId: deleteSalesAgent
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/sales-agents/{id}/profile-prices:
+    get:
+      tags: [Sales Agents]
+      summary: List profile prices for agent
+      operationId: listAgentProfilePrices
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Profile prices
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SalesProfilePriceResponse'
+
+  /api/v1/sales-agents/{id}/profile-prices/{profile}:
+    put:
+      tags: [Sales Agents]
+      summary: Upsert profile price for agent
+      operationId: upsertAgentProfilePrice
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - name: profile
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Profile name
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertProfilePriceRequest'
+      responses:
+        '200':
+          description: Profile price upserted
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SalesProfilePriceResponse'
+
+  /api/v1/sales-agents/{id}/invoices:
+    get:
+      tags: [Agent Invoices]
+      summary: List invoices for agent
+      operationId: listInvoicesByAgent
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: Agent invoices
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/AgentInvoiceResponse'
+
+  /api/v1/sales-agents/{id}/invoices/generate:
+    post:
+      tags: [Agent Invoices]
+      summary: Generate agent invoice for period
+      operationId: generateAgentInvoice
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateAgentInvoiceRequest'
+      responses:
+        '201':
+          description: Invoice generated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AgentInvoiceResponse'
+
+  # ── Agent Invoices ──────────────────────────────────────────────
+  /api/v1/agent-invoices:
+    get:
+      tags: [Agent Invoices]
+      summary: List all agent invoices with filters
+      operationId: listAgentInvoices
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: agent_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: router_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [draft, unpaid, paid, cancelled]
+        - name: billing_cycle
+          in: query
+          schema:
+            type: string
+            enum: [weekly, monthly]
+        - name: billing_year
+          in: query
+          schema:
+            type: integer
+        - name: billing_month
+          in: query
+          schema:
+            type: integer
+        - name: billing_week
+          in: query
+          schema:
+            type: integer
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: Agent invoice list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/AgentInvoiceResponse'
+
+  /api/v1/agent-invoices/{id}:
+    get:
+      tags: [Agent Invoices]
+      summary: Get agent invoice
+      operationId: getAgentInvoice
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Invoice details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AgentInvoiceResponse'
+
+  /api/v1/agent-invoices/{id}/pay:
+    put:
+      tags: [Agent Invoices]
+      summary: Mark agent invoice as paid
+      operationId: markAgentInvoicePaid
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MarkPaidRequest'
+      responses:
+        '200':
+          description: Marked paid
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/AgentInvoiceResponse'
+
+  /api/v1/agent-invoices/{id}/cancel:
+    put:
+      tags: [Agent Invoices]
+      summary: Cancel agent invoice
+      operationId: cancelAgentInvoice
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Cancelled
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/agent-invoices/process:
+    post:
+      tags: [Agent Invoices]
+      summary: Process scheduled agent invoices
+      operationId: processScheduledAgentInvoices
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Processed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  # ── Hotspot Sales ───────────────────────────────────────────────
+  /api/v1/hotspot-sales:
+    get:
+      tags: [Hotspot Sales]
+      summary: List all hotspot sales
+      operationId: listHotspotSales
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: router_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: agent_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: profile
+          in: query
+          schema:
+            type: string
+        - name: batch_code
+          in: query
+          schema:
+            type: string
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: Hotspot sales
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/HotspotSaleResponse'
+
+  /api/v1/routers/{router_id}/hotspot-sales:
+    get:
+      tags: [Hotspot Sales]
+      summary: List hotspot sales for router
+      operationId: listHotspotSalesByRouter
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - name: profile
+          in: query
+          schema:
+            type: string
+        - name: batch_code
+          in: query
+          schema:
+            type: string
+        - name: agent_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: Hotspot sales for router
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/HotspotSaleResponse'
+
+  # ── Cash Management ─────────────────────────────────────────────
+  /api/v1/cash-entries:
+    get:
+      tags: [Cash Management]
+      summary: List cash entries
+      operationId: listCashEntries
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [income, expense]
+        - name: source
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: date_from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: date_to
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: created_by
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: petty_cash_fund_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: Cash entries
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/CashEntryResponse'
+    post:
+      tags: [Cash Management]
+      summary: Create cash entry
+      operationId: createCashEntry
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCashEntryRequest'
+      responses:
+        '201':
+          description: Entry created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CashEntryResponse'
+
+  /api/v1/cash-entries/{id}:
+    get:
+      tags: [Cash Management]
+      summary: Get cash entry
+      operationId: getCashEntry
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Entry details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CashEntryResponse'
+    put:
+      tags: [Cash Management]
+      summary: Update cash entry
+      operationId: updateCashEntry
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Partial update fields
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CashEntryResponse'
+    delete:
+      tags: [Cash Management]
+      summary: Delete cash entry
+      operationId: deleteCashEntry
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Deleted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/cash-entries/{id}/approve:
+    post:
+      tags: [Cash Management]
+      summary: Approve cash entry
+      operationId: approveCashEntry
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Approved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CashEntryResponse'
+
+  /api/v1/cash-entries/{id}/reject:
+    post:
+      tags: [Cash Management]
+      summary: Reject cash entry
+      operationId: rejectCashEntry
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Rejected
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/CashEntryResponse'
+
+  /api/v1/petty-cash:
+    get:
+      tags: [Cash Management]
+      summary: List petty cash funds
+      operationId: listPettyCashFunds
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: Funds
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PettyCashFundResponse'
+    post:
+      tags: [Cash Management]
+      summary: Create petty cash fund
+      operationId: createPettyCashFund
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateFundRequest'
+      responses:
+        '201':
+          description: Fund created
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PettyCashFundResponse'
+
+  /api/v1/petty-cash/{id}:
+    get:
+      tags: [Cash Management]
+      summary: Get petty cash fund
+      operationId: getPettyCashFund
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Fund details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PettyCashFundResponse'
+    put:
+      tags: [Cash Management]
+      summary: Update petty cash fund
+      operationId: updatePettyCashFund
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateFundRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PettyCashFundResponse'
+
+  /api/v1/petty-cash/{id}/topup:
+    post:
+      tags: [Cash Management]
+      summary: Top up petty cash fund
+      operationId: topUpPettyCashFund
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TopUpFundRequest'
+      responses:
+        '200':
+          description: Topped up
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PettyCashFundResponse'
+
+  # ── Reports ─────────────────────────────────────────────────────
+  /api/v1/reports/summary:
+    get:
+      tags: [Reports]
+      summary: Get business summary report
+      operationId: getReportSummary
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+          description: Start date (YYYY-MM-DD), defaults to 1 month ago
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+          description: End date (YYYY-MM-DD), defaults to today
+      responses:
+        '200':
+          description: Summary report
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ReportSummary'
+
+  /api/v1/reports/subscriptions:
+    get:
+      tags: [Reports]
+      summary: Get subscription report
+      operationId: getSubscriptionReport
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: from
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          schema:
+            type: string
+            format: date
+        - $ref: '#/components/parameters/LimitQuery'
+        - $ref: '#/components/parameters/OffsetQuery'
+      responses:
+        '200':
+          description: Subscription report
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SubscriptionResponse'
+
+  /api/v1/reports/cash-flow:
+    get:
+      tags: [Reports]
+      summary: Get cash flow report
+      operationId: getCashFlowReport
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Cash flow report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /api/v1/reports/cash-balance:
+    get:
+      tags: [Reports]
+      summary: Get cash balance report
+      operationId: getCashBalanceReport
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Cash balance
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /api/v1/reports/reconciliation:
+    get:
+      tags: [Reports]
+      summary: Get reconciliation report
+      operationId: getReconciliationReport
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: to
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Reconciliation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  # ── System Settings ─────────────────────────────────────────────
+  /api/v1/settings:
+    get:
+      tags: [System Settings]
+      summary: List system settings
+      operationId: listSettings
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: group
+          in: query
+          schema:
+            type: string
+          description: Filter by group name
+      responses:
+        '200':
+          description: Settings
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SystemSettingResponse'
+    put:
+      tags: [System Settings]
+      summary: Create or update system setting
+      operationId: upsertSetting
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpsertSystemSettingRequest'
+      responses:
+        '200':
+          description: Setting saved
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SystemSettingResponse'
+
+  /api/v1/settings/{id}:
+    get:
+      tags: [System Settings]
+      summary: Get system setting
+      operationId: getSetting
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/IdPath'
+      responses:
+        '200':
+          description: Setting details
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SystemSettingResponse'
+
+  # ── MikroTik PPP ───────────────────────────────────────────────
+  /api/v1/routers/{router_id}/ppp/profiles:
+    get:
+      tags: [MikroTik PPP]
+      summary: List PPP profiles from router
+      operationId: listPPPProfiles
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '200':
+          description: PPP profiles
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PPPProfile'
+    post:
+      tags: [MikroTik PPP]
+      summary: Add PPP profile to router
+      operationId: addPPPProfile
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddPPPProfileRequest'
+      responses:
+        '201':
+          description: Profile added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/routers/{router_id}/ppp/profiles/{name}:
+    get:
+      tags: [MikroTik PPP]
+      summary: Get PPP profile by name
+      operationId: getPPPProfileByName
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - $ref: '#/components/parameters/NamePath'
+      responses:
+        '200':
+          description: PPP profile
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PPPProfile'
+        '404':
+          description: Not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/routers/{router_id}/ppp/profiles/{id}:
+    delete:
+      tags: [MikroTik PPP]
+      summary: Remove PPP profile from router
+      operationId: removePPPProfile
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - $ref: '#/components/parameters/MikrotikIdPath'
+      responses:
+        '200':
+          description: Removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/routers/{router_id}/ppp/secrets:
+    get:
+      tags: [MikroTik PPP]
+      summary: List PPP secrets
+      operationId: listPPPSecrets
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - name: profile
+          in: query
+          schema:
+            type: string
+          description: Filter by profile name
+      responses:
+        '200':
+          description: PPP secrets
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PPPSecret'
+    post:
+      tags: [MikroTik PPP]
+      summary: Add PPP secret
+      operationId: addPPPSecret
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddPPPSecretRequest'
+      responses:
+        '201':
+          description: Secret added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/routers/{router_id}/ppp/secrets/{name}:
+    get:
+      tags: [MikroTik PPP]
+      summary: Get PPP secret by name
+      operationId: getPPPSecretByName
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - $ref: '#/components/parameters/NamePath'
+      responses:
+        '200':
+          description: PPP secret
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/PPPSecret'
+
+  /api/v1/routers/{router_id}/ppp/secrets/{id}:
+    delete:
+      tags: [MikroTik PPP]
+      summary: Remove PPP secret
+      operationId: removePPPSecret
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - $ref: '#/components/parameters/MikrotikIdPath'
+      responses:
+        '200':
+          description: Removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/routers/{router_id}/ppp/active:
+    get:
+      tags: [MikroTik PPP]
+      summary: List active PPP connections
+      operationId: listPPPActive
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - name: service
+          in: query
+          schema:
+            type: string
+          description: Filter by service type
+      responses:
+        '200':
+          description: Active connections
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/PPPActive'
+
+  /api/v1/routers/{router_id}/ppp/ws/active:
+    get:
+      tags: [MikroTik PPP]
+      summary: WebSocket - Stream active PPP connections
+      description: Upgrades to WebSocket. Streams real-time PPPActive data. Auth via query param `token`.
+      operationId: wsPPPActive
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '101':
+          description: WebSocket upgrade
+
+  /api/v1/routers/{router_id}/ppp/ws/inactive:
+    get:
+      tags: [MikroTik PPP]
+      summary: WebSocket - Stream inactive PPP secrets
+      description: Upgrades to WebSocket. Streams real-time PPPSecret data.
+      operationId: wsPPPInactive
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '101':
+          description: WebSocket upgrade
+
+  # ── MikroTik Hotspot ────────────────────────────────────────────
+  /api/v1/routers/{router_id}/hotspot/profiles:
+    get:
+      tags: [MikroTik Hotspot]
+      summary: List hotspot profiles
+      operationId: listHotspotProfiles
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '200':
+          description: Profiles
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/HotspotUserProfile'
+    post:
+      tags: [MikroTik Hotspot]
+      summary: Add hotspot profile
+      operationId: addHotspotProfile
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddHotspotProfileRequest'
+      responses:
+        '201':
+          description: Profile added
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+
+  /api/v1/routers/{router_id}/hotspot/profiles/{name}:
+    get:
+      tags: [MikroTik Hotspot]
+      summary: Get hotspot profile by name
+      operationId: getHotspotProfileByName
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - $ref: '#/components/parameters/NamePath'
+      responses:
+        '200':
+          description: Profile
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/HotspotUserProfile'
+
+  /api/v1/routers/{router_id}/hotspot/profiles/{id}:
+    delete:
+      tags: [MikroTik Hotspot]
+      summary: Remove hotspot profile
+      operationId: removeHotspotProfile
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - $ref: '#/components/parameters/MikrotikIdPath'
+      responses:
+        '200':
+          description: Removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/routers/{router_id}/hotspot/users:
+    get:
+      tags: [MikroTik Hotspot]
+      summary: List hotspot users
+      operationId: listHotspotUsers
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - name: profile
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Users
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/HotspotUser'
+    post:
+      tags: [MikroTik Hotspot]
+      summary: Add hotspot user
+      operationId: addHotspotUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddHotspotUserRequest'
+      responses:
+        '201':
+          description: User added
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+
+  /api/v1/routers/{router_id}/hotspot/users/{name}:
+    get:
+      tags: [MikroTik Hotspot]
+      summary: Get hotspot user by name
+      operationId: getHotspotUserByName
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - $ref: '#/components/parameters/NamePath'
+      responses:
+        '200':
+          description: User
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/HotspotUser'
+
+  /api/v1/routers/{router_id}/hotspot/users/{id}:
+    delete:
+      tags: [MikroTik Hotspot]
+      summary: Remove hotspot user
+      operationId: removeHotspotUser
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - $ref: '#/components/parameters/MikrotikIdPath'
+      responses:
+        '200':
+          description: Removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/routers/{router_id}/hotspot/active:
+    get:
+      tags: [MikroTik Hotspot]
+      summary: List active hotspot sessions
+      operationId: listHotspotActive
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '200':
+          description: Active sessions
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/HotspotActive'
+
+  /api/v1/routers/{router_id}/hotspot/hosts:
+    get:
+      tags: [MikroTik Hotspot]
+      summary: List hotspot hosts
+      operationId: listHotspotHosts
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '200':
+          description: Hosts
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/HotspotHost'
+
+  /api/v1/routers/{router_id}/hotspot/servers:
+    get:
+      tags: [MikroTik Hotspot]
+      summary: List hotspot servers
+      operationId: listHotspotServers
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '200':
+          description: Servers
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/HotspotServer'
+
+  /api/v1/routers/{router_id}/hotspot/ws/active:
+    get:
+      tags: [MikroTik Hotspot]
+      summary: WebSocket - Stream active hotspot sessions
+      description: Upgrades to WebSocket. Streams real-time active session data.
+      operationId: wsHotspotActive
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '101':
+          description: WebSocket upgrade
+
+  /api/v1/routers/{router_id}/hotspot/ws/inactive:
+    get:
+      tags: [MikroTik Hotspot]
+      summary: WebSocket - Stream inactive hotspot users
+      description: Upgrades to WebSocket. Streams real-time inactive user data.
+      operationId: wsHotspotInactive
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '101':
+          description: WebSocket upgrade
+
+  # ── MikroTik Network ────────────────────────────────────────────
+  /api/v1/routers/{router_id}/queue/simple:
+    get:
+      tags: [MikroTik Network]
+      summary: List simple queues
+      operationId: listSimpleQueues
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '200':
+          description: Simple queues
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SimpleQueue'
+
+  /api/v1/routers/{router_id}/firewall/filter:
+    get:
+      tags: [MikroTik Network]
+      summary: List firewall filter rules
+      operationId: listFirewallFilterRules
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '200':
+          description: Filter rules
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/FirewallRule'
+
+  /api/v1/routers/{router_id}/firewall/nat:
+    get:
+      tags: [MikroTik Network]
+      summary: List NAT rules
+      operationId: listNATRules
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '200':
+          description: NAT rules
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/NATRule'
+
+  /api/v1/routers/{router_id}/firewall/address-list:
+    get:
+      tags: [MikroTik Network]
+      summary: List address lists
+      operationId: listAddressLists
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '200':
+          description: Address lists
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/AddressList'
+
+  /api/v1/routers/{router_id}/ip/pools:
+    get:
+      tags: [MikroTik Network]
+      summary: List IP pools
+      operationId: listIPPools
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '200':
+          description: IP pools
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/IPPool'
+    post:
+      tags: [MikroTik Network]
+      summary: Add IP pool
+      operationId: addIPPool
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddIPPoolRequest'
+      responses:
+        '201':
+          description: Pool added
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          id:
+                            type: string
+
+  /api/v1/routers/{router_id}/ip/pools/{id}:
+    delete:
+      tags: [MikroTik Network]
+      summary: Remove IP pool
+      operationId: removeIPPool
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - $ref: '#/components/parameters/MikrotikIdPath'
+      responses:
+        '200':
+          description: Removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/routers/{router_id}/ip/addresses:
+    get:
+      tags: [MikroTik Network]
+      summary: List IP addresses
+      operationId: listIPAddresses
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '200':
+          description: IP addresses
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/IPAddress'
+
+  # ── MikroTik Monitor ────────────────────────────────────────────
+  /api/v1/routers/{router_id}/monitor/system-resource:
+    get:
+      tags: [MikroTik Monitor]
+      summary: Get system resource info
+      operationId: getSystemResource
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '200':
+          description: System resource
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/SystemResource'
+
+  /api/v1/routers/{router_id}/monitor/interfaces:
+    get:
+      tags: [MikroTik Monitor]
+      summary: Get interfaces
+      operationId: getInterfaces
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '200':
+          description: Interfaces
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Interface'
+
+  /api/v1/routers/{router_id}/monitor/ws/system-resource:
+    get:
+      tags: [MikroTik Monitor]
+      summary: WebSocket - Stream system resource stats
+      description: Upgrades to WebSocket. Streams real-time CPU, memory, disk stats.
+      operationId: wsSystemResource
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '101':
+          description: WebSocket upgrade
+
+  /api/v1/routers/{router_id}/monitor/ws/traffic/{name}:
+    get:
+      tags: [MikroTik Monitor]
+      summary: WebSocket - Stream interface traffic stats
+      description: Upgrades to WebSocket. Streams real-time rx/tx bps for an interface.
+      operationId: wsTraffic
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - name: name
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Interface name
+      responses:
+        '101':
+          description: WebSocket upgrade
+
+  /api/v1/routers/{router_id}/monitor/ws/logs:
+    get:
+      tags: [MikroTik Monitor]
+      summary: WebSocket - Stream router logs
+      description: Upgrades to WebSocket. Streams real-time log entries.
+      operationId: wsLogs
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - name: topics
+          in: query
+          schema:
+            type: string
+          description: "Log topic filter (e.g. hotspot, ppp)"
+      responses:
+        '101':
+          description: WebSocket upgrade
+
+  /api/v1/routers/{router_id}/monitor/ws/ping:
+    get:
+      tags: [MikroTik Monitor]
+      summary: WebSocket - Ping from router
+      description: Upgrades to WebSocket. Streams ping results from the router.
+      operationId: wsPing
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - name: address
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Target IP/hostname to ping
+      responses:
+        '101':
+          description: WebSocket upgrade
+
+  # ── MikroTik Raw ────────────────────────────────────────────────
+  /api/v1/routers/{router_id}/raw/run:
+    post:
+      tags: [MikroTik Raw]
+      summary: Execute raw RouterOS command
+      description: |
+        Executes a raw command on the router. Dangerous commands are blocked
+        (reboot, shutdown, user management, etc.).
+      operationId: rawRun
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RawCommandRequest'
+      responses:
+        '200':
+          description: Command results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '403':
+          description: Command blocked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/routers/{router_id}/raw/ws/listen:
+    get:
+      tags: [MikroTik Raw]
+      summary: WebSocket - Listen to raw RouterOS command stream
+      description: Upgrades to WebSocket. Sends command args, streams results. Blocked commands return 403.
+      operationId: rawListenWS
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '101':
+          description: WebSocket upgrade
+
+  # ── Mikhmon Vouchers ────────────────────────────────────────────
+  /api/v1/routers/{router_id}/mikhmon/vouchers/generate:
+    post:
+      tags: [Mikhmon Vouchers]
+      summary: Generate voucher batch
+      operationId: generateVouchers
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateVoucherRequest'
+      responses:
+        '201':
+          description: Vouchers generated
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/VoucherBatchResponse'
+
+  /api/v1/routers/{router_id}/mikhmon/vouchers:
+    get:
+      tags: [Mikhmon Vouchers]
+      summary: Get vouchers by comment or code
+      operationId: getVouchers
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - name: comment
+          in: query
+          schema:
+            type: string
+          description: Filter by comment/batch code
+        - name: code
+          in: query
+          schema:
+            type: string
+          description: Filter by voucher code
+      responses:
+        '200':
+          description: Vouchers
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/VoucherResponse'
+    delete:
+      tags: [Mikhmon Vouchers]
+      summary: Remove voucher batch by comment
+      operationId: removeVoucherBatch
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - name: comment
+          in: query
+          required: true
+          schema:
+            type: string
+          description: Batch comment to remove
+      responses:
+        '200':
+          description: Removed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  # ── Mikhmon Profiles ────────────────────────────────────────────
+  /api/v1/routers/{router_id}/mikhmon/profiles:
+    post:
+      tags: [Mikhmon Profiles]
+      summary: Create mikhmon profile
+      operationId: createMikhmonProfile
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateMikhmonProfileRequest'
+      responses:
+        '201':
+          description: Profile created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/routers/{router_id}/mikhmon/profiles/{id}:
+    put:
+      tags: [Mikhmon Profiles]
+      summary: Update mikhmon profile
+      operationId: updateMikhmonProfile
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - $ref: '#/components/parameters/MikrotikIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateMikhmonProfileRequest'
+      responses:
+        '200':
+          description: Updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /api/v1/routers/{router_id}/mikhmon/profiles/generate-script:
+    post:
+      tags: [Mikhmon Profiles]
+      summary: Generate on-login script for profile
+      operationId: generateMikhmonScript
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateScriptRequest'
+      responses:
+        '200':
+          description: Generated script
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          script:
+                            type: string
+
+  # ── Mikhmon Reports ─────────────────────────────────────────────
+  /api/v1/routers/{router_id}/mikhmon/reports:
+    post:
+      tags: [Mikhmon Reports]
+      summary: Add sales report entry
+      operationId: addMikhmonReport
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateReportRequest'
+      responses:
+        '201':
+          description: Report added
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+    get:
+      tags: [Mikhmon Reports]
+      summary: Get sales reports
+      operationId: getMikhmonReports
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+        - name: owner
+          in: query
+          schema:
+            type: string
+        - name: day
+          in: query
+          schema:
+            type: string
+        - name: user
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Reports
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+
+  /api/v1/routers/{router_id}/mikhmon/reports/summary:
+    get:
+      tags: [Mikhmon Reports]
+      summary: Get sales report summary
+      operationId: getMikhmonReportSummary
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '200':
+          description: Summary
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/MikhmonReportSummary'
+
+  # ── Mikhmon Expire ──────────────────────────────────────────────
+  /api/v1/routers/{router_id}/mikhmon/expire/setup:
+    post:
+      tags: [Mikhmon Expire]
+      summary: Setup expire monitoring
+      operationId: setupExpireMonitor
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '200':
+          description: Setup complete
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          enabled:
+                            type: boolean
+                            example: true
+
+  /api/v1/routers/{router_id}/mikhmon/expire/disable:
+    post:
+      tags: [Mikhmon Expire]
+      summary: Disable expire monitoring
+      operationId: disableExpireMonitor
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '200':
+          description: Disabled
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          enabled:
+                            type: boolean
+                            example: false
+
+  /api/v1/routers/{router_id}/mikhmon/expire/status:
+    get:
+      tags: [Mikhmon Expire]
+      summary: Get expire monitor status
+      operationId: getExpireMonitorStatus
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '200':
+          description: Status
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ExpireStatusResponse'
+
+  /api/v1/routers/{router_id}/mikhmon/expire/generate-script:
+    get:
+      tags: [Mikhmon Expire]
+      summary: Generate expire scheduler script
+      operationId: generateExpireScript
+      security:
+        - BearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/RouterIdPath'
+      responses:
+        '200':
+          description: Script
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/SuccessResponse'
+                  - type: object
+                    properties:
+                      data:
+                        $ref: '#/components/schemas/ScriptResponse'

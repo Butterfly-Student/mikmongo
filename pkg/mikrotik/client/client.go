@@ -337,3 +337,119 @@ func (c *Client) ListenRaw(ctx context.Context, args []string, resultChan chan<-
 		return err
 	}, nil
 }
+
+// StreamEvent is a single sentence received from a concurrent multi-command listener.
+// It carries the index of the originating command (matching the slice position in
+// ListenManyArgsContext), the command args themselves, the raw RouterOS sentence fields,
+// and any read error.
+type StreamEvent struct {
+	// Index is the position of the command inside the args slice passed to ListenManyArgsContext.
+	Index int
+	// Args is the original command that produced this event (read-only).
+	Args []string
+	// Map contains the key=value pairs of the RouterOS !re sentence.
+	Map map[string]string
+	// Err is non-nil when the listener for this command terminated with an error.
+	Err error
+}
+
+// ListenManyArgsContext starts one concurrent RouterOS listener per command in args
+// and fans all sentences into a single output channel.
+//
+// Because the underlying connection is in async mode (tag multiplexing), all
+// listeners share the same TCP connection without contention.
+//
+// Each received sentence becomes a StreamEvent carrying:
+//   - Index  – position in the args slice, so callers can tell which command fired
+//   - Args   – the original command slice (useful for logging)
+//   - Map    – the raw RouterOS key=value pairs from the !re sentence
+//   - Err    – set on terminal error; the channel is NOT closed per-stream, only
+//     when ALL streams finish (context cancelled or all streams end)
+//
+// The returned channel is closed after all per-command goroutines have exited.
+// If any single command fails to start, its error is sent immediately and that
+// slot is considered done; the others are unaffected.
+//
+// Cancel the supplied context to stop all listeners simultaneously.
+//
+// Example – listen to interface traffic stats AND queue stats at the same time:
+//
+//	commands := [][]string{
+//	    {"/interface/print", "=.proplist=name,tx-byte,rx-byte", "?type=ether"},
+//	    {"/queue/simple/print", "=.proplist=name,max-limit,bytes"},
+//	}
+//	ch, err := client.ListenManyArgsContext(ctx, commands, 64)
+//	for ev := range ch {
+//	    if ev.Err != nil { ... }
+//	    fmt.Println(commands[ev.Index][0], ev.Map)
+//	}
+func (c *Client) ListenManyArgsContext(
+	ctx context.Context,
+	commands [][]string,
+	queueSize int,
+) (<-chan StreamEvent, error) {
+	if len(commands) == 0 {
+		return nil, fmt.Errorf("ListenManyArgsContext: at least one command required")
+	}
+
+	conn, err := c.getConn()
+	if err != nil {
+		return nil, err
+	}
+
+	if queueSize <= 0 {
+		queueSize = DefaultQueueSize
+	}
+
+	out := make(chan StreamEvent, queueSize)
+
+	var wg sync.WaitGroup
+	for i, cmd := range commands {
+		wg.Add(1)
+		go func(idx int, args []string) {
+			defer wg.Done()
+
+			lr, err := conn.ListenArgsQueueContext(ctx, args, queueSize)
+			if err != nil {
+				select {
+				case out <- StreamEvent{Index: idx, Args: args, Err: fmt.Errorf("listen start: %w", err)}:
+				case <-ctx.Done():
+				}
+				return
+			}
+
+			for {
+				select {
+				case <-ctx.Done():
+					lr.Cancel() //nolint:errcheck
+					return
+				case sentence, ok := <-lr.Chan():
+					if !ok {
+						// Stream ended (Cancel called or RouterOS closed it).
+						if lrErr := lr.Err(); lrErr != nil {
+							select {
+							case out <- StreamEvent{Index: idx, Args: args, Err: lrErr}:
+							case <-ctx.Done():
+							}
+						}
+						return
+					}
+					select {
+					case out <- StreamEvent{Index: idx, Args: args, Map: sentence.Map}:
+					case <-ctx.Done():
+						lr.Cancel() //nolint:errcheck
+						return
+					}
+				}
+			}
+		}(i, cmd)
+	}
+
+	// Close the merged output channel once all per-command goroutines finish.
+	go func() {
+		wg.Wait()
+		close(out)
+	}()
+
+	return out, nil
+}
