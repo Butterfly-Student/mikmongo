@@ -33,14 +33,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Expired access tokens are silently refreshed using the refresh token without user action
   4. Customer can log into their portal route, and agent can log into their portal route
   5. Unauthenticated users on protected routes are redirected to their portal's login page
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 01-01: Remove Clerk dependencies and establish custom JWT auth with Zustand store
-- [ ] 01-02: Build Axios client layer with token interceptors and refresh flow for all three portals
-- [ ] 01-03: Implement admin login/logout/change-password pages and protected route guards
-- [ ] 01-04: Implement customer and agent portal login pages with separate auth contexts
-- [ ] 01-05: Configure three-portal route structure with TanStack Router (admin, customer, agent)
+- [x] 01-01: Auth data layer -- Zustand store with three portal slices, Zod schemas matching OpenAPI, Axios clients with token refresh, API auth functions
+- [ ] 01-02: Admin auth UI -- login page with Indonesian text, change password page, logout confirmation dialog, MikMongo branding
+- [ ] 01-03: Customer and agent portal login pages with identifier/username fields matching OpenAPI, auth hooks
+- [ ] 01-04: Three-portal route guards, route files, hydration gate, Clerk removal, human verification
 
 ### Phase 2: Layout, Dashboard & Users
 **Goal**: Admin sees a functional ISP dashboard with router selector in sidebar, real-time ping in header, overview widgets, and can manage admin users
@@ -188,7 +187,7 @@ Note: Phase 6 depends on Phase 3 and can theoretically run in parallel with Phas
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Auth & API Foundation | 0/5 | Not started | - |
+| 1. Auth & API Foundation | 0/4 | Planning complete | - |
 | 2. Layout, Dashboard & Users | 0/4 | Not started | - |
 | 3. Customers, Routers & Subscriptions | 0/5 | Not started | - |
 | 4. Billing & Payments | 0/5 | Not started | - |

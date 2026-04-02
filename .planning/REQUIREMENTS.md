@@ -9,14 +9,14 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Authentication
 
-- [ ] **AUTH-01**: Admin can login with email/password and receive JWT tokens (access + refresh)
-- [ ] **AUTH-02**: Admin can refresh expired access token using refresh token
+- [x] **AUTH-01**: Admin can login with email/password and receive JWT tokens (access + refresh)
+- [x] **AUTH-02**: Admin can refresh expired access token using refresh token
 - [ ] **AUTH-03**: Admin can change password (old + new)
 - [ ] **AUTH-04**: Admin can logout (invalidate token)
 - [ ] **AUTH-05**: Admin session persists across browser refresh via token storage
 - [ ] **AUTH-06**: Customer can login to portal with email/password
 - [ ] **AUTH-07**: Agent can login to agent portal with email/password
-- [ ] **AUTH-08**: Auth state managed via Zustand store with token persistence
+- [x] **AUTH-08**: Auth state managed via Zustand store with token persistence
 - [ ] **AUTH-09**: Protected routes redirect to respective login pages when unauthenticated
 
 ### Navigation & Layout
@@ -208,14 +208,14 @@ Deferred to future release. Tracked but not in current roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| AUTH-01 | Phase 1 | Pending |
-| AUTH-02 | Phase 1 | Pending |
+| AUTH-01 | Phase 1 | Complete |
+| AUTH-02 | Phase 1 | Complete |
 | AUTH-03 | Phase 1 | Pending |
 | AUTH-04 | Phase 1 | Pending |
 | AUTH-05 | Phase 1 | Pending |
 | AUTH-06 | Phase 1 | Pending |
 | AUTH-07 | Phase 1 | Pending |
-| AUTH-08 | Phase 1 | Pending |
+| AUTH-08 | Phase 1 | Complete |
 | AUTH-09 | Phase 1 | Pending |
 | NAV-01 | Phase 2 | Pending |
 | NAV-02 | Phase 2 | Pending |

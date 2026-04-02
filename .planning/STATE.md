@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 1 context gathered
-last_updated: "2026-04-02T14:34:14.519Z"
-last_activity: 2026-04-02 -- Roadmap created
+status: executing
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-04-02T22:41:46.386Z"
+last_activity: 2026-04-02
 progress:
   total_phases: 8
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 4
+  completed_plans: 1
   percent: 0
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-02)
 
 **Core value:** Admin can manage their entire ISP operation from one dashboard: customers, routers, subscriptions, billing, and monitor MikroTik devices in real-time.
-**Current focus:** Phase 1 -- Auth & API Foundation
+**Current focus:** Phase 01 — Auth & API Foundation
 
 ## Current Position
 
-Phase: 1 of 8 (Auth & API Foundation)
-Plan: 0 of 5 in current phase
-Status: Ready to plan
-Last activity: 2026-04-02 -- Roadmap created
+Phase: 01 (Auth & API Foundation) — EXECUTING
+Plan: 2 of 4
+Status: Ready to execute
+Last activity: 2026-04-02
 
 Progress: [          ] 0%
 
@@ -47,6 +47,7 @@ Progress: [          ] 0%
 | - | - | - | - |
 
 *Updated after each plan completion*
+| Phase 01 P01 | 319 | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -58,6 +59,9 @@ Recent decisions affecting current work:
 - [Init]: Three-portal architecture (admin, customer, agent) with separate route trees and auth schemes
 - [Init]: Replace Clerk with custom JWT auth matching API contract
 - [Init]: 8-phase roadmap derived from 109 requirements at standard granularity
+- [Phase 01]: Zustand persist with partialize for selective auth token persistence in localStorage
+- [Phase 01]: Admin refresh uses plain axios to avoid interceptor loop, parses token field (not access_token)
+- [Phase 01]: Customer/agent portals use single token with 401 redirect, no refresh mechanism
 
 ### Pending Todos
 
@@ -69,6 +73,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-02T14:34:14.512Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01/01-CONTEXT.md
+Last session: 2026-04-02T22:41:46.382Z
+Stopped at: Completed 01-01-PLAN.md
+Resume file: None
