@@ -38,7 +38,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 Plans:
 - [x] 01-01: Auth data layer -- Zustand store with three portal slices, Zod schemas matching OpenAPI, Axios clients with token refresh, API auth functions
 - [x] 01-02: Admin auth UI -- login page with Indonesian text, change password page, logout confirmation dialog, MikMongo branding
-- [ ] 01-03: Customer and agent portal login pages with identifier/username fields matching OpenAPI, auth hooks
+- [x] 01-03: Customer and agent portal login pages with identifier/username fields matching OpenAPI, auth hooks
 - [ ] 01-04: Three-portal route guards, route files, hydration gate, Clerk removal, human verification
 
 ### Phase 2: Layout, Dashboard & Users

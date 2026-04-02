@@ -14,8 +14,8 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **AUTH-03**: Admin can change password (old + new)
 - [x] **AUTH-04**: Admin can logout (invalidate token)
 - [x] **AUTH-05**: Admin session persists across browser refresh via token storage
-- [ ] **AUTH-06**: Customer can login to portal with email/password
-- [ ] **AUTH-07**: Agent can login to agent portal with email/password
+- [x] **AUTH-06**: Customer can login to portal with email/password
+- [x] **AUTH-07**: Agent can login to agent portal with email/password
 - [x] **AUTH-08**: Auth state managed via Zustand store with token persistence
 - [ ] **AUTH-09**: Protected routes redirect to respective login pages when unauthenticated
 
@@ -213,8 +213,8 @@ Deferred to future release. Tracked but not in current roadmap.
 | AUTH-03 | Phase 1 | Complete |
 | AUTH-04 | Phase 1 | Complete |
 | AUTH-05 | Phase 1 | Complete |
-| AUTH-06 | Phase 1 | Pending |
-| AUTH-07 | Phase 1 | Pending |
+| AUTH-06 | Phase 1 | Complete |
+| AUTH-07 | Phase 1 | Complete |
 | AUTH-08 | Phase 1 | Complete |
 | AUTH-09 | Phase 1 | Pending |
 | NAV-01 | Phase 2 | Pending |
