@@ -39,7 +39,7 @@ Plans:
 - [x] 01-01: Auth data layer -- Zustand store with three portal slices, Zod schemas matching OpenAPI, Axios clients with token refresh, API auth functions
 - [x] 01-02: Admin auth UI -- login page with Indonesian text, change password page, logout confirmation dialog, MikMongo branding
 - [x] 01-03: Customer and agent portal login pages with identifier/username fields matching OpenAPI, auth hooks
-- [ ] 01-04: Three-portal route guards, route files, hydration gate, Clerk removal, human verification
+- [x] 01-04: Three-portal route guards, route files, hydration gate, Clerk removal, human verification
 
 ### Phase 2: Layout, Dashboard & Users
 **Goal**: Admin sees a functional ISP dashboard with router selector in sidebar, real-time ping in header, overview widgets, and can manage admin users

@@ -17,14 +17,14 @@ Requirements for initial release. Each maps to roadmap phases.
 - [x] **AUTH-06**: Customer can login to portal with email/password
 - [x] **AUTH-07**: Agent can login to agent portal with email/password
 - [x] **AUTH-08**: Auth state managed via Zustand store with token persistence
-- [ ] **AUTH-09**: Protected routes redirect to respective login pages when unauthenticated
+- [x] **AUTH-09**: Protected routes redirect to respective login pages when unauthenticated
 
 ### Navigation & Layout
 
 - [ ] **NAV-01**: Sidebar displays router selector dropdown to switch active router
 - [ ] **NAV-02**: Sidebar shows router status badges (online/offline/syncing)
 - [ ] **NAV-03**: Header displays real-time ping to 8.8.8.8 showing ms latency
-- [ ] **NAV-04**: Navigation structure supports three portals (admin, customer, agent) with separate route trees
+- [x] **NAV-04**: Navigation structure supports three portals (admin, customer, agent) with separate route trees
 - [ ] **NAV-05**: Sidebar navigation groups reflect ISP management domains (Customers, Billing, MikroTik, etc.)
 
 ### Dashboard
@@ -216,11 +216,11 @@ Deferred to future release. Tracked but not in current roadmap.
 | AUTH-06 | Phase 1 | Complete |
 | AUTH-07 | Phase 1 | Complete |
 | AUTH-08 | Phase 1 | Complete |
-| AUTH-09 | Phase 1 | Pending |
+| AUTH-09 | Phase 1 | Complete |
 | NAV-01 | Phase 2 | Pending |
 | NAV-02 | Phase 2 | Pending |
 | NAV-03 | Phase 2 | Pending |
-| NAV-04 | Phase 1 | Pending |
+| NAV-04 | Phase 1 | Complete |
 | NAV-05 | Phase 2 | Pending |
 | DASH-01 | Phase 2 | Pending |
 | DASH-02 | Phase 2 | Pending |
