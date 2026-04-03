@@ -42,13 +42,13 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Customer Management
 
-- [ ] **CUST-01**: Admin can view customer list with pagination, search, and filters
-- [ ] **CUST-02**: Admin can create new customer (with optional auto-subscription)
-- [ ] **CUST-03**: Admin can update customer details
-- [ ] **CUST-04**: Admin can activate/deactivate customer accounts
-- [ ] **CUST-05**: Admin can manage customer registrations (pending/approved/rejected pipeline)
-- [ ] **CUST-06**: Admin can approve registrations with router and profile assignment
-- [ ] **CUST-07**: Admin can reject registrations with reason
+- [x] **CUST-01**: Admin can view customer list with pagination, search, and filters
+- [x] **CUST-02**: Admin can create new customer (with optional auto-subscription)
+- [x] **CUST-03**: Admin can update customer details
+- [x] **CUST-04**: Admin can activate/deactivate customer accounts
+- [x] **CUST-05**: Admin can manage customer registrations (pending/approved/rejected pipeline)
+- [x] **CUST-06**: Admin can approve registrations with router and profile assignment
+- [x] **CUST-07**: Admin can reject registrations with reason
 
 ### Router Management
 
@@ -229,13 +229,13 @@ Deferred to future release. Tracked but not in current roadmap.
 | USER-02 | Phase 2 | Pending |
 | USER-03 | Phase 2 | Pending |
 | USER-04 | Phase 2 | Pending |
-| CUST-01 | Phase 3 | Pending |
-| CUST-02 | Phase 3 | Pending |
-| CUST-03 | Phase 3 | Pending |
-| CUST-04 | Phase 3 | Pending |
-| CUST-05 | Phase 3 | Pending |
-| CUST-06 | Phase 3 | Pending |
-| CUST-07 | Phase 3 | Pending |
+| CUST-01 | Phase 3 | Complete |
+| CUST-02 | Phase 3 | Complete |
+| CUST-03 | Phase 3 | Complete |
+| CUST-04 | Phase 3 | Complete |
+| CUST-05 | Phase 3 | Complete |
+| CUST-06 | Phase 3 | Complete |
+| CUST-07 | Phase 3 | Complete |
 | RTR-01 | Phase 3 | Pending |
 | RTR-02 | Phase 3 | Pending |
 | RTR-03 | Phase 3 | Pending |
