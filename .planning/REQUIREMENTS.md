@@ -67,11 +67,11 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Subscription Management
 
-- [ ] **SUB-01**: Admin can view subscriptions per router with status filters
-- [ ] **SUB-02**: Admin can create new subscription (assign profile to customer on router)
-- [ ] **SUB-03**: Admin can update/terminate subscription
-- [ ] **SUB-04**: Admin can activate, suspend, isolate, and restore subscriptions
-- [ ] **SUB-05**: Customer portal shows their active subscriptions
+- [x] **SUB-01**: Admin can view subscriptions per router with status filters
+- [x] **SUB-02**: Admin can create new subscription (assign profile to customer on router)
+- [x] **SUB-03**: Admin can update/terminate subscription
+- [x] **SUB-04**: Admin can activate, suspend, isolate, and restore subscriptions
+- [x] **SUB-05**: Customer portal shows their active subscriptions
 
 ### Billing & Invoices
 
@@ -245,11 +245,11 @@ Deferred to future release. Tracked but not in current roadmap.
 | BW-01 | Phase 3 | Pending |
 | BW-02 | Phase 3 | Pending |
 | BW-03 | Phase 3 | Pending |
-| SUB-01 | Phase 3 | Pending |
-| SUB-02 | Phase 3 | Pending |
-| SUB-03 | Phase 3 | Pending |
-| SUB-04 | Phase 3 | Pending |
-| SUB-05 | Phase 3 | Pending |
+| SUB-01 | Phase 3 | Complete |
+| SUB-02 | Phase 3 | Complete |
+| SUB-03 | Phase 3 | Complete |
+| SUB-04 | Phase 3 | Complete |
+| SUB-05 | Phase 3 | Complete |
 | INV-01 | Phase 4 | Pending |
 | INV-02 | Phase 4 | Pending |
 | INV-03 | Phase 4 | Pending |
