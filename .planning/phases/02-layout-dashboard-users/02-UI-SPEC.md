@@ -73,23 +73,24 @@ Exceptions: Dashboard widget grid uses `gap-4` (16px) for tight visual grouping 
 
 ## Typography
 
-Same scale as Phase 1. No changes.
+Same scale as Phase 1, consolidated for Phase 2 widget needs. Exactly 4 sizes, 2 weights.
 
 | Role | Size | Weight | Line Height | Source |
 |------|------|--------|-------------|--------|
-| Body | 14px (text-sm) | 400 (regular) | 1.5 | Inherited from Phase 1, table cells |
-| Label | 14px (text-sm) | 500 (medium) | none (leading-none) | Inherited from Phase 1 |
-| Heading | 20px (text-xl) | 500 (medium) | 1.2 (tracking-tight) | Inherited from Phase 1, page headings |
+| Label | 14px (text-sm) | 600 (semibold) | none (leading-none) | Inherited from Phase 1; weight adjusted to 600; also used for KPI card titles (Widget Label merged here) |
+| Body | 14px (text-sm) | 400 (regular) | 1.5 | Inherited from Phase 1; also used for trend text in KPI cards (previously 12px text-xs, now 14px with `text-muted-foreground`) |
 | Card Title | 18px (text-lg) | 600 (semibold) | 1.0 (leading-none font-semibold) | Inherited from Phase 1 |
-| Widget Value | 24px (text-2xl) | 700 (bold) | 1.0 | NEW for Phase 2 -- KPI metric numbers |
-| Widget Label | 14px (text-sm) | 500 (medium) | 1.0 | NEW for Phase 2 -- KPI card titles |
+| Heading | 20px (text-xl) | 600 (semibold) | 1.2 (tracking-tight) | Inherited from Phase 1, page headings; weight adjusted to 600 |
+| Display | 24px (text-2xl) | 600 (semibold) | 1.0 | NEW for Phase 2 -- KPI metric numbers (Widget Value consolidated here); weight 600 instead of 700 |
+
+**Weight policy:** 400 (regular) for body text and secondary content. 600 (semibold) for all headings, labels, titles, and metric values. No 500 or 700 weights used in this phase.
 
 ### Widget Typography Pattern
 
 Dashboard KPI cards follow this pattern:
-- Card title: `text-sm font-medium` (14px, 500)
-- Metric value: `text-2xl font-bold` (24px, 700)
-- Trend text: `text-xs text-muted-foreground` (12px, 400)
+- Card title: `text-sm font-semibold text-muted-foreground` (14px, 600) -- reuses Label role
+- Metric value: `text-2xl font-semibold` (24px, 600) -- reuses Display role
+- Trend text: `text-sm text-muted-foreground` (14px, 400) -- reuses Body role with muted color (previously text-xs, merged to avoid a 5th size)
 
 ---
 
@@ -347,8 +348,8 @@ No third-party registries declared. All components come from the official shadcn
 
 1. **Layout**: 4-column responsive grid (`grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4`)
 2. **Widget pattern**: Each widget is a `Card` with:
-   - `CardHeader`: flex-row with title (text-sm font-medium) + icon (text-muted-foreground, 16x16)
-   - `CardContent`: metric value (text-2xl font-bold) + trend text (text-xs text-muted-foreground)
+   - `CardHeader`: flex-row with title (text-sm font-semibold text-muted-foreground) + icon (text-muted-foreground, 16x16)
+   - `CardContent`: metric value (text-2xl font-semibold) + trend text (text-sm text-muted-foreground)
 3. **Data source**: `GET /api/v1/reports/summary` for revenue/invoices data. Customer and subscription counts from the same endpoint or derived.
 4. **Loading state**: `Skeleton` component replacing metric value and trend text
 5. **Currency formatting**: Use `Rp` prefix with Indonesian number formatting (e.g., "Rp 15.230.000")
