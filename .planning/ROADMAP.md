@@ -49,16 +49,17 @@ Plans:
   1. Admin can select an active router from a dropdown in the sidebar, and the dropdown shows online/offline/syncing status badges
   2. Admin sees real-time ping latency (ms) to 8.8.8.8 displayed in the header
   3. Admin dashboard shows widgets for total customers, active subscriptions, monthly revenue, and router health cards
-  4. Admin can create, view, edit, and deactivate admin users with role assignment
+  4. Admin can create, view, and deactivate admin users with role assignment (edit deferred -- no PUT endpoint)
   5. Sidebar navigation groups are organized by ISP management domains (Customers, Billing, MikroTik, etc.)
-**Plans**: TBD
+**Plans**: 5 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 02-01: Refactor sidebar with router selector dropdown and status badges
-- [ ] 02-02: Add real-time ping display (8.8.8.8) in header using WebSocket or polling
-- [ ] 02-03: Build admin dashboard overview page with ISP widgets and router health cards
-- [ ] 02-04: Implement admin user management (list, create, edit, deactivate) with data table
+- [ ] 02-01: Data layer -- schemas, store, API functions, TanStack Query hooks for routers, reports, users
+- [ ] 02-02: Sidebar nav restructure -- ISP groups, MikMongo branding, disabled items, app-title
+- [ ] 02-03: Router selector + ping display -- Select dropdown, WebSocket hook, header integration
+- [ ] 02-04: Dashboard overview -- KPI widgets, router health cards, activity feed with real user data
+- [ ] 02-05: Admin user management -- list table, create dialog, delete confirmation
 
 ### Phase 3: Customers, Routers & Subscriptions
 **Goal**: Admin can manage the full customer lifecycle (create, activate, registration pipeline) and manage MikroTik routers with bandwidth profiles and subscription plans
@@ -188,7 +189,7 @@ Note: Phase 6 depends on Phase 3 and can theoretically run in parallel with Phas
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Auth & API Foundation | 0/4 | Planning complete | - |
-| 2. Layout, Dashboard & Users | 0/4 | Not started | - |
+| 2. Layout, Dashboard & Users | 0/5 | Planning complete | - |
 | 3. Customers, Routers & Subscriptions | 0/5 | Not started | - |
 | 4. Billing & Payments | 0/5 | Not started | - |
 | 5. Sales & Agents | 0/5 | Not started | - |
