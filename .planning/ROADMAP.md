@@ -12,7 +12,7 @@ Transform the shadcn-admin template into a full-featured ISP management dashboar
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Auth & API Foundation** - Replace Clerk with custom JWT auth, establish API client layer, configure three-portal route structure
+- [x] **Phase 1: Auth & API Foundation** - Replace Clerk with custom JWT auth, establish API client layer, configure three-portal route structure
 - [ ] **Phase 2: Layout, Dashboard & Users** - Router selector sidebar, real-time ping header, ISP dashboard widgets, admin user CRUD
 - [ ] **Phase 3: Customers, Routers & Subscriptions** - Customer management pipeline, MikroTik router CRUD, bandwidth profiles, subscription lifecycle
 - [ ] **Phase 4: Billing & Payments** - Invoice generation, payment management with gateway integration, cash workflow
@@ -72,15 +72,17 @@ Plans:
   4. Admin can create and manage bandwidth profiles (rate-limit, burst) per router
   5. Admin can create subscriptions, assign profiles to customers on routers, and manage subscription lifecycle (activate, suspend, isolate, restore, terminate)
   6. Customer portal displays the customer's active subscriptions
-**Plans**: TBD
+**Plans**: 7 plans (3 executed + 4 gap closure)
 **UI hint**: yes
 
 Plans:
-- [ ] 03-01: Build customer list page with CRUD operations and activation/deactivation
-- [ ] 03-02: Implement customer registration pipeline (pending, approve, reject workflows)
-- [ ] 03-03: Build router management pages (list, add/edit/delete, test connection, sync)
-- [ ] 03-04: Implement bandwidth profile management per router
-- [ ] 03-05: Build subscription management with full lifecycle (CRUD, activate, suspend, isolate, restore, terminate)
+- [x] 03-01: Router list page with profiles, create router, sync, test connection, bandwidth profile management
+- [x] 03-02: Customer list page with CRUD, registration pipeline, approve/reject dialogs
+- [x] 03-03: Subscription management with full lifecycle (CRUD, activate, suspend, isolate, restore, terminate)
+- [ ] 03-04: Router CRUD completion -- edit/delete router dialogs, sync-all button, sidebar navigation fix (RTR-02, RTR-06)
+- [ ] 03-05: Customer edit -- update hook, edit dialog, wire into table (CUST-03)
+- [ ] 03-06: Profile update -- update API, hook, edit dialog, wire into profile table (BW-03)
+- [ ] 03-07: Customer portal subscriptions -- portal API, hook, subscriptions page, route (SUB-05)
 
 ### Phase 4: Billing & Payments
 **Goal**: Admin can generate invoices, manage payments (manual confirm/reject/refund and gateway-initiated via Midtrans/Xendit), and manage cash entry workflow
@@ -188,9 +190,9 @@ Note: Phase 6 depends on Phase 3 and can theoretically run in parallel with Phas
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Auth & API Foundation | 0/4 | Planning complete | - |
+| 1. Auth & API Foundation | 4/4 | Complete | - |
 | 2. Layout, Dashboard & Users | 0/5 | Planning complete | - |
-| 3. Customers, Routers & Subscriptions | 0/5 | Not started | - |
+| 3. Customers, Routers & Subscriptions | 3/7 | Executing (gap closure) | - |
 | 4. Billing & Payments | 0/5 | Not started | - |
 | 5. Sales & Agents | 0/5 | Not started | - |
 | 6. MikroTik Device Management | 0/3 | Not started | - |
