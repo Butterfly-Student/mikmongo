@@ -53,11 +53,11 @@ Requirements for initial release. Each maps to roadmap phases.
 ### Router Management
 
 - [ ] **RTR-01**: Admin can view list of MikroTik routers with status
-- [ ] **RTR-02**: Admin can add/edit/delete router configurations (name, address, credentials, area)
+- [x] **RTR-02**: Admin can add/edit/delete router configurations (name, address, credentials, area)
 - [ ] **RTR-03**: Admin can select active router for context-dependent operations
 - [ ] **RTR-04**: Admin can sync router data from MikroTik device
 - [ ] **RTR-05**: Admin can test connection to router
-- [ ] **RTR-06**: Admin can sync all routers simultaneously
+- [x] **RTR-06**: Admin can sync all routers simultaneously
 
 ### Bandwidth Profiles
 
@@ -237,11 +237,11 @@ Deferred to future release. Tracked but not in current roadmap.
 | CUST-06 | Phase 3 | Complete |
 | CUST-07 | Phase 3 | Complete |
 | RTR-01 | Phase 3 | Pending |
-| RTR-02 | Phase 3 | Pending |
+| RTR-02 | Phase 3 | Complete |
 | RTR-03 | Phase 3 | Pending |
 | RTR-04 | Phase 3 | Pending |
 | RTR-05 | Phase 3 | Pending |
-| RTR-06 | Phase 3 | Pending |
+| RTR-06 | Phase 3 | Complete |
 | BW-01 | Phase 3 | Pending |
 | BW-02 | Phase 3 | Pending |
 | BW-03 | Phase 3 | Complete |
