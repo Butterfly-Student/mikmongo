@@ -192,7 +192,7 @@ Note: Phase 6 depends on Phase 3 and can theoretically run in parallel with Phas
 |-------|----------------|--------|-----------|
 | 1. Auth & API Foundation | 4/4 | Complete | - |
 | 2. Layout, Dashboard & Users | 0/5 | Planning complete | - |
-| 3. Customers, Routers & Subscriptions | 3/7 | Executing (gap closure) | - |
+| 3. Customers, Routers & Subscriptions | 6/7 | In Progress|  |
 | 4. Billing & Payments | 0/5 | Not started | - |
 | 5. Sales & Agents | 0/5 | Not started | - |
 | 6. MikroTik Device Management | 0/3 | Not started | - |

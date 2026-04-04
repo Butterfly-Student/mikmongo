@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-03-subscriptions-PLAN.md
-last_updated: "2026-04-03T14:51:46.619Z"
-last_activity: 2026-04-03
+stopped_at: Completed 03-04-router-crud-sidebar-PLAN.md
+last_updated: "2026-04-04T11:58:19.773Z"
+last_activity: 2026-04-04
 progress:
   total_phases: 8
-  completed_phases: 3
-  total_plans: 12
-  completed_plans: 12
+  completed_phases: 2
+  total_plans: 16
+  completed_plans: 15
   percent: 100
 ---
 
@@ -26,9 +26,9 @@ See: .planning/PROJECT.md (updated 2026-04-02)
 ## Current Position
 
 Phase: 03 (customers-routers-subscriptions) — EXECUTING
-Plan: 3 of 3
+Plan: 4 of 7
 Status: Ready to execute
-Last activity: 2026-04-03
+Last activity: 2026-04-04
 
 Progress: [██████████] 100%
 
@@ -53,6 +53,9 @@ Progress: [██████████] 100%
 | Phase 01 P04 | 5min | 2 tasks | 22 files |
 | Phase 03 P02 | 6min | 3 tasks | 13 files |
 | Phase 03 P03 | 7min | 3 tasks | 11 files |
+| Phase 03 P07 | 2min | 1 tasks | 5 files |
+| Phase 03 P06 | 8 | 1 tasks | 5 files |
+| Phase 03 P04 | 12 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -81,6 +84,11 @@ Recent decisions affecting current work:
 - [Phase 03]: Subscriptions consume active router from Zustand store for router-scoped API calls
 - [Phase 03]: All destructive subscription actions route through ConfirmActionDialog before API call
 - [Phase 03]: Sidebar nav updated: Subscriptions route enabled at /subscriptions
+- [Phase 03]: Customer portal index redirects to /customer/subscriptions for seamless UX
+- [Phase 03]: Edit dialog resets on close to prevent stale form state; editTarget state doubles as open flag
+- [Phase 03]: Edit router omits password from payload when field is blank, preserving existing credentials
+- [Phase 03]: useMutation hooks use unknown error type with type assertion narrowing instead of any
+- [Phase 03]: Sidebar nav enabled for Customers and Routers by removing disabled flag and setting real URLs
 
 ### Pending Todos
 
@@ -92,6 +100,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-03T14:51:46.615Z
-Stopped at: Completed 03-03-subscriptions-PLAN.md
+Last session: 2026-04-04T11:58:19.769Z
+Stopped at: Completed 03-04-router-crud-sidebar-PLAN.md
 Resume file: None

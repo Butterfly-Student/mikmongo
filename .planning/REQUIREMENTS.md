@@ -63,7 +63,7 @@ Requirements for initial release. Each maps to roadmap phases.
 
 - [ ] **BW-01**: Admin can view bandwidth profiles per router
 - [ ] **BW-02**: Admin can create bandwidth profile (name, rate-limit, burst)
-- [ ] **BW-03**: Admin can update/delete bandwidth profiles
+- [x] **BW-03**: Admin can update/delete bandwidth profiles
 
 ### Subscription Management
 
@@ -244,7 +244,7 @@ Deferred to future release. Tracked but not in current roadmap.
 | RTR-06 | Phase 3 | Pending |
 | BW-01 | Phase 3 | Pending |
 | BW-02 | Phase 3 | Pending |
-| BW-03 | Phase 3 | Pending |
+| BW-03 | Phase 3 | Complete |
 | SUB-01 | Phase 3 | Complete |
 | SUB-02 | Phase 3 | Complete |
 | SUB-03 | Phase 3 | Complete |
