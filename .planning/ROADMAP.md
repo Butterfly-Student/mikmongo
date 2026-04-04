@@ -95,15 +95,15 @@ Plans:
   4. Admin can view, create, approve, and reject cash entries and manage petty cash fund
   5. Customer portal shows their invoices, invoice details, payment history, and allows initiating gateway payments
   6. Agent portal shows invoice list with payment request option
-**Plans**: TBD
+**Plans**: 5 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 04-01: Build invoice management (list with filters, details, monthly generation trigger)
-- [ ] 04-02: Implement payment management (view, confirm/reject, refund, gateway initiation)
-- [ ] 04-03: Build cash entry management with approval workflow and petty cash fund
-- [ ] 04-04: Add invoice and payment views to Customer Portal
-- [ ] 04-05: Add invoice list with payment request to Agent Portal
+- [ ] 04-01-PLAN.md — Billing data layer: Zod schemas, API functions, TanStack Query hooks for invoices, payments, cash, petty cash, portal billing
+- [ ] 04-02-PLAN.md — Admin invoice management: list with filters, detail sheet, monthly generation trigger
+- [ ] 04-03-PLAN.md — Admin payment management: list with filters, confirm/reject/refund dialogs, gateway initiation
+- [ ] 04-04-PLAN.md — Admin cash management: entries table with inline approve/reject, create dialog, petty cash card with top-up
+- [ ] 04-05-PLAN.md — Portal billing views: customer invoices + payments, agent invoices with payment request
 
 ### Phase 5: Sales & Agents
 **Goal**: Admin can manage sales agents (create, profile pricing, invoice generation/payment) and track hotspot sales with Mikhmon voucher generation
@@ -193,7 +193,7 @@ Note: Phase 6 depends on Phase 3 and can theoretically run in parallel with Phas
 | 1. Auth & API Foundation | 4/4 | Complete | - |
 | 2. Layout, Dashboard & Users | 0/5 | Planning complete | - |
 | 3. Customers, Routers & Subscriptions | 6/7 | In Progress|  |
-| 4. Billing & Payments | 0/5 | Not started | - |
+| 4. Billing & Payments | 0/5 | Planning complete | - |
 | 5. Sales & Agents | 0/5 | Not started | - |
 | 6. MikroTik Device Management | 0/3 | Not started | - |
 | 7. Monitoring, Reports & Settings | 0/6 | Not started | - |
