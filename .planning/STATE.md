@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-04-router-crud-sidebar-PLAN.md
-last_updated: "2026-04-04T11:58:19.773Z"
+stopped_at: Completed 03-05-customer-edit-PLAN.md
+last_updated: "2026-04-04T11:59:14.953Z"
 last_activity: 2026-04-04
 progress:
   total_phases: 8
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 16
-  completed_plans: 15
+  completed_plans: 16
   percent: 100
 ---
 
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-04-02)
 ## Current Position
 
 Phase: 03 (customers-routers-subscriptions) — EXECUTING
-Plan: 4 of 7
+Plan: 5 of 7
 Status: Ready to execute
 Last activity: 2026-04-04
 
@@ -56,6 +56,7 @@ Progress: [██████████] 100%
 | Phase 03 P07 | 2min | 1 tasks | 5 files |
 | Phase 03 P06 | 8 | 1 tasks | 5 files |
 | Phase 03 P04 | 12 | 2 tasks | 7 files |
+| Phase 03 P05 | 2m28s | 1 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -89,6 +90,8 @@ Recent decisions affecting current work:
 - [Phase 03]: Edit router omits password from payload when field is blank, preserving existing credentials
 - [Phase 03]: useMutation hooks use unknown error type with type assertion narrowing instead of any
 - [Phase 03]: Sidebar nav enabled for Customers and Routers by removing disabled flag and setting real URLs
+- [Phase 03]: useEffect resets edit form when customer prop changes, preventing stale pre-population
+- [Phase 03]: Password field in edit dialog only sent in payload if user explicitly fills it (security)
 
 ### Pending Todos
 
@@ -100,6 +103,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T11:58:19.769Z
-Stopped at: Completed 03-04-router-crud-sidebar-PLAN.md
+Last session: 2026-04-04T11:59:14.950Z
+Stopped at: Completed 03-05-customer-edit-PLAN.md
 Resume file: None
