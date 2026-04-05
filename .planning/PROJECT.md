@@ -12,25 +12,26 @@ Admin can manage their entire ISP operation from one dashboard: customers, route
 
 ### Validated
 
-(None yet — ship to validate)
+- [x] Custom JWT authentication replacing Clerk (login, refresh, change password, logout, /me) — Validated in Phase 01: auth-foundation
+- [x] Admin dashboard with real-time widgets (customers, revenue, subscriptions, router health) — Validated in Phase 02: admin-dashboard
+- [x] Three-portal architecture (Admin, Customer Portal, Agent Portal) with separate routes and auth — Validated in Phase 01: auth-foundation
+- [x] Router selector in sidebar with status badges (online/offline/syncing) — Validated in Phase 02: admin-dashboard
+- [x] Real-time ping display (8.8.8.8) in header showing ms latency — Validated in Phase 02: admin-dashboard
+- [x] Customer management (CRUD, activate/deactivate, registration pipeline) — Validated in Phase 03: customers-routers-subscriptions
+- [x] MikroTik router management (CRUD, select active, sync, test connection) — Validated in Phase 03: customers-routers-subscriptions
+- [x] Bandwidth profile management per router (plans) — Validated in Phase 03: customers-routers-subscriptions
+- [x] Subscription management (CRUD, activate, suspend, isolate, restore, terminate) — Validated in Phase 03: customers-routers-subscriptions
+- [x] Invoice management with monthly trigger — Validated in Phase 04: billing-payments
+- [x] Payment management with gateway integration (Midtrans/Xendit) — Validated in Phase 04: billing-payments
+- [x] Cash entry and petty cash fund management — Validated in Phase 04: billing-payments
+- [x] Customer Portal billing (invoices with pay button, payment history) — Validated in Phase 04: billing-payments
+- [x] Agent Portal billing (invoice list with payment request) — Validated in Phase 04: billing-payments
 
 ### Active
 
-- [ ] Custom JWT authentication replacing Clerk (login, refresh, change password, logout, /me)
-- [ ] Admin dashboard with real-time widgets (customers, revenue, subscriptions, router health)
-- [ ] Three-portal architecture (Admin, Customer Portal, Agent Portal) with separate routes and auth
-- [ ] Router selector in sidebar with status badges (online/offline/syncing)
-- [ ] Real-time ping display (8.8.8.8) in header showing ms latency
-- [ ] Customer management (CRUD, activate/deactivate, registration pipeline)
-- [ ] MikroTik router management (CRUD, select active, sync, test connection)
-- [ ] Bandwidth profile management per router (plans)
-- [ ] Subscription management (CRUD, activate, suspend, isolate, restore, terminate)
-- [ ] Invoice management with monthly trigger
-- [ ] Payment management with gateway integration (Midtrans/Xendit)
 - [ ] Sales agent management with profile pricing
 - [ ] Agent invoice management with payment workflow
 - [ ] Hotspot sales tracking and voucher generation (Mikhmon)
-- [ ] Cash entry and petty cash fund management
 - [ ] Business reports with charts (Recharts) and data tables
 - [ ] MikroTik PPP management (profiles, secrets, active connections, WebSocket)
 - [ ] MikroTik Hotspot management (profiles, users, active, hosts, servers, WebSocket)
