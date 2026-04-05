@@ -115,15 +115,15 @@ Plans:
   3. Admin can view and create hotspot sales entries, generate Mikhmon vouchers in batch, and manage Mikhmon profiles
   4. Admin can generate Mikhmon setup script and view Mikhmon sales reports/summary
   5. Agent portal shows sales history and invoice management
-**Plans**: TBD
+**Plans**: 5 plans
 **UI hint**: yes
 
 Plans:
-- [ ] 05-01: Build sales agent management (list, create, update, profile pricing)
-- [ ] 05-02: Implement agent invoice management (view, generate, payment workflow)
-- [ ] 05-03: Build hotspot sales tracking and Mikhmon voucher generation
-- [ ] 05-04: Implement Mikhmon profile management, setup script generation, and sales reports
-- [ ] 05-05: Add sales history and invoice management views to Agent Portal
+- [ ] 05-01-PLAN.md — Data layer: schemas, API functions, hooks for sales/agents/hotspot/mikhmon
+- [ ] 05-02-PLAN.md — Admin sales agent management UI (list, create, edit, profile prices)
+- [ ] 05-03-PLAN.md — Admin agent invoice management UI (list, detail, generate, pay, cancel, process)
+- [ ] 05-04-PLAN.md — Hotspot sales + Mikhmon tabs (sales, vouchers, profiles, reports)
+- [ ] 05-05-PLAN.md — Agent portal additions: sales history + portal navigation
 
 ### Phase 6: MikroTik Device Management
 **Goal**: Admin can manage PPP profiles/secrets, Hotspot users/sessions, and Network configuration (queues, firewall, IP pools) across all routers
