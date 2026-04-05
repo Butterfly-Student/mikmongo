@@ -103,7 +103,7 @@ Plans:
 - [x] 04-02-PLAN.md — Admin invoice management: list with filters, detail sheet, monthly generation trigger
 - [x] 04-03-PLAN.md — Admin payment management: list with filters, confirm/reject/refund dialogs, gateway initiation
 - [x] 04-04-PLAN.md — Admin cash management: entries table with inline approve/reject, create dialog, petty cash card with top-up
-- [ ] 04-05-PLAN.md — Portal billing views: customer invoices + payments, agent invoices with payment request
+- [x] 04-05-PLAN.md — Portal billing views: customer invoices + payments, agent invoices with payment request
 
 ### Phase 5: Sales & Agents
 **Goal**: Admin can manage sales agents (create, profile pricing, invoice generation/payment) and track hotspot sales with Mikhmon voucher generation
