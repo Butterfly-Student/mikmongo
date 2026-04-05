@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 4 context gathered
-last_updated: "2026-04-04T12:21:00.806Z"
-last_activity: 2026-04-04
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-04-05T02:35:50.618Z"
+last_activity: 2026-04-05
 progress:
   total_phases: 8
   completed_phases: 3
-  total_plans: 16
-  completed_plans: 16
+  total_plans: 21
+  completed_plans: 17
   percent: 100
 ---
 
@@ -21,14 +21,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-04-02)
 
 **Core value:** Admin can manage their entire ISP operation from one dashboard: customers, routers, subscriptions, billing, and monitor MikroTik devices in real-time.
-**Current focus:** Phase 03 — customers-routers-subscriptions
+**Current focus:** Phase 04 — billing-payments
 
 ## Current Position
 
-Phase: 03 (customers-routers-subscriptions) — EXECUTING
-Plan: 5 of 7
+Phase: 04 (billing-payments) — EXECUTING
+Plan: 2 of 5
 Status: Ready to execute
-Last activity: 2026-04-04
+Last activity: 2026-04-05
 
 Progress: [██████████] 100%
 
@@ -57,6 +57,7 @@ Progress: [██████████] 100%
 | Phase 03 P06 | 8 | 1 tasks | 5 files |
 | Phase 03 P04 | 12 | 2 tasks | 7 files |
 | Phase 03 P05 | 2m28s | 1 tasks | 4 files |
+| Phase 04 P01 | 4 | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -92,6 +93,8 @@ Recent decisions affecting current work:
 - [Phase 03]: Sidebar nav enabled for Customers and Routers by removing disabled flag and setting real URLs
 - [Phase 03]: useEffect resets edit form when customer prop changes, preventing stale pre-population
 - [Phase 03]: Password field in edit dialog only sent in payload if user explicitly fills it (security)
+- [Phase 04]: CashEntryListResponseSchema uses optional meta since cash-entries endpoint may not return pagination
+- [Phase 04]: Gateway payment hooks open payment_url in new tab via window.open before showing toast
 
 ### Pending Todos
 
@@ -103,6 +106,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-04-04T12:21:00.802Z
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-billing-payments/04-CONTEXT.md
+Last session: 2026-04-05T02:35:50.615Z
+Stopped at: Completed 04-01-PLAN.md
+Resume file: None
