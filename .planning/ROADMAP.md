@@ -100,7 +100,7 @@ Plans:
 
 Plans:
 - [x] 04-01-PLAN.md — Billing data layer: Zod schemas, API functions, TanStack Query hooks for invoices, payments, cash, petty cash, portal billing
-- [ ] 04-02-PLAN.md — Admin invoice management: list with filters, detail sheet, monthly generation trigger
+- [x] 04-02-PLAN.md — Admin invoice management: list with filters, detail sheet, monthly generation trigger
 - [ ] 04-03-PLAN.md — Admin payment management: list with filters, confirm/reject/refund dialogs, gateway initiation
 - [ ] 04-04-PLAN.md — Admin cash management: entries table with inline approve/reject, create dialog, petty cash card with top-up
 - [ ] 04-05-PLAN.md — Portal billing views: customer invoices + payments, agent invoices with payment request
@@ -193,7 +193,7 @@ Note: Phase 6 depends on Phase 3 and can theoretically run in parallel with Phas
 | 1. Auth & API Foundation | 4/4 | Complete | - |
 | 2. Layout, Dashboard & Users | 0/5 | Planning complete | - |
 | 3. Customers, Routers & Subscriptions | 6/7 | In Progress|  |
-| 4. Billing & Payments | 1/5 | In Progress|  |
+| 4. Billing & Payments | 2/5 | In Progress|  |
 | 5. Sales & Agents | 0/5 | Not started | - |
 | 6. MikroTik Device Management | 0/3 | Not started | - |
 | 7. Monitoring, Reports & Settings | 0/6 | Not started | - |

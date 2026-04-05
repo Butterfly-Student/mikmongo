@@ -75,21 +75,21 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Billing & Invoices
 
-- [ ] **INV-01**: Admin can view invoices with overdue filter
-- [ ] **INV-02**: Admin can trigger monthly invoice generation
-- [ ] **INV-03**: Admin can view invoice details
-- [ ] **INV-04**: Customer portal shows their invoices
-- [ ] **INV-05**: Customer portal can view individual invoice details
+- [x] **INV-01**: Admin can view invoices with overdue filter
+- [x] **INV-02**: Admin can trigger monthly invoice generation
+- [x] **INV-03**: Admin can view invoice details
+- [x] **INV-04**: Customer portal shows their invoices
+- [x] **INV-05**: Customer portal can view individual invoice details
 
 ### Payments
 
-- [ ] **PAY-01**: Admin can view all payments with filters
-- [ ] **PAY-02**: Admin can confirm/reject manual payments
-- [ ] **PAY-03**: Admin can refund payments
-- [ ] **PAY-04**: Admin can initiate gateway payment (Midtrans/Xendit)
-- [ ] **PAY-05**: Customer portal shows payment history
-- [ ] **PAY-06**: Customer portal can initiate payment via gateway
-- [ ] **PAY-07**: Agent portal shows invoice list with payment request option
+- [x] **PAY-01**: Admin can view all payments with filters
+- [x] **PAY-02**: Admin can confirm/reject manual payments
+- [x] **PAY-03**: Admin can refund payments
+- [x] **PAY-04**: Admin can initiate gateway payment (Midtrans/Xendit)
+- [x] **PAY-05**: Customer portal shows payment history
+- [x] **PAY-06**: Customer portal can initiate payment via gateway
+- [x] **PAY-07**: Agent portal shows invoice list with payment request option
 
 ### Sales Agents
 
@@ -113,10 +113,10 @@ Requirements for initial release. Each maps to roadmap phases.
 
 ### Cash Management
 
-- [ ] **CASH-01**: Admin can view cash entries with approval workflow
-- [ ] **CASH-02**: Admin can create new cash entry
-- [ ] **CASH-03**: Admin can approve/reject cash entries
-- [ ] **CASH-04**: Admin can manage petty cash fund
+- [x] **CASH-01**: Admin can view cash entries with approval workflow
+- [x] **CASH-02**: Admin can create new cash entry
+- [x] **CASH-03**: Admin can approve/reject cash entries
+- [x] **CASH-04**: Admin can manage petty cash fund
 
 ### MikroTik PPP
 
@@ -250,22 +250,22 @@ Deferred to future release. Tracked but not in current roadmap.
 | SUB-03 | Phase 3 | Complete |
 | SUB-04 | Phase 3 | Complete |
 | SUB-05 | Phase 3 | Complete |
-| INV-01 | Phase 4 | Pending |
-| INV-02 | Phase 4 | Pending |
-| INV-03 | Phase 4 | Pending |
-| INV-04 | Phase 4 | Pending |
-| INV-05 | Phase 4 | Pending |
-| PAY-01 | Phase 4 | Pending |
-| PAY-02 | Phase 4 | Pending |
-| PAY-03 | Phase 4 | Pending |
-| PAY-04 | Phase 4 | Pending |
-| PAY-05 | Phase 4 | Pending |
-| PAY-06 | Phase 4 | Pending |
-| PAY-07 | Phase 4 | Pending |
-| CASH-01 | Phase 4 | Pending |
-| CASH-02 | Phase 4 | Pending |
-| CASH-03 | Phase 4 | Pending |
-| CASH-04 | Phase 4 | Pending |
+| INV-01 | Phase 4 | Complete |
+| INV-02 | Phase 4 | Complete |
+| INV-03 | Phase 4 | Complete |
+| INV-04 | Phase 4 | Complete |
+| INV-05 | Phase 4 | Complete |
+| PAY-01 | Phase 4 | Complete |
+| PAY-02 | Phase 4 | Complete |
+| PAY-03 | Phase 4 | Complete |
+| PAY-04 | Phase 4 | Complete |
+| PAY-05 | Phase 4 | Complete |
+| PAY-06 | Phase 4 | Complete |
+| PAY-07 | Phase 4 | Complete |
+| CASH-01 | Phase 4 | Complete |
+| CASH-02 | Phase 4 | Complete |
+| CASH-03 | Phase 4 | Complete |
+| CASH-04 | Phase 4 | Complete |
 | AGNT-01 | Phase 5 | Pending |
 | AGNT-02 | Phase 5 | Pending |
 | AGNT-03 | Phase 5 | Pending |
