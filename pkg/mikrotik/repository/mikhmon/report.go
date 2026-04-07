@@ -101,9 +101,9 @@ func (r *reportRepository) GetReportSummary(ctx context.Context, filter *mikhmon
 		reports, err = r.GetReportsByDay(ctx, filter.Day)
 	} else {
 		// Get all reports with mikhmon comment
-		reply, err := r.client.RunContext(ctx, "/system/script/print", "?comment=mikhmon")
-		if err != nil {
-			return nil, fmt.Errorf("failed to get reports: %w", err)
+		reply, err2 := r.client.RunContext(ctx, "/system/script/print", "?comment=mikhmon")
+		if err2 != nil {
+			return nil, fmt.Errorf("failed to get reports: %w", err2)
 		}
 
 		reports = make([]*mikhmonDomain.SalesReport, 0, len(reply.Re))

@@ -23,11 +23,11 @@ type Registry struct {
 }
 
 // NewRegistry creates a new middleware registry
-func NewRegistry(logger *zap.Logger, jwtService *jwt.Service, redisClient *redis.Client, enforcer *casbincore.Enforcer, allowedOrigins []string) *Registry {
+func NewRegistry(logger *zap.Logger, jwtService *jwt.Service, redisClient *redis.Client, enforcer *casbincore.Enforcer, allowedOrigins []string, internalKey string) *Registry {
 	loggerMiddleware := NewLoggerMiddleware(logger)
 
 	return &Registry{
-		Auth:            NewAuthMiddleware(jwtService, redisClient),
+		Auth:            NewAuthMiddleware(jwtService, redisClient, internalKey),
 		Logger:          loggerMiddleware.GinLogger(),
 		RateLimit:       NewRateLimitMiddleware(redisClient),
 		RequestID:       requestid.New(),

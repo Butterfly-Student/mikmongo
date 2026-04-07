@@ -71,8 +71,8 @@ func (h *VoucherHandler) GetVouchers(c *gin.Context) {
 	} else if code != "" {
 		vouchers, err = h.voucherSvc.GetVouchersByCode(c.Request.Context(), routerID, code)
 	} else {
-		response.BadRequest(c, "either comment or code query parameter is required")
-		return
+		// No filter - get all vouchers
+		vouchers, err = h.voucherSvc.GetAllVouchers(c.Request.Context(), routerID)
 	}
 
 	if err != nil {

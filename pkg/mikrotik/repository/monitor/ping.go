@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Butterfly-Student/go-ros/client"
@@ -81,6 +82,57 @@ func (r *pingRepository) StartPingListen(ctx context.Context, cfg domain.PingCon
 	}, nil
 }
 
+// parseRouterOSTime converts RouterOS ping time strings to milliseconds.
+//
+// Formats handled:
+//
+//	RouterOS 6.x : "23ms"           → 23.0 ms
+//	RouterOS 7.x : "24ms509us"      → 24.509 ms  (combined ms+us)
+//	Pure µs       : "13579us"        → 13.579 ms  (unlikely but safe)
+//	Seconds       : "1s"             → 1000.0 ms
+//	Plain number  : "23"             → 23.0 ms
+func parseRouterOSTime(s string) float64 {
+	if s == "" {
+		return 0
+	}
+
+	// Handle combined "<N>ms<M>us" (RouterOS 7.x) or plain "<N>ms"
+	if msIdx := strings.Index(s, "ms"); msIdx != -1 {
+		totalMs := 0.0
+		if v, err := strconv.ParseFloat(s[:msIdx], 64); err == nil {
+			totalMs = v
+		}
+		// Check for trailing microseconds part after "ms"
+		remainder := s[msIdx+2:]
+		if strings.HasSuffix(remainder, "us") {
+			if v, err := strconv.ParseFloat(remainder[:len(remainder)-2], 64); err == nil {
+				totalMs += v / 1000.0
+			}
+		}
+		return totalMs
+	}
+
+	// Pure microseconds: "13579us"
+	if strings.HasSuffix(s, "us") {
+		if v, err := strconv.ParseFloat(s[:len(s)-2], 64); err == nil {
+			return v / 1000.0
+		}
+		return 0
+	}
+
+	// Seconds: "1s"
+	if strings.HasSuffix(s, "s") {
+		if v, err := strconv.ParseFloat(s[:len(s)-1], 64); err == nil {
+			return v * 1000.0
+		}
+		return 0
+	}
+
+	// Plain number
+	v, _ := strconv.ParseFloat(s, 64)
+	return v
+}
+
 func parsePingSentence(sentence *proto.Sentence, seq int, address string) domain.PingResult {
 	m := sentence.Map
 	result := domain.PingResult{
@@ -97,13 +149,7 @@ func parsePingSentence(sentence *proto.Sentence, seq int, address string) domain
 		result.TTL = ttl
 	}
 	if timeStr := m["time"]; timeStr != "" {
-		trimmed := timeStr
-		if len(timeStr) > 2 && timeStr[len(timeStr)-2:] == "ms" {
-			trimmed = timeStr[:len(timeStr)-2]
-		}
-		if t, err := strconv.ParseFloat(trimmed, 64); err == nil {
-			result.TimeMs = t
-		}
+		result.TimeMs = parseRouterOSTime(timeStr)
 	}
 	return result
 }

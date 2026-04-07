@@ -45,7 +45,8 @@ func (r *routerDeviceRepository) Update(ctx context.Context, device *model.Mikro
 
 func (r *routerDeviceRepository) UpdateLastSync(ctx context.Context, id uuid.UUID) error {
 	now := time.Now()
-	return r.db.WithContext(ctx).Model(&model.MikrotikRouter{}).Where("id = ?", id).Update("last_seen_at", &now).Error
+	return r.db.WithContext(ctx).Model(&model.MikrotikRouter{}).Where("id = ?", id).
+		Updates(map[string]any{"last_seen_at": &now, "status": "online"}).Error
 }
 
 func (r *routerDeviceRepository) Delete(ctx context.Context, id uuid.UUID) error {

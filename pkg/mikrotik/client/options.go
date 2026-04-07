@@ -11,5 +11,4 @@ type Config struct {
 	UseTLS            bool
 	ReconnectInterval time.Duration
 	Timeout           time.Duration // per-command timeout (default 10s)
-	PoolSize          int           // unused field kept for config compatibility
 }

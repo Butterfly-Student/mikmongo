@@ -65,7 +65,8 @@ type Config struct {
 		GroupID  string
 		Timeout  int
 	}
-	Seed struct {
+	InternalKey string
+	Seed        struct {
 		AutoMigrate    bool
 		AdminEmail     string
 		AdminPassword  string
@@ -140,6 +141,9 @@ func Load() *Config {
 	config.GoWA.DeviceID = os.Getenv("GOWA_DEVICE_ID")
 	config.GoWA.GroupID = os.Getenv("GOWA_GROUP_ID")
 	config.GoWA.Timeout = envInt("GOWA_TIMEOUT", 30)
+
+	// Internal key for WebSocket auth bypass
+	config.InternalKey = env("INTERNAL_KEY", "")
 
 	// Seed
 	config.Seed.AutoMigrate = envBool("AUTO_MIGRATE")

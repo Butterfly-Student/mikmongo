@@ -13,13 +13,15 @@ import (
 type AuthMiddleware struct {
 	jwtService  *jwt.Service
 	redisClient *redis.Client
+	internalKey string
 }
 
 // NewAuthMiddleware creates a new auth middleware
-func NewAuthMiddleware(jwtService *jwt.Service, redisClient *redis.Client) *AuthMiddleware {
+func NewAuthMiddleware(jwtService *jwt.Service, redisClient *redis.Client, internalKey string) *AuthMiddleware {
 	return &AuthMiddleware{
 		jwtService:  jwtService,
 		redisClient: redisClient,
+		internalKey: internalKey,
 	}
 }
 
@@ -47,6 +49,16 @@ func (m *AuthMiddleware) Authenticate() gin.HandlerFunc {
 			c.Abort()
 			return
 		}
+
+		// Internal key bypass — for WebSocket endpoints that don't carry user JWT
+		if m.internalKey != "" && token == m.internalKey {
+			c.Set("user_id", "internal")
+			c.Set("email", "internal@system")
+			c.Set("role", "superadmin")
+			c.Next()
+			return
+		}
+
 		claims, err := m.jwtService.Validate(token)
 		if err != nil {
 			response.Unauthorized(c, "invalid token")

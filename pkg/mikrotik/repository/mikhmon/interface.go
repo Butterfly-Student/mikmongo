@@ -9,6 +9,7 @@ import (
 // VoucherRepository defines the interface for voucher management
 type VoucherRepository interface {
 	GenerateBatch(ctx context.Context, req *mikhmon.VoucherGenerateRequest) (*mikhmon.VoucherBatch, error)
+	GetAllVouchers(ctx context.Context) ([]*mikhmon.Voucher, error)
 	GetVouchersByComment(ctx context.Context, comment string) ([]*mikhmon.Voucher, error)
 	GetVouchersByCode(ctx context.Context, code string) ([]*mikhmon.Voucher, error)
 	RemoveVoucherBatch(ctx context.Context, comment string) error

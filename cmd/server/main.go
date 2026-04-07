@@ -249,7 +249,7 @@ func main() {
 	}
 
 	// Middleware
-	middlewareRegistry := middleware.NewRegistry(logg.Logger, jwtService, redisClient, casbinEnforcer, cfg.App.AllowedOrigins)
+	middlewareRegistry := middleware.NewRegistry(logg.Logger, jwtService, redisClient, casbinEnforcer, cfg.App.AllowedOrigins, cfg.InternalKey)
 
 	// Router
 	r := router.New(handlerRegistry, middlewareRegistry)

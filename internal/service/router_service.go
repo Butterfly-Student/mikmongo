@@ -136,6 +136,17 @@ func (s *RouterService) GetMikrotikClient(ctx context.Context, routerID uuid.UUI
 	return mikrotik.NewClientFromConnection(clientConn), nil
 }
 
+// GetRouterHost returns the IP/hostname of the router.
+// Used by the collector to populate the "host" tag in TSDB data points.
+// Does not decrypt credentials — cheaper than getRouterConfig.
+func (s *RouterService) GetRouterHost(ctx context.Context, routerID uuid.UUID) (string, error) {
+	router, err := s.routerRepo.GetByID(ctx, routerID)
+	if err != nil {
+		return "", fmt.Errorf("router not found: %w", err)
+	}
+	return router.Address, nil
+}
+
 // Connect connects to a MikroTik router using its stored credentials (backward compatibility)
 func (s *RouterService) Connect(ctx context.Context, routerID uuid.UUID) (*mikrotik.Client, error) {
 	return s.GetMikrotikClient(ctx, routerID)

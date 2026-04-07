@@ -96,6 +96,29 @@ func (r *voucherRepository) GenerateBatch(ctx context.Context, req *mikhmonDomai
 	return batch, nil
 }
 
+// GetAllVouchers retrieves all hotspot users as vouchers
+func (r *voucherRepository) GetAllVouchers(ctx context.Context) ([]*mikhmonDomain.Voucher, error) {
+	users, err := r.hotspotRepo.User().GetUsers(ctx, "")
+	if err != nil {
+		return nil, err
+	}
+
+	vouchers := make([]*mikhmonDomain.Voucher, 0, len(users))
+	for _, user := range users {
+		voucher := &mikhmonDomain.Voucher{
+			ID:       user.ID,
+			Name:     user.Name,
+			Password: user.Password,
+			Profile:  user.Profile,
+			Server:   user.Server,
+			Comment:  user.Comment,
+		}
+		vouchers = append(vouchers, voucher)
+	}
+
+	return vouchers, nil
+}
+
 // GetVouchersByComment retrieves vouchers by comment
 func (r *voucherRepository) GetVouchersByComment(ctx context.Context, comment string) ([]*mikhmonDomain.Voucher, error) {
 	users, err := r.hotspotRepo.User().GetUsersByComment(ctx, comment)

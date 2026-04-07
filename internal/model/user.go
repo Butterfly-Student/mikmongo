@@ -8,23 +8,23 @@ import (
 
 // User represents admin users and operators in the ISP system
 type User struct {
-	ID           string         `gorm:"type:uuid;primary_key;default:gen_random_uuid()"`
-	FullName     string         `gorm:"type:varchar(100);not null"`
-	Email        string         `gorm:"type:varchar(100);unique;not null"`
-	Phone        string         `gorm:"type:varchar(20)"`
-	PasswordHash string         `gorm:"type:varchar(255);not null"`
-	Role         string         `gorm:"type:varchar(20);not null;default:'cs';check:role IN ('superadmin', 'admin', 'cs', 'billing', 'technician', 'readonly')"`
-	IsActive     bool           `gorm:"type:boolean;default:true"`
-	LastLogin    *time.Time     `gorm:"type:timestamptz"`
-	LastIP       string         `gorm:"type:varchar(45)"`
-	BearerKey    *string        `gorm:"type:varchar(255);unique"`
-	CreatedAt    time.Time      `gorm:"type:timestamptz;not null;default:CURRENT_TIMESTAMP"`
-	UpdatedAt    time.Time      `gorm:"type:timestamptz;not null;default:CURRENT_TIMESTAMP"`
-	DeletedAt    gorm.DeletedAt `gorm:"index"`
+	ID           string         `gorm:"type:uuid;primary_key;default:gen_random_uuid()" json:"id"`
+	FullName     string         `gorm:"type:varchar(100);not null" json:"full_name"`
+	Email        string         `gorm:"type:varchar(100);unique;not null" json:"email"`
+	Phone        string         `gorm:"type:varchar(20)" json:"phone"`
+	PasswordHash string         `gorm:"type:varchar(255);not null" json:"-"`
+	Role         string         `gorm:"type:varchar(20);not null;default:'cs';check:role IN ('superadmin', 'admin', 'cs', 'billing', 'technician', 'readonly')" json:"role"`
+	IsActive     bool           `gorm:"type:boolean;default:true" json:"is_active"`
+	LastLogin    *time.Time     `gorm:"type:timestamptz" json:"last_login"`
+	LastIP       string         `gorm:"type:varchar(45)" json:"last_ip"`
+	BearerKey    *string        `gorm:"type:varchar(255);unique" json:"-"`
+	CreatedAt    time.Time      `gorm:"type:timestamptz;not null;default:CURRENT_TIMESTAMP" json:"created_at"`
+	UpdatedAt    time.Time      `gorm:"type:timestamptz;not null;default:CURRENT_TIMESTAMP" json:"updated_at"`
+	DeletedAt    gorm.DeletedAt `gorm:"index" json:"-"`
 
 	// Relationships
-	CreatedCustomers []Customer `gorm:"foreignKey:CreatedBy"`
-	UpdatedCustomers []Customer `gorm:"foreignKey:UpdatedBy"`
+	CreatedCustomers []Customer `gorm:"foreignKey:CreatedBy" json:"-"`
+	UpdatedCustomers []Customer `gorm:"foreignKey:UpdatedBy" json:"-"`
 }
 
 func (User) TableName() string {

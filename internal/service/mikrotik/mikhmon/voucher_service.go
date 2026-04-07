@@ -33,6 +33,14 @@ func (s *MikhmonVoucherService) GenerateBatch(ctx context.Context, routerID uuid
 	return repo.GenerateBatch(ctx, req)
 }
 
+func (s *MikhmonVoucherService) GetAllVouchers(ctx context.Context, routerID uuid.UUID) ([]*mikhmonDomain.Voucher, error) {
+	repo, err := s.getVoucherRepo(ctx, routerID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get voucher repository: %w", err)
+	}
+	return repo.GetAllVouchers(ctx)
+}
+
 func (s *MikhmonVoucherService) GetVouchersByComment(ctx context.Context, routerID uuid.UUID, comment string) ([]*mikhmonDomain.Voucher, error) {
 	repo, err := s.getVoucherRepo(ctx, routerID)
 	if err != nil {

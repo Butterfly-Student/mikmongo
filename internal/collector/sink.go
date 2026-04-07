@@ -13,20 +13,32 @@ import (
 
 // DataPoint is a single monitoring observation from a MikroTik router.
 type DataPoint struct {
-	// RouterID identifies the source router.
+	// RouterID identifies the source router (UUID, used as InfluxDB tag).
 	RouterID uuid.UUID
+	// RouterHost is the IP/hostname of the router (used as InfluxDB tag).
+	RouterHost string
 	// Topic matches Command.Topic (e.g. "system-resource", "interfaces").
 	Topic string
-	// Category determines TTL and pub/sub behavior.
+	// Category determines TTL and pub/sub behaviour.
 	Category DataCategory
 	// Timestamp of the observation.
 	Timestamp time.Time
-	// Fields contains the raw key=value data from RouterOS.
-	Fields map[string]string
+
+	// RawFields contains the raw key=value strings from RouterOS.
+	// Used by RedisSink for HSET cache.
+	RawFields map[string]string
+
+	// Tags are non-numeric labels classified from RawFields by a Parser
+	// (e.g. interface name, service type). Used by TSDB sinks.
+	Tags map[string]string
+
+	// Fields are numeric measurements classified from RawFields by a Parser
+	// (e.g. tx-byte, cpu-load). Used by TSDB sinks.
+	Fields map[string]float64
 }
 
 // DataSink receives processed monitoring data. Implementations write to
-// different backends (Redis, TSDB, etc.).
+// different backends (Redis, InfluxDB, etc.).
 type DataSink interface {
 	// Write stores a monitoring data point.
 	Write(ctx context.Context, point DataPoint) error
@@ -50,15 +62,15 @@ func NewRedisSink(redis *pkgredis.Client, logger *zap.Logger) *RedisSink {
 	return &RedisSink{redis: redis, logger: logger}
 }
 
-// Write stores the data point as a Redis hash with TTL, and publishes
-// to a Pub/Sub channel if the data category is RealTime.
+// Write stores the data point as a Redis hash with TTL (using RawFields),
+// and publishes to a Pub/Sub channel if the data category is RealTime.
 func (s *RedisSink) Write(ctx context.Context, point DataPoint) error {
 	key := CacheKey(point.RouterID, point.Topic)
 	ttl := TTLFor(point.Category)
 
-	// Convert map[string]string → map[string]interface{} for HSet.
-	fields := make(map[string]any, len(point.Fields)+1)
-	for k, v := range point.Fields {
+	// Convert RawFields map[string]string → map[string]interface{} for HSet.
+	fields := make(map[string]any, len(point.RawFields)+1)
+	for k, v := range point.RawFields {
 		fields[k] = v
 	}
 	fields["_updated_at"] = point.Timestamp.Unix()
@@ -74,7 +86,7 @@ func (s *RedisSink) Write(ctx context.Context, point DataPoint) error {
 	// Publish to Pub/Sub channel for real-time data.
 	if point.Category == RealTime {
 		channel := PubSubChannel(point.RouterID, point.Topic)
-		payload, err := json.Marshal(point.Fields)
+		payload, err := json.Marshal(point.RawFields)
 		if err != nil {
 			return err
 		}
@@ -97,8 +109,8 @@ func (s *RedisSink) Close() error { return nil }
 // MultiSink
 // ─────────────────────────────────────────────────────────────────────────────
 
-// MultiSink fans out writes to multiple sinks. Useful for adding a TSDB
-// sink alongside Redis without changing the collector code.
+// MultiSink fans out writes to multiple sinks. Useful for routing live data
+// to Redis and historical data to InfluxDB simultaneously.
 type MultiSink struct {
 	sinks  []DataSink
 	logger *zap.Logger
@@ -110,7 +122,7 @@ func NewMultiSink(logger *zap.Logger, sinks ...DataSink) *MultiSink {
 }
 
 // Write sends the data point to every sink. Errors are logged but do not
-// stop writes to remaining sinks.
+// stop writes to remaining sinks. The first encountered error is returned.
 func (m *MultiSink) Write(ctx context.Context, point DataPoint) error {
 	var firstErr error
 	for _, sink := range m.sinks {

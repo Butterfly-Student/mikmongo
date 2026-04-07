@@ -6,11 +6,13 @@
 // into cmd/server/main.go.
 package collector
 
-// DataCategory controls how a command's results are stored.
+// DataCategory controls how a command's results are stored and forwarded.
+// Both categories stream events via RouterOS =follow= — no polling occurs.
 type DataCategory int
 
 const (
-	// SlowChanging data is polled periodically and cached with a long TTL.
+	// SlowChanging data is streamed via RouterOS =follow= and cached with a
+	// long TTL. Cache is refreshed only when RouterOS fires a change event.
 	// Examples: IP addresses, PPP active sessions, DHCP leases.
 	SlowChanging DataCategory = iota
 
@@ -58,12 +60,15 @@ func DefaultCommands() []Command {
 			Topic:    "queues",
 		},
 
-		// ── SlowChanging (polled every PollInterval) ─────────────────────
+		// ── SlowChanging (event-driven via =follow=, long TTL, no pub/sub) ─
+		// RouterOS pushes a notification only when data actually changes,
+		// so this adds zero periodic load to the router.
 
 		{
 			Args: []string{
 				"/ip/address/print",
 				"=.proplist=.id,address,interface,network,disabled",
+				"=follow=",
 			},
 			Category: SlowChanging,
 			Topic:    "ip-addresses",
@@ -72,6 +77,7 @@ func DefaultCommands() []Command {
 			Args: []string{
 				"/ppp/active/print",
 				"=.proplist=.id,name,service,address,uptime,caller-id",
+				"=follow=",
 			},
 			Category: SlowChanging,
 			Topic:    "ppp-active",
@@ -80,6 +86,7 @@ func DefaultCommands() []Command {
 			Args: []string{
 				"/ip/dhcp-server/lease/print",
 				"=.proplist=.id,address,mac-address,host-name,status,server",
+				"=follow=",
 			},
 			Category: SlowChanging,
 			Topic:    "dhcp-leases",
